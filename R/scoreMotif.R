@@ -5,9 +5,6 @@
 ## optional: produce random SNP sets of equivalent size to the index SNP list to
 ## simulate background for enrichment calculations.
 
-require("BSgenome.Hsapiens.UCSC.hg19") ## DNAString, DNAStringSet, PDict, matchPDict
-require("MotifDb") ## dataset
-
 ## define utility functions 'defaultOmega' (and related fxns) and maxPwm and
 ## minPwm
 
@@ -76,8 +73,8 @@ pctScore <- function(score, min.score, max.score) {
 
 ## motif scorer, using MotifDb objects returns vector of probabilities based on
 ## the PPM
-#' importFrom compiler compfun
-scoreMotif <- function(snp.seq, ppm, len, method = "default",
+#' @importFrom compiler cmpfun
+scoreMotif.a <- function(snp.seq, ppm, len, method = "default",
                        ag = c(A = 0.25, C = 0.25, G = 0.25, T = 0.25),
                        offset = 1) {
   snp.seq <- snp.seq[offset:(offset + len - 1)]
@@ -90,11 +87,10 @@ scoreMotif <- function(snp.seq, ppm, len, method = "default",
     return(position.probs)
   }
 }
-scoreMotif2 <- cmpfun(scoreMotif)
-require(compiler)
+scoreMotif <- cmpfun(scoreMotif.a, options = list(optimize = 3))
 
 ## create an all purpose scoring algorithm 'w' for weighted
-wScore <- function(snp.seq, ppm, pwm.omega, offset, method = "default", bkg = NULL, 
+wScore <- function(snp.seq, ppm, pwm.omega, offset, method = "default", bkg = NULL,
                    len) {
   if (is.null(bkg)) {
     bkg <- c(0.25, 0.25, 0.25, 0.25)
@@ -121,7 +117,7 @@ wScore <- function(snp.seq, ppm, pwm.omega, offset, method = "default", bkg = NU
 
 ## take a sequence and score all its windows for a pwm
 
-scoreAllWindows <- function(snp.seq, snp.seq.rc, pwm, pwm.omega, pwm.bot, pwm.min, 
+scoreAllWindows <- function(snp.seq, snp.seq.rc, pwm, pwm.omega, pwm.bot, pwm.min,
                             method = "default", bkg = NULL, from = "default", to = "default") {
   ## frequently used variables;
   l <- ncol(pwm)
@@ -137,12 +133,12 @@ scoreAllWindows <- function(snp.seq, snp.seq.rc, pwm, pwm.omega, pwm.bot, pwm.mi
   window.scores <- rep(NA, m)
   window.scores.rc <- rep(NA, m)
   for (i in from:to) {
-    window.scores[i - from + 1] <- wScore(snp.seq, pwm, pwm.omega, offset = i, 
+    window.scores[i - from + 1] <- wScore(snp.seq, pwm, pwm.omega, offset = i,
                                           method, bkg, len = l)
-    window.scores.rc[i - from + 1] <- wScore(snp.seq.rc, pwm, pwm.omega, offset = i, 
+    window.scores.rc[i - from + 1] <- wScore(snp.seq.rc, pwm, pwm.omega, offset = i,
                                              method, bkg, len = l)
   }
-  all.window.scores <- matrix(data = c(window.scores, window.scores.rc), nrow = 2, 
+  all.window.scores <- matrix(data = c(window.scores, window.scores.rc), nrow = 2,
                               ncol = m, byrow = T, dimnames = list(c("top", "bot"), from:to))
   all.window.scores <- (all.window.scores - pwm.min)/pwm.bot
   return(all.window.scores)
@@ -183,26 +179,35 @@ snpEff <- function(allelR, allelA) {
   }
 }
 
-scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL, threshold = 0.8, 
-                         show.neutral = FALSE, verbose = FALSE) {
-  if (!(Reduce("&", width(fsnplist$REF) == 1)) || !(Reduce("&", width(fsnplist$ALT) == 
-                                                             1))) {
+#' @import methods
+#' @importFrom Biostrings getSeq replaceLetterAt reverseComplement
+#' @importFrom GenomicRanges promoters GRangesList
+#' @importFrom S4Vectors mcols mcols<-
+#' @importFrom BiocGenerics width
+#' @importFrom IRanges reverse
+scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
+                         threshold = 0.8, show.neutral = FALSE, verbose = FALSE) {
+  if (!(Reduce("&", width(fsnplist$REF) == 1)) || !(Reduce("&", width(fsnplist$ALT) == 1))) {
     drop.snp.i <- !(width(fsnplist$REF) == 1) & (width(fsnplist$ALT) == 1)
     drop.snp <- names(fsnplist[!drop.snp.i])
     fsnplist <- fsnplist[drop.snp.i]
     warning(paste(drop.snp, "not valid for motif analysis...skipping", sep = " "))
   }
   genome.package <- attributes(fsnplist)$genome.package
-  genome.bsgenome <- eval(parse(text = genome.package))
-  require(eval(genome.package), character.only = TRUE)
+  if(requireNamespace(eval(genome.package), quietly = TRUE, character.only = TRUE)) {
+    genome.bsgenome <- eval(parse(text = paste(genome.package, genome.package, sep="::")))
+  } else {
+    stop(paste0(eval(genome.package), " is the genome selected for this snp list and \n",
+                "is not present on your system. Please install and try again."))
+  }
   k <- max(sapply(pwmList, ncol))
   ## Get Reference Sequence with k bp flanking
-  snp.sequence.ref <- getSeq(genome.bsgenome, promoters(fsnplist, upstream = k - 
-                                                          1, downstream = k))
+  snp.sequence.ref <- getSeq(genome.bsgenome, promoters(fsnplist, upstream = k - 1,
+                                                        downstream = k))
   ## check that reference matches ref genome
   equals.ref <- getSeq(genome.bsgenome, fsnplist) == fsnplist$REF
   if (!Reduce("&", equals.ref)) {
-    stop(paste(names(fsnplist[!equals.ref]), "reference allele does not match value in reference genome", 
+    stop(paste(names(fsnplist[!equals.ref]), "reference allele does not match value in reference genome",
                sep = " "))
   }
   at <- matrix(FALSE, nrow = length(snp.sequence.ref), ncol = (k * 2) - 1)
@@ -256,13 +261,13 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL, thre
       ## REF
       pwm <- pwmList[[pwm.i]]
       len <- ncol(pwm)
-      ref.windows <- scoreAllWindows(snp.ref, snp.ref.rc, pwm, pwmList.omega[[pwm.i]], 
-                                     pwmList.bot[[pwm.i]], pwmList.min[[pwm.i]], method, bkg = bkg, from = k - 
+      ref.windows <- scoreAllWindows(snp.ref, snp.ref.rc, pwm, pwmList.omega[[pwm.i]],
+                                     pwmList.bot[[pwm.i]], pwmList.min[[pwm.i]], method, bkg = bkg, from = k -
                                        len + 1, to = k)
       hit.ref <- maxThresholdWindows(ref.windows, threshold = threshold)
       ## ALT
-      alt.windows <- scoreAllWindows(snp.alt, snp.alt.rc, pwm, pwmList.omega[[pwm.i]], 
-                                     pwmList.bot[[pwm.i]], pwmList.min[[pwm.i]], method, bkg = bkg, from = k - 
+      alt.windows <- scoreAllWindows(snp.alt, snp.alt.rc, pwm, pwmList.omega[[pwm.i]],
+                                     pwmList.bot[[pwm.i]], pwmList.min[[pwm.i]], method, bkg = bkg, from = k -
                                        len + 1, to = k)
       hit.alt <- maxThresholdWindows(alt.windows, threshold = threshold)
       if (hit.ref[["strand"]] == 0L && hit.alt[["strand"]] == 0L) {
@@ -282,16 +287,16 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL, thre
           effect <- snpEff(allelR, allelA)
           if (effect == "neut") {
             if (show.neutral) {
-              res.el[pwm.i] <- updateResults(res.el[pwm.i], snp.ref, snp.pos, 
-                                             hit, ref.windows, alt.windows, allelR, allelA, effect, len, 
+              res.el[pwm.i] <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
+                                             hit, ref.windows, alt.windows, allelR, allelA, effect, len,
                                              k, pwm)
               pwm.sig[[pwm.i]] <- TRUE
             } else {
               pwm.sig[[pwm.i]] <- FALSE
             }
           } else {
-            res.el[pwm.i] <- updateResults(res.el[pwm.i], snp.ref, snp.pos, 
-                                           hit, ref.windows, alt.windows, allelR, allelA, effect, len, 
+            res.el[pwm.i] <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
+                                           hit, ref.windows, alt.windows, allelR, allelA, effect, len,
                                            k, pwm)
             pwm.sig[[pwm.i]] <- TRUE
           }
@@ -310,16 +315,16 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL, thre
           effect <- snpEff(allelR, allelA)
           if (effect == "neut") {
             if (show.neutral) {
-              res.el[pwm.i] <- updateResults(res.el[pwm.i], snp.ref, snp.pos, 
-                                             hit, ref.windows, alt.windows, allelR, allelA, effect, len, 
+              res.el[pwm.i] <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
+                                             hit, ref.windows, alt.windows, allelR, allelA, effect, len,
                                              k, pwm)
               pwm.sig[[pwm.i]] <- TRUE
             } else {
               pwm.sig[[pwm.i]] <- FALSE
             }
           } else {
-            res.el[pwm.i] <- updateResults(res.el[pwm.i], snp.ref, snp.pos, 
-                                           hit, ref.windows, alt.windows, allelR, allelA, effect, len, 
+            res.el[pwm.i] <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
+                                           hit, ref.windows, alt.windows, allelR, allelA, effect, len,
                                            k, pwm)
             pwm.sig[[pwm.i]] <- TRUE
           }
@@ -341,8 +346,8 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL, thre
   resultSet <- resultSet[set.sig]
   if (length(resultSet) < 1) {
     if (verbose) {
-      message(paste("reached end of SNPs list length =", length(fsnplist), 
-                    "with 0 potentially disruptive matches to", length(unique(resultSet$geneSymbol)), 
+      message(paste("reached end of SNPs list length =", length(fsnplist),
+                    "with 0 potentially disruptive matches to", length(unique(resultSet$geneSymbol)),
                     "of", length(pwmList), "motifs."))
     }
     return(NULL)
@@ -350,18 +355,18 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL, thre
     resultSet <- unlist(GRangesList(resultSet), use.names = F)
     mcols(resultSet) <- mcols(resultSet)[, -(1:2)]
     if (verbose) {
-      message(paste("reached end of SNPs list length =", length(fsnplist), 
-                    "with", length(resultSet), "potentially disruptive matches to", length(unique(resultSet$geneSymbol)), 
+      message(paste("reached end of SNPs list length =", length(fsnplist),
+                    "with", length(resultSet), "potentially disruptive matches to", length(unique(resultSet$geneSymbol)),
                     "of", length(pwmList), "motifs."))
     }
     return(resultSet)
   }
 }
 
-
-updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.windows, 
+#' @importFrom stringr str_pad
+#' @importFrom BiocGenerics start end start<- end<-
+updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.windows,
                           allelR, allelA, effect, len, k, pwm) {
-  ## if(snp.pos == 6) stop('here')
   strand.opt <- c("+", "-")
   strand <- (-hit[["strand"]] + 3) / 2
   strand(result) <- strand.opt[strand]
@@ -391,29 +396,111 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
   return(result)
 }
 
-motifbreakR <- function(snpList, pwmList, threshold, method = "default", bkg = NULL, 
-                        show.neutral = FALSE, verbose = FALSE, cores = 1L) {
-  require(parallel)
+
+#' Predict The Disruptiveness Of Single Nucleotide Polymorphisms On
+#' Transcription Factor Binding Sites.
+#'
+#' @param snpList The output of \code{snps.from.rsid} or \code{snps.from.bed}
+#' @param pwmList An object of class \code{MotifList} containing the motifs that
+#'   you wish to interrogate
+#' @param threshold Numeric; the minimum disruptiveness score for which to
+#'   report results
+#' @param method Character; one of \code{default}, \code{log}, or \code{IC}; see
+#'   details.
+#' @param bkg Numeric Vector; the background probabilites of the nucleotides
+#'   used with method=\code{log} method=\code{IC}
+#' @param show.neutral Logical; include neutral changes in the output
+#' @param verbose Logical; if running serially, show verbose messages
+#' @param BPPARAM a BiocParallel object see \code{\link{[BiocParallel]register}}
+#'   and see \code{getClass("BiocParallelParam")} for additional parameter
+#'   classes
+#' @seealso \code{\link{snps.from.rsid}} \code{\link{snps.from.bed}}
+#' @details \pkg{motifbreakR} works with position probability matrices (PPM).
+#'   PPM are derived as the fractional occurrence of nucleotides A,C,G, and T at
+#'   each position of a position frequency matrix (PFM). PFM are simply the
+#'   tally of each nucleotide at each position across a set of aligned
+#'   sequences. With a PPM, one can generate probabilities based on the genome,
+#'   or more practically, create any number of position specific scoring
+#'   matrices (PSSM) based on the principle that the PPM contains information
+#'   about the likelihood of observing a particular nucleotide at a particular
+#'   position of a true transcription factor binding site. What follows is a
+#'   discussion of the three different algorithms that may be employed in calls
+#'   to the \pkg{motifbreakR} function via the \code{method} argument. Suppose
+#'   we have a PPM \eqn{P} with columns \eqn{i} and \eqn{j} rows for nucleotides
+#'   A,C,G,T. We can produce scores from the matrix corresponding to a sequence
+#'   at position \eqn{n}. Suppose further that the vector of scores \eqn{p}
+#'   derived from \eqn{P} given the sequence is \eqn{p_n}. The sum of this
+#'   vector is called the match score\cite{pssm}, \eqn{S}: \deqn{S(p_n)~=~\sum
+#'   p_{n}} When weighted by the difference between the best nucleotide at each
+#'   position of \eqn{P} minus the worst, we have a weighted-sum, or the default
+#'   method of motif scoring in motifbreakR. This algorithm may be represented
+#'   mathematically as \deqn{S(p_n)~=~p_{n}~\cdot~\omega_{P}} where \eqn{\omega}
+#'   is the \eqn{max(P_{i}) - min(P_{i})} for each column \eqn{i} of the
+#'   probability matrix. This is the method of \citet{plosgen77}. The classic
+#'   PWM is defined as the sum of the log-probabilities, accessed from
+#'   method="log": \deqn{S(p_n)~=~\sum {log (p_n/p_{bk})}} where the background
+#'   probabilities of the letters are represented by \eqn{p_{bk}}. By default a
+#'   uniform distribution is assumed, but the user may specify any distribution
+#'   by including the "bkg" argument in function calls. This parameter is a
+#'   vector (length 2) specifying the probability of A and G in the genome as a
+#'   fraction of 1. Lastly, the scores may be weighted by self-information
+#'   content (IC), or relative entropy, at each position of the scoring
+#'   matrix\cite{Stormo2000}. The method, accessed by specifying method="IC"
+#'   (information content) is philosophically similar to the weighted matrix-sum
+#'   above. \deqn{S(p_n)~=~p_{n}~\cdot~I_{P}} where the vector of information
+#'   content at all positions of the matrix, \(I_P\), is given by
+#'   \deqn{I_{P}~=~\sum_{j=A}^{T} P_{i,j}log_2 (P_{i,j}/p_{bk})} Regardless of
+#'   the called method, all scores are normalized to the scoring range over the
+#'   maximum and minimum values of $P$. Thus the final score \eqn{S_{norm}} is
+#'   given as \deqn{S_{norm}~=~\frac{S(p_n) - S(P_{min})}{S(P_{max})}}
+#' @return a GRanges object containing:
+#'  \item{REF}{the reference allele for the SNP}
+#'  \item{ALT}{the alternate allele for the SNP}
+#'  \item{snpPos}{the coordinates of the SNP}
+#'  \item{motifPos}{the coordinates of the SNP within the TF binding motif}
+#'  \item{geneSymbol}{the geneSymbol corresponding to the TF of the TF binding motif}
+#'  \item{dataSource}{the source of the TF binding motif}
+#'  \item{providerName, providerId}{the name and id provided by the source}
+#'  \item{seqMatch}{the sequence on the 5' -> 3' direction that corresponds to DNA
+#'  at the position that the TF binding motif was found.}
+#'  \item{pctRef}{}
+#'  \item{pctAlt}{}
+#'  \item{alleleRef}{}
+#'  \item{alleleAlt}{}
+#'  \item{effect}{one of weak, strong, or neutral indicating the strength of the effect.}
+#' @import BiocParallel
+#' @importFrom BiocParallel bplapply
+#' @importFrom BiocGenerics unlist
+#' @importFrom stringr str_length str_trim
+#' @export
+motifbreakR <- function(snpList, pwmList, threshold, method = "default", bkg = NULL,
+                        show.neutral = FALSE, verbose = FALSE, BPPARAM=bpparam()) {
+  if(.Platform$OS.type == "windows" && class(BPPARAM) == "MulticoreParam") {
+    warning(paste0("Serial evaluation under effect, to achive parallel evaluation under\n",
+            "Windows, please supply an alternative BPPARAM"))
+  }
+  cores <- bpworkers(BPPARAM)
   num.snps <- length(snpList)
+  if(num.snps < cores) {
+    cores <- num.snps
+  }
   genome.package <- attributes(snpList)$genome.package
   snpList <- sapply(suppressWarnings(split(snpList, 1:cores)), list)
-  x <- mclapply(snpList, scoreSnpList, pwmList = pwmList, threshold = threshold, 
-                method = method, bkg = bkg, show.neutral = show.neutral, verbose = ifelse(cores == 
-                                                                                            1, verbose, FALSE), mc.cores = cores, mc.preschedule = FALSE)
+  x <- bplapply(snpList, scoreSnpList, pwmList = pwmList, threshold = threshold,
+                method = method, bkg = bkg, show.neutral = show.neutral,
+                verbose = ifelse(cores == 1, verbose, FALSE))
   drops <- sapply(x, is.null)
   x <- x[!drops]
   if (length(x) > 1) {
     x <- unlist(GRangesList(unname(x)))
     x <- x[order(match(names(x), names(snpList)), x$geneSymbol), ]
     attributes(x)$genome.package <- genome.package
-    attributes(x)$motifs <- pwmList[mcols(pwmList)$providerId %in% unique(x$providerId), 
-                                    ]
+    attributes(x)$motifs <- pwmList[mcols(pwmList)$providerId %in% unique(x$providerId), ]
   } else {
     if (length(x) == 1L) {
       x <- x[[1]]
       attributes(x)$genome.package <- genome.package
-      attributes(x)$motifs <- pwmList[mcols(pwmList)$providerId %in% unique(x$providerId), 
-                                      ]
+      attributes(x)$motifs <- pwmList[mcols(pwmList)$providerId %in% unique(x$providerId), ]
     } else {
       warning("No SNP/Motif Interactions reached threshold")
       x <- NULL
@@ -421,19 +508,19 @@ motifbreakR <- function(snpList, pwmList, threshold, method = "default", bkg = N
   }
   if (verbose && cores > 1) {
     if (is.null(x)) {
-      message(paste("reached end of SNPs list length =", num.snps, "with 0 potentially disruptive matches to", 
+      message(paste("reached end of SNPs list length =", num.snps, "with 0 potentially disruptive matches to",
                     length(unique(x$geneSymbol)), "of", length(pwmList), "motifs."))
-      
+
     } else {
-      message(paste("reached end of SNPs list length =", num.snps, "with", 
-                    length(x), "potentially disruptive matches to", length(unique(x$geneSymbol)), 
+      message(paste("reached end of SNPs list length =", num.snps, "with",
+                    length(x), "potentially disruptive matches to", length(unique(x$geneSymbol)),
                     "of", length(pwmList), "motifs."))
     }
   }
   return(x)
 }
 
-
+#' @importFrom grImport PostScriptTrace readPicture grid.picture
 addPWM <- function(identifier, ...) {
   motif.name <- identifier
   ps.file <- paste(tempdir(), motif.name, sep = "/")
@@ -442,6 +529,10 @@ addPWM <- function(identifier, ...) {
   grid.picture(motif.figure[-1], distort = FALSE)
 }
 
+#' @importFrom grDevices postscript
+#' @import motifStack
+#' @importFrom Gviz IdeogramTrack SequenceTrack GenomeAxisTrack HighlightTrack AnnotationTrack plotTracks
+#' @importFrom BiocGenerics strand
 MBplot <- function(results, rsid, reverseMotif = TRUE) {
   g <- genome(results)[[1]]
   result <- results[names(results) %in% rsid]
@@ -453,12 +544,11 @@ MBplot <- function(results, rsid, reverseMotif = TRUE) {
   temp.dir <- tempdir()
   pwmList <- attributes(result)$motifs
   for (pwm.id in names(pwmList)) {
-    postscript(paste(temp.dir, pwm.id, sep = "/"), width = 10, height = 3, horizontal = FALSE, 
+    postscript(paste(temp.dir, pwm.id, sep = "/"), width = 10, height = 3, horizontal = FALSE,
                fonts = c("sans", "Helvetica"))
     pwm <- pwmList[[pwm.id]]
     if (Reduce("|", result$providerId %in% mcols(pwmList[pwm.id])$providerId)) {
-      if (reverseMotif && (as.character(strand(result)[result$providerId %in% 
-                                                       mcols(pwmList[pwm.id])$providerId]) == "-")) {
+      if (reverseMotif && (as.character(strand(result)[result$providerId %in% mcols(pwmList[pwm.id])$providerId]) == "-")) {
         pwm <- pwm[, rev(1:ncol(pwm))]
         rownames(pwm) <- c("T", "G", "C", "A")
       }
@@ -470,24 +560,27 @@ MBplot <- function(results, rsid, reverseMotif = TRUE) {
   ideoT <- IdeogramTrack(genome = g, chromosome = chromosome)
   seqT <- SequenceTrack(genome.bsgenome, fontcolor = colorset("DNA", "auto"))
   axisT <- GenomeAxisTrack(exponent = 0)
-  hiT <- HighlightTrack(seqT, start = result$snpPos[[1]], end = result$snpPos[[1]], 
+  hiT <- HighlightTrack(seqT, start = result$snpPos[[1]], end = result$snpPos[[1]],
                         chromosome = chromosome)
   if (Reduce("|", result$providerId %in% mcols(pwmList[pwm.id])$providerId)) {
-    if (reverseMotif && (as.character(strand(result)[result$providerId %in% mcols(pwmList[pwm.id])$providerId]) == 
-                           "-")) {
-      motifT <- AnnotationTrack(result, id = names(pwmList)[mcols(pwmList)$providerId %in% 
-                                          result$providerId], fun = addPWM, group = result$providerId, feature = paste0("snp@", 
-                                                                                                         result$motifPos), name = names(result)[[1]])
+    if (reverseMotif && (as.character(strand(result)[result$providerId %in% mcols(pwmList[pwm.id])$providerId]) == "-")) {
+      motifT <- AnnotationTrack(result, id = names(pwmList)[mcols(pwmList)$providerId %in% result$providerId],
+                                fun = addPWM, group = result$providerId, feature = paste0("snp@", result$motifPos),
+                                name = names(result)[[1]])
     }
   } else {
-    motifT <- AnnotationTrack(result, id = names(pwmList)[mcols(pwmList)$providerId %in% 
-                                        result$providerId], fun = addPWM, group = result$providerId, feature = paste0("snp@", 
-                                                                                                       result$motifPos), name = names(result)[[1]])
+    motifT <- AnnotationTrack(result, id = names(pwmList)[mcols(pwmList)$providerId %in% result$providerId],
+                              fun = addPWM, group = result$providerId,
+                              feature = paste0("snp@",
+                                               ifelse(strand(result) == "-",
+                                                      str_length(str_trim(result$seqMatch)) - result$motifPos,
+                                                      result$motifPos)),
+                              name = names(result)[[1]])
   }
-  plotTracks(list(ideoT, motifT, hiT, axisT), from = from, to = to, showBandId = TRUE, 
-             add53 = TRUE, labelpos = "below", chromosome = chromosome, groupAnnotation = "group", 
-             collapse = FALSE, min.width = 1, featureAnnotation = "feature", cex.feature = 0.8, 
-             details.size = 0.5, detailsConnector.pch = NA, shape = "box", cex.group = 0.8, 
+  plotTracks(list(ideoT, motifT, hiT, axisT), from = from, to = to, showBandId = TRUE,
+             add53 = TRUE, labelpos = "below", chromosome = chromosome, groupAnnotation = "group",
+             collapse = FALSE, min.width = 1, featureAnnotation = "feature", cex.feature = 0.8,
+             details.size = 0.5, detailsConnector.pch = NA, shape = "box", cex.group = 0.8,
              fonts = c("sans", "Helvetica"))
 }
 
