@@ -27,7 +27,7 @@ used with method=\code{log} method=\code{IC}}
 
 \item{verbose}{Logical; if running serially, show verbose messages}
 
-\item{BPPARAM}{a BiocParallel object see \code{\link{[BiocParallel]register}}
+\item{BPPARAM}{a BiocParallel object see \code{\link[BiocParallel]{register}}
 and see \code{getClass("BiocParallelParam")} for additional parameter
 classes}
 }
@@ -42,11 +42,12 @@ a GRanges object containing:
  \item{providerName, providerId}{the name and id provided by the source}
  \item{seqMatch}{the sequence on the 5' -> 3' direction that corresponds to DNA
  at the position that the TF binding motif was found.}
- \item{pctRef}:
- \item{pctAlt}:
- \item{alleleRef}:
- \item{alleleAlt}:
+ \item{pctRef}{The score as determined by the scoring method, when the sequence contains the reference SNP allele}
+ \item{pctAlt}{The score as determined by the scoring method, when the sequence contains the alternate SNP allele}
+ \item{alleleRef}{The proportional frequency of the reference allele at position \code{motifPos} in the motif}
+ \item{alleleAlt}{The proportional frequency of the alternate allele at position \code{motifPos} in the motif}
  \item{effect}{one of weak, strong, or neutral indicating the strength of the effect.}
+ each SNP in this object may be plotted with \code{\link{MBplot}}
 }
 \description{
 Predict The Disruptiveness Of Single Nucleotide Polymorphisms On
@@ -93,6 +94,8 @@ Transcription Factor Binding Sites.
   given as \deqn{S_{norm}~=~\frac{S(p_n) - S(P_{min})}{S(P_{max})}}
 }
 \seealso{
-\code{\link{snps.from.rsid}} \code{\link{snps.from.bed}}
+\code{\link{snps.from.rsid}} and \code{\link{snps.from.bed}} for
+  information about how to generate the input to this function and \code{\link{MBplot}}
+  for information on how to visualize it's output
 }
 

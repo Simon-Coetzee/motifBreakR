@@ -281,8 +281,8 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
             allelR <- pwm[as.character(result$REF), snp.pos]
             allelA <- pwm[as.character(result$ALT), snp.pos]
           } else {
-            allelR <- pwm[as.character(reverse(result$REF)), snp.pos]
-            allelA <- pwm[as.character(reverse(result$ALT)), snp.pos]
+            allelR <- pwm[as.character(complement(result$REF)), snp.pos]
+            allelA <- pwm[as.character(complement(result$ALT)), snp.pos]
           }
           effect <- snpEff(allelR, allelA)
           if (effect == "neut") {
@@ -309,8 +309,8 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
             allelR <- pwm[as.character(result$REF), snp.pos]
             allelA <- pwm[as.character(result$ALT), snp.pos]
           } else {
-            allelR <- pwm[as.character(reverse(result$REF)), snp.pos]
-            allelA <- pwm[as.character(reverse(result$ALT)), snp.pos]
+            allelR <- pwm[as.character(complement(result$REF)), snp.pos]
+            allelA <- pwm[as.character(complement(result$ALT)), snp.pos]
           }
           effect <- snpEff(allelR, allelA)
           if (effect == "neut") {
@@ -411,10 +411,12 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #'   used with method=\code{log} method=\code{IC}
 #' @param show.neutral Logical; include neutral changes in the output
 #' @param verbose Logical; if running serially, show verbose messages
-#' @param BPPARAM a BiocParallel object see \code{\link{[BiocParallel]register}}
+#' @param BPPARAM a BiocParallel object see \code{\link[BiocParallel]{register}}
 #'   and see \code{getClass("BiocParallelParam")} for additional parameter
 #'   classes
-#' @seealso \code{\link{snps.from.rsid}} \code{\link{snps.from.bed}}
+#' @seealso See \code{\link{snps.from.rsid}} and \code{\link{snps.from.bed}} for
+#'   information about how to generate the input to this function and \code{\link{MBplot}}
+#'   for information on how to visualize it's output
 #' @details \pkg{motifbreakR} works with position probability matrices (PPM).
 #'   PPM are derived as the fractional occurrence of nucleotides A,C,G, and T at
 #'   each position of a position frequency matrix (PFM). PFM are simply the
@@ -463,11 +465,12 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #'  \item{providerName, providerId}{the name and id provided by the source}
 #'  \item{seqMatch}{the sequence on the 5' -> 3' direction that corresponds to DNA
 #'  at the position that the TF binding motif was found.}
-#'  \item{pctRef}{}
-#'  \item{pctAlt}{}
-#'  \item{alleleRef}{}
-#'  \item{alleleAlt}{}
+#'  \item{pctRef}{The score as determined by the scoring method, when the sequence contains the reference SNP allele}
+#'  \item{pctAlt}{The score as determined by the scoring method, when the sequence contains the alternate SNP allele}
+#'  \item{alleleRef}{The proportional frequency of the reference allele at position \code{motifPos} in the motif}
+#'  \item{alleleAlt}{The proportional frequency of the alternate allele at position \code{motifPos} in the motif}
 #'  \item{effect}{one of weak, strong, or neutral indicating the strength of the effect.}
+#'  each SNP in this object may be plotted with \code{\link{MBplot}}
 #' @import BiocParallel
 #' @importFrom BiocParallel bplapply
 #' @importFrom BiocGenerics unlist
@@ -486,7 +489,7 @@ motifbreakR <- function(snpList, pwmList, threshold, method = "default", bkg = N
   }
   genome.package <- attributes(snpList)$genome.package
   snpList <- sapply(suppressWarnings(split(snpList, 1:cores)), list)
-  x <- bplapply(snpList, scoreSnpList, pwmList = pwmList, threshold = threshold,
+  x <- lapply(snpList, scoreSnpList, pwmList = pwmList, threshold = threshold,
                 method = method, bkg = bkg, show.neutral = show.neutral,
                 verbose = ifelse(cores == 1, verbose, FALSE))
   drops <- sapply(x, is.null)
@@ -533,7 +536,7 @@ addPWM <- function(identifier, ...) {
 #' @import motifStack
 #' @importFrom Gviz IdeogramTrack SequenceTrack GenomeAxisTrack HighlightTrack AnnotationTrack plotTracks
 #' @importFrom BiocGenerics strand
-MBplot <- function(results, rsid, reverseMotif = TRUE) {
+MBplot <- function(results, rsid, reverseMotif = TRUE, stack = FALSE) {
   g <- genome(results)[[1]]
   result <- results[names(results) %in% rsid]
   chromosome <- as.character(seqnames(result))[[1]]
@@ -543,19 +546,33 @@ MBplot <- function(results, rsid, reverseMotif = TRUE) {
   to <- max(end(result)) + 4
   temp.dir <- tempdir()
   pwmList <- attributes(result)$motifs
-  for (pwm.id in names(pwmList)) {
-    postscript(paste(temp.dir, pwm.id, sep = "/"), width = 10, height = 3, horizontal = FALSE,
-               fonts = c("sans", "Helvetica"))
-    pwm <- pwmList[[pwm.id]]
-    if (Reduce("|", result$providerId %in% mcols(pwmList[pwm.id])$providerId)) {
-      if (reverseMotif && (as.character(strand(result)[result$providerId %in% mcols(pwmList[pwm.id])$providerId]) == "-")) {
-        pwm <- pwm[, rev(1:ncol(pwm))]
-        rownames(pwm) <- c("T", "G", "C", "A")
-      }
-    }
-    p <- new("pfm", mat = pwm, name = mcols(pwmList[pwm.id])$providerId)
-    plot(p)
+  if(stack) {
+    pwm.names <<- result$providerId
+    pwms <- pwmList[mcols(pwmList)$providerId %in% pwm.names, ]
+    pwms <- lapply(names(pwms), function(x, pwms=pwms) {new("pfm", mat=pwms[[x]],
+                                                          name=x)}, pwms)
+    pwms <- DNAmotifAlignment(pwms)
+    message(length(pwm.names))
+    pwms.1 <<- pwms
+    postscript(paste("~", "stack.ps", sep = "/"), width = 5, height =  2*length(pwm.names), paper="special", horizontal = FALSE)
+    plotMotifLogoStack(pwms, ncex=1.0)
     dev.off()
+    stop('here')
+  } else {
+    for (pwm.id in names(pwmList)) {
+      postscript(paste(temp.dir, pwm.id, sep = "/"), width = 10, height = 3, horizontal = FALSE,
+                 fonts = c("sans", "Helvetica"))
+      pwm <- pwmList[[pwm.id]]
+      if (Reduce("|", result$providerId %in% mcols(pwmList[pwm.id])$providerId)) {
+        if (reverseMotif && (as.character(strand(result)[result$providerId %in% mcols(pwmList[pwm.id])$providerId]) == "-")) {
+          pwm <- pwm[, rev(1:ncol(pwm))]
+          rownames(pwm) <- c("T", "G", "C", "A")
+        }
+      }
+      p <- new("pfm", mat = pwm, name = mcols(pwmList[pwm.id])$providerId)
+      plot(p)
+      dev.off()
+    }
   }
   ideoT <- IdeogramTrack(genome = g, chromosome = chromosome)
   seqT <- SequenceTrack(genome.bsgenome, fontcolor = colorset("DNA", "auto"))
@@ -573,7 +590,7 @@ MBplot <- function(results, rsid, reverseMotif = TRUE) {
                               fun = addPWM, group = result$providerId,
                               feature = paste0("snp@",
                                                ifelse(strand(result) == "-",
-                                                      str_length(str_trim(result$seqMatch)) - result$motifPos,
+                                                      str_length(str_trim(result$seqMatch)) - result$motifPos + 1,
                                                       result$motifPos)),
                               name = names(result)[[1]])
   }
