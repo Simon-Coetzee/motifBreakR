@@ -94,7 +94,7 @@ Transcription Factor Binding Sites.
   given as \deqn{S_{norm}~=~\frac{S(p_n) - S(P_{min})}{S(P_{max})}}
 }
 \seealso{
-\code{\link{snps.from.rsid}} and \code{\link{snps.from.bed}} for
+See \code{\link{snps.from.rsid}} and \code{\link{snps.from.bed}} for
   information about how to generate the input to this function and \code{\link{MBplot}}
   for information on how to visualize it's output
 }

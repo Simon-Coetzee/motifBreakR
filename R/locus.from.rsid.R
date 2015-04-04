@@ -1,5 +1,6 @@
 #' @importFrom BSgenome snpid2grange snplocs
 #' @importFrom Biostrings DNAStringSet
+#' @export
 snps.from.rsid <- function(rsid = NULL, dbSNP = NULL,
                            search.genome = NULL) {
   if (is.null(rsid)) {
@@ -109,6 +110,7 @@ strSort <- function(x) {
 #' @importFrom GenomicRanges findOverlaps queryHits subjectHits
 #' @importFrom GenomeInfoDb species sortSeqlevels
 #' @importFrom BiocGenerics sapply
+#' @export
 snps.from.bed <- function(bedfile = NULL, dbSNP = NULL, search.genome = NULL) {
   snps <- import.bed(bedfile)
   if (Reduce("|", grepl("rs", snps$name)) & (class(dbSNP) != "SNPlocs")) {
