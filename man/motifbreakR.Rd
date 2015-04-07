@@ -40,8 +40,8 @@ a GRanges object containing:
  \item{geneSymbol}{the geneSymbol corresponding to the TF of the TF binding motif}
  \item{dataSource}{the source of the TF binding motif}
  \item{providerName, providerId}{the name and id provided by the source}
- \item{seqMatch}{the sequence on the 5' -> 3' direction that corresponds to DNA
- at the position that the TF binding motif was found.}
+ \item{seqMatch}{the sequence on the 5' -> 3' direction of the "+" strand
+ that corresponds to DNA at the position that the TF binding motif was found.}
  \item{pctRef}{The score as determined by the scoring method, when the sequence contains the reference SNP allele}
  \item{pctAlt}{The score as determined by the scoring method, when the sequence contains the alternate SNP allele}
  \item{alleleRef}{The proportional frequency of the reference allele at position \code{motifPos} in the motif}
@@ -92,6 +92,19 @@ Transcription Factor Binding Sites.
   the called method, all scores are normalized to the scoring range over the
   maximum and minimum values of $P$. Thus the final score \eqn{S_{norm}} is
   given as \deqn{S_{norm}~=~\frac{S(p_n) - S(P_{min})}{S(P_{max})}}
+}
+\examples{
+if(requireNamespace("BSgenome.Hsapiens.UCSC.hg19", quietly = TRUE) &&
+   requireNamespace("SNPlocs.Hsapiens.dbSNP.20120608", quietly = TRUE)) {
+   # prepare variants
+   data(pca.enhancer.snps) # loads snps.mb
+   pca.enhancer.snps <- sample(snps.mb, 20)
+   # Get motifs to interrogate
+   data(hocomoco)
+   motifs <- sample(hocomoco, 50)
+   # run motifbreakR
+   results <- motifbreakR(pca.enhancer.snps, motifs, threshold = 0.9, method = "IC")
+ }
 }
 \seealso{
 See \code{\link{snps.from.rsid}} and \code{\link{snps.from.bed}} for

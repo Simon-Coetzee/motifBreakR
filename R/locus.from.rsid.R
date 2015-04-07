@@ -1,3 +1,29 @@
+#' Import SNPs from rsid for use in motifbreakR
+#'
+#' @param rsid Character; a character vector of rsid values from dbSNP
+#' @param dbSNP an object of class SNPlocs to lookup rsids; see \code{\link[BSgenome]{availible.SNPs}}
+#'   to check for availible SNPlocs
+#' @param search.genome an object of class BSgenome for the species you are interrogating;
+#'  see \code{\link[BSgenome]{available.genomes}} for a list of species
+#' @seealso See \code{\link{motifbreakR}} for analysis; See \code{\link{snps.from.bed}}
+#'   for an alternate method for generating a list of variants.
+#' @details \code{snps.from.rsid} take an rsid, or character vector of rsids and
+#'  generates the required object to input into \code{motifbreakR}
+#' @return a GRanges object containing:
+#'  \item{SNP_id}{The rsid of the snp with the "rs" portion stripped}
+#'  \item{alleles_as_ambig}{THE IUPAC ambiguity code between the reference and
+#'  alternate allele for this SNP}
+#'  \item{REF}{The reference allele for the SNP}
+#'  \item{ALT}{The alternate allele for the SNP}
+#'  @examples
+#'  if(requireNamespace("BSgenome.Hsapiens.UCSC.hg19", quietly = TRUE) &&
+#'    requireNamespace("SNPlocs.Hsapiens.dbSNP.20120608", quietly = TRUE)) {
+#'    snps.file <- system.file("extdata", "pca.enhancer.snps", package = "motifbreakR")
+#'    snps <- as.character(read.table(snps.file)[,1])
+#'    snps.mb <- snps.from.rsid(snps,
+#'                              dbSNP = SNPlocs.Hsapiens.dbSNP.20120608,
+#'                              search.genome = BSgenome.Hsapiens.UCSC.hg19)
+#'  }
 #' @importFrom BSgenome snpid2grange snplocs
 #' @importFrom Biostrings DNAStringSet
 #' @export
@@ -6,11 +32,11 @@ snps.from.rsid <- function(rsid = NULL, dbSNP = NULL,
   if (is.null(rsid)) {
     stop("no RefSNP IDs have been found, please include RefSNP ID numbers")
   }
-  if (class(dbSNP) != "SNPlocs") {
+  if (!inherits(dbSNP, "SNPlocs")) {
     stop(paste0("dbSNP argument was not provided with a valid SNPlocs object.\n",
-                "Please run availible.SNPs() to check for availble SNPlocs"))
+                "Please run availible.SNPs() to check for availible SNPlocs"))
   }
-  if (class(search.genome) != "BSgenome") {
+  if (!inherits(search.genome, "BSgenome")) {
     stop(paste0("search.genome argument was not provided with a valid BSgenome object.\n",
                 "Run availible.genomes() and choose the appropriate BSgenome object"))
   }
@@ -55,26 +81,6 @@ determine.allele.from.ambiguous <- function(ambiguous.allele, known.allele) {
   return(unknown.allele)
 }
 
-
-#change.to.ucsc.genome <- function(granges.object, search.genome = BSgenome.Hsapiens.UCSC.hg19) {
-#  if (Reduce("&", !is.na(genome(granges.object)))) {
-#    if (Reduce("&", genome(granges.object) == "hg19")) {
-#      return(granges.object)
-#    }
-#  }
-#  if (Reduce("&", is.na(genome(granges.object))) && length(seqinfo(granges.object)) !=
-#      25) {
-#    xome.value <- str_extract(seqlevels(granges.object), "[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9]|6[0-9]|7[0-9]|8[0-9]|9[0-9]|M")
-#    positions <- sapply(paste0("chr", xome.value, "$"), grep, seqnames(seqinfo(search.genome)))
-#    new2oldmap <- rep(NA, length(seqinfo(search.genome)))
-#    new2oldmap[positions] <- 1:length(positions)
-#  } else {
-#    new2oldmap <- c(1:25, rep(NA, length(seqinfo(search.genome)) - length(seqinfo(granges.object))))
-#  }
-#  seqinfo(granges.object, new2old = new2oldmap) <- seqinfo(search.genome)
-#  return(granges.object)
-#}
-
 #' @importFrom stringr str_extract
 #' @importFrom GenomeInfoDb seqinfo genome
 #' @importFrom GenomeInfoDb seqnames seqlevels seqinfo<-
@@ -104,7 +110,40 @@ change.to.search.genome <- function(granges.object, search.genome) {
 strSort <- function(x) {
   sapply(lapply(strsplit(x, NULL), sort), paste, collapse = "")
 }
-
+#' Import SNPs from a BED file for use in motifbreakR
+#'
+#' @param bedfile Character; a character containing the path to a bed file
+#'   see Details for a description of the required format
+#' @param dbSNP OPTIONAL; an object of class SNPlocs to lookup rsids; see \code{\link[BSgenome]{availible.SNPs}}
+#'   to check for availible SNPlocs
+#' @param search.genome an object of class BSgenome for the species you are interrogating;
+#'  see \code{\link[BSgenome]{available.genomes}} for a list of species
+#' @seealso See \code{\link{motifbreakR}} for analysis; See \code{\link{snps.from.rsid}}
+#'   for an alternate method for generating a list of variants.
+#' @details \code{snps.from.bed} takes a character vector describing the file path
+#'  to a bed file that contains the necissary information to generate the input for
+#'  \code{motifbreakR} see \url{http://www.genome.ucsc.edu/FAQ/FAQformat.html#format1}
+#'  for a complete description of the BED format.  Our convention deviates in that there
+#'  is a required format for the name field.  \code{name} is defined as chromosome:start:REF:ALT
+#'  or the rsid from dbSNP (if you've included the optional SNPlocs argument).
+#'  For example if you were to include rs123 in it's alternate
+#'  format it would be entered as chr7:24966446:C:A
+#' @return a GRanges object containing:
+#'  \item{SNP_id}{The rsid of the snp with the "rs" portion stripped}
+#'  \item{alleles_as_ambig}{THE IUPAC ambiguity code between the reference and
+#'  alternate allele for this SNP}
+#'  \item{REF}{The reference allele for the SNP}
+#'  \item{ALT}{The alternate allele for the SNP}
+#'  @examples
+#'  if(requireNamespace("BSgenome.Hsapiens.UCSC.hg19", quietly = TRUE) &&
+#'    requireNamespace("SNPlocs.Hsapiens.dbSNP.20120608", quietly = TRUE)) {
+#'    snps.bed.file <- system.file("extdata", "snps.bed", package = "motifbreakR")
+#'    # see the contents
+#'    read.table(snps.bed.file)
+#'    #import the BED file
+#'    snps.mb <- snps.from.bed(snps.bed.file,
+#'                             search.genome = BSgenome.Hsapiens.UCSC.hg19)
+#'  }
 #' @importFrom rtracklayer import.bed
 #' @importFrom Biostrings IUPAC_CODE_MAP
 #' @importFrom GenomicRanges findOverlaps queryHits subjectHits

@@ -463,22 +463,34 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #'  \item{geneSymbol}{the geneSymbol corresponding to the TF of the TF binding motif}
 #'  \item{dataSource}{the source of the TF binding motif}
 #'  \item{providerName, providerId}{the name and id provided by the source}
-#'  \item{seqMatch}{the sequence on the 5' -> 3' direction that corresponds to DNA
-#'  at the position that the TF binding motif was found.}
+#'  \item{seqMatch}{the sequence on the 5' -> 3' direction of the "+" strand
+#'  that corresponds to DNA at the position that the TF binding motif was found.}
 #'  \item{pctRef}{The score as determined by the scoring method, when the sequence contains the reference SNP allele}
 #'  \item{pctAlt}{The score as determined by the scoring method, when the sequence contains the alternate SNP allele}
 #'  \item{alleleRef}{The proportional frequency of the reference allele at position \code{motifPos} in the motif}
 #'  \item{alleleAlt}{The proportional frequency of the alternate allele at position \code{motifPos} in the motif}
 #'  \item{effect}{one of weak, strong, or neutral indicating the strength of the effect.}
 #'  each SNP in this object may be plotted with \code{\link{MBplot}}
+#'  @examples
+#'  if(requireNamespace("BSgenome.Hsapiens.UCSC.hg19", quietly = TRUE) &&
+#'    requireNamespace("SNPlocs.Hsapiens.dbSNP.20120608", quietly = TRUE)) {
+#'    # prepare variants
+#'    data(pca.enhancer.snps) # loads snps.mb
+#'    pca.enhancer.snps <- sample(snps.mb, 20)
+#'    # Get motifs to interrogate
+#'    data(hocomoco)
+#'    motifs <- sample(hocomoco, 50)
+#'    # run motifbreakR
+#'    results <- motifbreakR(pca.enhancer.snps, motifs, threshold = 0.9, method = "IC")
+#'  }
 #' @import BiocParallel
 #' @importFrom BiocParallel bplapply
-#' @importFrom BiocGenerics unlist
+#' @importFrom BiocGenerics unlist sapply
 #' @importFrom stringr str_length str_trim
 #' @export
 motifbreakR <- function(snpList, pwmList, threshold, method = "default", bkg = NULL,
                         show.neutral = FALSE, verbose = FALSE, BPPARAM=bpparam()) {
-  if(.Platform$OS.type == "windows" && class(BPPARAM) == "MulticoreParam") {
+  if(.Platform$OS.type == "windows" && inherits(BPPARAM, "MulticoreParam")) {
     warning(paste0("Serial evaluation under effect, to achive parallel evaluation under\n",
             "Windows, please supply an alternative BPPARAM"))
   }
@@ -491,7 +503,7 @@ motifbreakR <- function(snpList, pwmList, threshold, method = "default", bkg = N
   snpList <- sapply(suppressWarnings(split(snpList, 1:cores)), list)
   x <- bplapply(snpList, scoreSnpList, pwmList = pwmList, threshold = threshold,
                 method = method, bkg = bkg, show.neutral = show.neutral,
-                verbose = ifelse(cores == 1, verbose, FALSE))
+                verbose = ifelse(cores == 1, verbose, FALSE), BPPARAM=BPPARAM)
   drops <- sapply(x, is.null)
   x <- x[!drops]
   if (length(x) > 1) {
@@ -553,6 +565,7 @@ selall <- function(identifier, GdObject, ... ) {
 }
 
 plotMotifLogoStack.2 <- function(pfms, ...) {
+  pfms <- rev(pfms)
   n <- length(pfms)
   lapply(pfms, function(.ele) {
     if (class(.ele) != "pfm")
@@ -569,60 +582,151 @@ plotMotifLogoStack.2 <- function(pfms, ...) {
   par(opar)
 }
 
+#' @importFrom stringr str_replace
+DNAmotifAlignment.2snp <- function(pwms, result) {
+  from <- min(start(result))
+  to <- max(end(result))
+  for(pwm.i in seq_along(pwms)) {
+    pwm <- pwms[[pwm.i]]@mat
+    ## get pwm info from result data
+    pwm.name <- pwms[[pwm.i]]@name
+    pwm.name <- str_replace(pwm.name, pattern = "-:rc$", replace = "")
+    pwm.name <- str_replace(pwm.name, pattern = "-:r$", replace = "")
+    pwm.info <- attributes(result)$motifs
+    pwm.id <- mcols(pwm.info[pwm.name, ])$providerId
+    start.offset <- start(result[result$providerId == pwm.id, ]) - from
+    end.offset <- to - end(result[result$providerId == pwm.id, ])
+    if(start.offset > 0){
+      pwm <- cbind(matrix(c(0.25, 0.25, 0.25, 0.25), ncol = start.offset, nrow = 4), pwm)
+    }
+    if(end.offset > 0) {
+      pwm <- cbind(pwm, matrix(c(0.25, 0.25, 0.25, 0.25), ncol = end.offset, nrow = 4))
+    }
+    pwms[[pwm.i]]@mat <- pwm
+  }
+  return(pwms)
+}
+
+
+
+#' Plot a genomic region surrounding a genomic variant, and potentially disrupted
+#' motifs
+#'
+#' @param results The output of \code{motifbreakR}
+#' @param rsid Character; the identifier of the variant to be visualized
+#' @param reverseMotif Logical; if the motif is on the "-" strand show the
+#'   the motifs as reversed \code{FALSE} or reverse complement \code{TRUE}
+#' @param stackmotif Logical; show motifs vertically, aligned on the variant \code{TRUE}
+#'   or horizontally.
+#' @param effect Character; show motifs that are strongly effected \code{c("strg")},
+#'   weakly effected \code{c("weak")}, or both \code{c("strg", "weak")}
+#' @seealso See \code{\link{motifbreakR}} for the function that produces output to be
+#'   visualized here, also \code{\link{snps.from.rsid}} and \code{\link{snps.from.bed}}
+#'   for information about how to generate the input to \code{\link{motifbreakR}}
+#'   function.
+#' @details \code{plotMB} produces output showing the location of the SNP on the
+#'   chromosome, the surrounding sequence of the + strand, the footprint of any
+#'   motif that is disrupted by the SNP or SNV, and the DNA sequence motif(s)
+#' @return plots a figure representing the results of \code{motifbreakR} at the
+#'   location of a single SNP, returns \code{NULL}.
 #' @importFrom grDevices postscript
 #' @import motifStack
-#' @importFrom Gviz IdeogramTrack SequenceTrack GenomeAxisTrack HighlightTrack AnnotationTrack plotTracks
+#' @importFrom Gviz IdeogramTrack SequenceTrack GenomeAxisTrack HighlightTrack
+#'   AnnotationTrack plotTracks
 #' @importFrom BiocGenerics strand
 #' @export
-MBplot <- function(results, rsid, reverseMotif = TRUE, stackmotif = FALSE) {
+plotMB <- function(results, rsid, reverseMotif = TRUE, stackmotif = FALSE, effect = c("strg", "weak")) {
   g <- genome(results)[[1]]
   result <- results[names(results) %in% rsid]
+  if(length(result) <= 1) stackmotif <- FALSE
+  result <- result[order(start(result), end(result)), ]
+  result <- result[result$effect %in% effect]
   chromosome <- as.character(seqnames(result))[[1]]
   genome.package <- attributes(result)$genome.package
   genome.bsgenome <- eval(parse(text = genome.package))
-  from <- min(start(result)) - 3
-  to <- max(end(result)) + 4
+  distance.to.edge <- max(result[1, ]$snpPos - min(start(result)), max(end(result)) - result[1, ]$snpPos) + 4
+  from <- result[1, ]$snpPos - distance.to.edge + 1
+  to <- result[1, ]$snpPos + distance.to.edge
   temp.dir <- tempdir()
   pwmList <- attributes(result)$motifs
-  if(stackmotif) {
-    pwm.names <- result$providerId
+  pwm.names <- result$providerId
+  if(stackmotif && length(result) > 1) {
     pwms <- pwmList[mcols(pwmList)$providerId %in% pwm.names, ]
+    pwms <- pwms[order(match(mcols(pwms)$providerId, result$providerId))]
     if(reverseMotif) {
-      doRev <- as.character(strand(result)[result$providerId %in% mcols(pwms)$providerId]) == "-"
-      for(pwm.id in names(pwms[doRev])) {
-        pwm <- pwms[[pwm.id]]
-        pwm <- pwm[, rev(1:ncol(pwm))]
-        rownames(pwm) <- c("T", "G", "C", "A")
-        pwms[[pwm.id]] <- pwm
+      for(pwm.i in seq_along(pwms)) {
+        pwm.name <- names(pwms[pwm.i])
+        pwm.id <- mcols(pwms[pwm.name, ])$providerId
+        doRev <- as.logical(strand(result[result$providerId == pwm.id, ]) == "-")
+        if(doRev) {
+          pwm <- pwms[[pwm.i]]
+          pwm <- pwm[, rev(1:ncol(pwm))]
+          rownames(pwm) <- c("T", "G", "C", "A")
+          pwm <- pwm[c("A", "C", "G", "T"), ]
+          pwms[[pwm.i]] <- pwm
+          names(pwms)[pwm.i] <- paste0(names(pwms)[pwm.i], "-:rc")
+        }
       }
     } else {
-      doRev <- rep(FALSE, length(pwm.names))
+      for(pwm.i in seq_along(pwms)) {
+        pwm.name <- names(pwms[pwm.i])
+        pwm.id <- mcols(pwms[pwm.name, ])$providerId
+        doRev <- as.logical(strand(result[result$providerId == pwm.id, ]) == "-")
+        if(doRev) {
+          pwm <- pwms[[pwm.i]]
+          pwm <- pwm[, rev(1:ncol(pwm))]
+          pwms[[pwm.i]] <- pwm
+          names(pwms)[pwm.i] <- paste0(names(pwms)[pwm.i], "-:r")
+        }
+      }
     }
     pwms <- lapply(names(pwms), function(x, pwms=pwms) {new("pfm", mat=pwms[[x]],
                                                           name=x)}, pwms)
-    pwms.out <<- pwms
-    pwms <- DNAmotifAlignment(pwms)
-    message(length(pwm.names))
+    pwms <- DNAmotifAlignment.2snp(pwms, result)
     postscript(paste("~", "stack.ps", sep = "/"), width = 7, height =  2*length(pwm.names), paper="special", horizontal = FALSE)
-    plotMotifLogoStack.2(pwms, ncex=1.0, doRev)
+    plotMotifLogoStack.2(pwms, ncex=1.0)
     dev.off()
   } else {
-    for (pwm.id in names(pwmList)) {
-      postscript(paste(temp.dir, pwm.id, sep = "/"), width = 10, height = 3, horizontal = FALSE,
-                 fonts = c("sans", "Helvetica"))
-      pwm <- pwmList[[pwm.id]]
-      if (Reduce("|", result$providerId %in% mcols(pwmList[pwm.id])$providerId)) {
-        if (reverseMotif && (as.character(strand(result)[result$providerId %in% mcols(pwmList[pwm.id])$providerId]) == "-")) {
-          pwm <- pwm[, rev(1:ncol(pwm))]
-          rownames(pwm) <- c("T", "G", "C", "A")
+    pwmList <- pwmList[mcols(pwmList)$providerId %in% pwm.names, ]
+    pwmList <- pwmList[order(match(mcols(pwmList)$providerId, result$providerId))]
+    for(pwm.i in seq_along(pwmList)) {
+      pwm <- pwmList[pwm.i]
+      if (reverseMotif) {
+        pwm.id <- mcols(pwm)$providerId
+        doRev <- as.logical(strand(result[result$providerId == pwm.id, ]) == "-")
+        if(doRev) {
+          pwm.mat <- pwm[[1]]
+          pwm.mat <- pwm.mat[, rev(1:ncol(pwm.mat))]
+          rownames(pwm.mat) <- c("T", "G", "C", "A")
+          pwm.mat <- pwm.mat[c("A", "C", "G", "T"), ]
+          pwmList[[pwm.i]] <- pwm.mat
+          names(pwm)[1] <- paste0(names(pwm)[1], "-:rc")
+          names(pwmList)[pwm.i] <- names(pwm)[1]
+        }
+      } else {
+        pwm.id <- mcols(pwm)$providerId
+        doRev <- as.logical(strand(result[result$providerId == pwm.id, ]) == "-")
+        if(doRev) {
+          pwm.mat <- pwm[[1]]
+          pwm.mat <- pwm.mat[, rev(1:ncol(pwm.mat))]
+          pwmList[[pwm.i]] <- pwm.mat
+          names(pwm)[1] <- paste0(names(pwm)[1], "-:r")
+          names(pwmList)[pwm.i] <- names(pwm)[1]
         }
       }
-      p <- new("pfm", mat = pwm, name = mcols(pwmList[pwm.id])$providerId)
-      motifStack::plotMotifLogo(p)
+      p <- new("pfm", mat = pwm[[1]], name = names(pwm[1]))
+      message(paste(temp.dir, names(pwm[1]), sep="/"))
+      postscript(paste(temp.dir, names(pwm[1]), sep = "/"), width = 10, height = 3, horizontal = FALSE,
+                 fonts = c("sans", "Helvetica"))
+      motifStack::plotMotifLogo(p, motifName = p@name)
       dev.off()
     }
   }
-  ideoT <- IdeogramTrack(genome = g, chromosome = chromosome)
+  ideoT <- try(IdeogramTrack(genome = g, chromosome = chromosome), silent = TRUE)
+  if(inherits(ideoT, "try-error")) {
+    backup.band <- data.frame(chrom = chromosome, chromStart = 0, chromEnd = length(genome.bsgenome[[chromosome]]), name = chromosome, gieStain = "gneg")
+    ideoT <- IdeogramTrack(genome = g, chromosome = chromosome, bands = backup.band)
+  }
   seqT <- SequenceTrack(genome.bsgenome, fontcolor = colorset("DNA", "auto"))
   axisT <- GenomeAxisTrack(exponent = 0)
   hiT <- HighlightTrack(seqT, start = result$snpPos[[1]], end = result$snpPos[[1]],
@@ -634,25 +738,19 @@ MBplot <- function(results, rsid, reverseMotif = TRUE, stackmotif = FALSE) {
     detailfun <- addPWM
     selectingfun <- selall
   }
-  if (!reverseMotif) {
-    motifT <- AnnotationTrack(result, id = names(pwmList)[mcols(pwmList)$providerId %in% result$providerId],
-                              fun = detailfun, group = result$providerId, feature = paste0("snp@", result$motifPos),
-                              name = names(result)[[1]], selectFun = selectingfun)
-  } else {
-    motifT <- AnnotationTrack(result, id = names(pwmList)[mcols(pwmList)$providerId %in% result$providerId],
-                              fun = detailfun, group = result$providerId,
-                              feature = paste0("snp@",
-                                               ifelse(strand(result) == "-",
-                                                      str_length(str_trim(result$seqMatch)) - result$motifPos + 1,
-                                                      result$motifPos)),
-                              name = names(result)[[1]], selectFun = selectingfun)
-  }
-
+  motifT <- AnnotationTrack(result, id = names(pwmList)[mcols(pwmList)$providerId %in% result$providerId],
+                            fun = detailfun, group = result$providerId,
+                            feature = paste0("snp@",
+                                             ifelse(strand(result) == "-",
+                                                    str_length(str_trim(result$seqMatch)) - result$motifPos + 1,
+                                                    result$motifPos)),
+                            name = names(result)[[1]], selectFun = selectingfun)
   plotTracks(list(ideoT, motifT, hiT, axisT), from = from, to = to, showBandId = TRUE,
              add53 = TRUE, labelpos = "below", chromosome = chromosome, groupAnnotation = "group",
              collapse = FALSE, min.width = 1, featureAnnotation = "feature", cex.feature = 0.8,
-             details.size = ifelse(stackmotif, 0.9, 0.5), detailsConnector.pch = NA, detailsConnector.lty = 0,
+             details.size = ifelse(stackmotif, 0.9, 0.5), detailsConnector.pch = NA, detailsConnector.lty = ifelse(stackmotif, 0, 3),
              shape = "box", cex.group = 0.8, fonts = c("sans", "Helvetica"))
+  return(NULL)
 }
 
 
