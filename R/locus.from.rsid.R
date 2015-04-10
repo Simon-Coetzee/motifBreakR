@@ -167,7 +167,17 @@ snps.from.bed <- function(bedfile = NULL, dbSNP = NULL, search.genome = NULL) {
   ## get alt for unnamed snps
   snps.noid.alt <- snps.noid$name
   snps.noid.alt <- unlist(lapply(snps.noid.alt, strsplit, split = ":"), recursive = FALSE)
-  snps.noid.alt <- sapply(snps.noid.alt, "[", 3)
+  snps.noid.ref.user <- sapply(snps.noid.alt, "[", 3)
+  if(isTRUE(all.equal(snps.noid.ref, snps.noid.ref.user))) {
+    rm(snps.noid.ref.user)
+  } else {
+    warning(paste0("User selected reference allele differs from the sequence in ",
+            attributes(search.genome)$pkgname, " continuing with user specified",
+            " reference allels\n", "there are ", sum(snps.noid.ref != snps.noid.ref.user),
+            " differences"))
+    snps.noid.ref <- snps.noid.ref.user
+  }
+  snps.noid.alt <- sapply(snps.noid.alt, "[", 4)
   ## check if alt was given for unnamed snps
   alt.allele.is.valid <- (toupper(snps.noid.alt) %in% c("A", "T", "G", "C")) &
     (snps.noid.alt != snps.noid.ref)

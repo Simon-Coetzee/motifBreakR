@@ -16,8 +16,14 @@ BiocStyle::markdown()
 library(kfigr)
 ```
 ## Introduction
-This document offers an introduction and overview of `r Githubpkg("rstudio/rmarkdown")`, which allows the biologist to judge whether the sequence surrounding a polymorphism or mutation is a good match, and how much information is gained or lost in one allele of the polymorphism relative to another or mutation vs. wildtype. `r Rpackage(motifbreakR)` is flexible, giving a choice of algorithms for interrogation of genomes with motifs from public sources that users can choose from; these are 1) a weighted-sum, 2) log-probabilities, and 3) relative entropy. MotifbreakR can predict effects for novel or previously described variants in public databases, making it suitable for tasks beyond the scope of its original design. Lastly, it can be used to interrogate any genome curated within bioconductor.
- 
+This document offers an introduction and overview of `r Githubpkg("Simon-Coetzee/MotifBreakR")`, which allows the biologist to judge whether the sequence surrounding a polymorphism or mutation is a good match, and how much information is gained or lost in one allele of the polymorphism relative to another or mutation vs. wildtype. `r Githubpkg("Simon-Coetzee/MotifBreakR")` is flexible, giving a choice of algorithms for interrogation of genomes with motifs from public sources that users can choose from; these are 1) a weighted-sum, 2) log-probabilities, and 3) relative entropy. `r Githubpkg("Simon-Coetzee/MotifBreakR")` can predict effects for novel or previously described variants in public databases, making it suitable for tasks beyond the scope of its original design. Lastly, it can be used to interrogate any genome curated within bioconductor.
+
+MotifbreakR works with position probability matrices (PPM). PPM are derived as the fractional occurrence of nucleotides A,C,G, and T at each position of a position frequency matrix (PFM). PFM are simply the tally of each nucleotide at each position across a set of aligned sequences. With a PPM, one can generate probabilities based on the genome, or more practically, create any number of position specific scoring matrices (PSSM) based on the principle that the PPM contains information about the likelihood of observing a particular nucleotide at a particular position of a true transcription factor binding site.
+
+This guide includes a brief overview of the processing flow, followed by an example focusing more in depth on the practical aspect of using `r Githubpkg("Simon-Coetzee/MotifBreakR")`
+
+## Processing overview
+`r Githubpkg("Simon-Coetzee/MotifBreakR")` may be used to interrogate SNPs or SNVs for their effect on 
 
 ## Vignette Info
 
