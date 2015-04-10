@@ -91,7 +91,7 @@ shown to be TFs or to models exhibiting an irrelevant LOGO shape or a wrong
 consensus sequence. Quality F (failure) was assigned to TFs for which there
 was no reliable model identified."
 }
- \item{pubmedID}{23175603 see \code{Source} for mor details}
+ \item{pubmedID}{23175603 see \code{Source} for more details}
 }}
 \source{
 Kulakovskiy,I.V., Medvedeva,Y.A., Schaefer,U., Kasianov,A.S.,
