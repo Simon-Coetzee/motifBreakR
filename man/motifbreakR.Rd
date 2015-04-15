@@ -5,8 +5,9 @@
 \title{Predict The Disruptiveness Of Single Nucleotide Polymorphisms On
 Transcription Factor Binding Sites.}
 \usage{
-motifbreakR(snpList, pwmList, threshold, method = "default", bkg = NULL,
-  show.neutral = FALSE, verbose = FALSE, BPPARAM = bpparam())
+motifbreakR(snpList, pwmList, threshold, method = "default", bkg = c(A =
+  0.25, C = 0.25, G = 0.25, T = 0.25), show.neutral = FALSE,
+  verbose = FALSE, BPPARAM = bpparam())
 }
 \arguments{
 \item{snpList}{The output of \code{snps.from.rsid} or \code{snps.from.bed}}
@@ -29,7 +30,9 @@ used with method=\code{log} method=\code{IC}}
 
 \item{BPPARAM}{a BiocParallel object see \code{\link[BiocParallel]{register}}
 and see \code{getClass("BiocParallelParam")} for additional parameter
-classes}
+classes.  Try \code{BiocParallel::registered()} to see what's availible and
+for example \code{BiocParallel::bpparam("SerialParam")} would allow serial
+evaluation.}
 }
 \value{
 a GRanges object containing:

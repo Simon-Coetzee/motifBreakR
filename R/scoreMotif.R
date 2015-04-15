@@ -47,7 +47,7 @@ limitPwm <- function(pwm, limitFun, method = "default", bkg = NULL) {
     bkg <- bkg[c(1, 2, 2, 1)]
   }
   names(bkg) <- c("A", "C", "G", "T")
-  if (method == "log") {
+  if (method != "default") {
     pwm <- pwm/bkg
   }
   PWMlimit <- apply(pwm, 2, limitFun)
@@ -80,12 +80,7 @@ scoreMotif.a <- function(snp.seq, ppm, len, method = "default",
   snp.seq <- snp.seq[offset:(offset + len - 1)]
   ## diag code
   position.probs <- c(ppm[snp.seq, ])[1 + 0L:(len - 1L) * (len + 1)]
-  if (method == "default") {
-    return(position.probs)
-  } else {
-    position.probs <- position.probs/ag[snp.seq]
-    return(position.probs)
-  }
+  return(position.probs)
 }
 scoreMotif <- cmpfun(scoreMotif.a, options = list(optimize = 3))
 
@@ -97,7 +92,9 @@ wScore <- function(snp.seq, ppm, pwm.omega, offset, method = "default", bkg = NU
   } else {
     bkg <- bkg[c(1, 2, 2, 1)]
   }
-  names(bkg) <- c("A", "C", "G", "T")
+  if(method != "default") {
+    ppm <- ppm/bkg
+  }
   vscores <- scoreMotif(snp.seq, ppm, len, method = method, ag = bkg, offset = offset)
   if (method != "default") {
     vscores <- vscores + 1e-07
@@ -258,6 +255,10 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
     res.el$effect <- as.character(NA)
     pwm.sig <- rep(NA, length(res.el))
     for (pwm.i in seq_along(pwmList)) {
+      #if(names(res.el) == "rs10109680") && mcols(pwmList[pwm.i])$providerName == "BARHL2") {
+      #  browser();
+      #  stop()
+      #}
       ## REF
       pwm <- pwmList[[pwm.i]]
       len <- ncol(pwm)
@@ -413,7 +414,9 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #' @param verbose Logical; if running serially, show verbose messages
 #' @param BPPARAM a BiocParallel object see \code{\link[BiocParallel]{register}}
 #'   and see \code{getClass("BiocParallelParam")} for additional parameter
-#'   classes
+#'   classes.  Try \code{BiocParallel::registered()} to see what's availible and
+#'   for example \code{BiocParallel::bpparam("SerialParam")} would allow serial
+#'   evaluation.
 #' @seealso See \code{\link{snps.from.rsid}} and \code{\link{snps.from.bed}} for
 #'   information about how to generate the input to this function and \code{\link{MBplot}}
 #'   for information on how to visualize it's output
@@ -488,7 +491,8 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #' @importFrom BiocGenerics unlist sapply
 #' @importFrom stringr str_length str_trim
 #' @export
-motifbreakR <- function(snpList, pwmList, threshold, method = "default", bkg = NULL,
+motifbreakR <- function(snpList, pwmList, threshold, method = "default",
+                        bkg = c(A=0.25, C=0.25, G=0.25, T=0.25),
                         show.neutral = FALSE, verbose = FALSE, BPPARAM=bpparam()) {
   if(.Platform$OS.type == "windows" && inherits(BPPARAM, "MulticoreParam")) {
     warning(paste0("Serial evaluation under effect, to achive parallel evaluation under\n",
@@ -501,6 +505,7 @@ motifbreakR <- function(snpList, pwmList, threshold, method = "default", bkg = N
   }
   genome.package <- attributes(snpList)$genome.package
   snpList <- sapply(suppressWarnings(split(snpList, 1:cores)), list)
+  bkg <- bkg[c('A', 'C', 'G', 'T')]
   x <- bplapply(snpList, scoreSnpList, pwmList = pwmList, threshold = threshold,
                 method = method, bkg = bkg, show.neutral = show.neutral,
                 verbose = ifelse(cores == 1, verbose, FALSE), BPPARAM=BPPARAM)
