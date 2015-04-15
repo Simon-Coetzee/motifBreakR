@@ -14,22 +14,22 @@
 #' model. HOCOMOCO contains 426 systematically curated TFBS models for 401 human
 #' TFs, where 172 models are based on more than one data source."
 #'
-#'@format \code{\link[MotifDb]{MotifDb}} object of length 426 to access metadata
+#'@format \code{\link[MotifDb]{MotifDb}} object of length 426; to access metadata
 #' use mcols(hocomoco)
 #'\describe{
 #'  \item{providerName}{Name provided by HOCOMOCO}
 #'  \item{providerId}{ID provided by HOCOMOCO including experiment type}
-#'  \item{dataSource}{HOCOMOCO}
+#'  \item{dataSource}{\code{"HOCOMOCO"}}
 #'  \item{geneSymbol}{Gene symbol for the transcription factor}
 #'  \item{geneId}{Entrez gene id for the transcription factor}
-#'  \item{geneIdType}{ENTREZ}
+#'  \item{geneIdType}{\code{"ENTREZ"}}
 #'  \item{proteinId}{UNIPROT id for the transcription factor}
-#'  \item{proteinIdType}{UNIPROT}
-#'  \item{organism}{Hsapiens}
+#'  \item{proteinIdType}{\code{"UNIPROT"}}
+#'  \item{organism}{\code{"Hsapiens"}}
 #'  \item{sequenceCount}{Number of sequences evaluated for producing the PWM}
 #'  \item{bindingSequence}{Consensus sequence for the motif}
-#'  \item{bindingDomain}{NA incomplete}
-#'  \item{tfFamily}{NA incomplete}
+#'  \item{bindingDomain}{\code{NA} incomplete}
+#'  \item{tfFamily}{\code{NA} incomplete}
 #'  \item{experimentType}{from \url{http://autosome.ru/HOCOMOCO/Details.php#200}
 #'    quoted here:
 #'
@@ -100,14 +100,68 @@
 #' consensus sequence. Quality F (failure) was assigned to TFs for which there
 #' was no reliable model identified."
 #'}
-#'  \item{pubmedID}{23175603 see \code{Source} for more details}
+#'  \item{pubmedID}{\code{"23175603"} see \code{Source} for more details}
 #'}
 #'
 #'
 #' @source Kulakovskiy,I.V., Medvedeva,Y.A., Schaefer,U., Kasianov,A.S.,
 #'   Vorontsov,I.E., Bajic,V.B. and Makeev,V.J. (2013) HOCOMOCO: a comprehensive
-#'   collection of human transcription factor binding sites models. Nucleic Acids
-#'   Research, 41, D195–D202.
+#'   collection of human transcription factor binding sites models. Nucleic
+#'   Acids Research, \bold{41}, D195--D202.
 "hocomoco"
+
+#' MotifDb object containing motif information from the known and discovered
+#' motifs for the ENCODE TF ChIP-seq datasets.
+#'
+#' From the abstract: "Recent advances in technology have led to a dramatic
+#' increase in the number of available transcription factor ChIP-seq and
+#' ChIP-chip data sets. Understanding the motif content of these data sets is an
+#' important step in understanding the underlying mechanisms of regulation. Here
+#' we provide a systematic motif analysis for 427 human ChIP-seq data sets using
+#' motifs curated from the literature and also discovered de novo using five
+#' established motif discovery tools. We use a systematic pipeline for
+#' calculating motif enrichment in each data set, providing a principled way for
+#' choosing between motif variants found in the literature and for flagging
+#' potentially problematic data sets. Our analysis confirms the known
+#' specificity of 41 of the 56 analyzed factor groups and reveals motifs of
+#' potential cofactors. We also use cell type-specific binding to find factors
+#' active in specific conditions. The resource we provide is accessible both for
+#' browsing a small number of factors and for performing large-scale systematic
+#' analyses. We provide motif matrices, instances and enrichments in each of the
+#' ENCODE data sets. The motifs discovered here have been used in parallel
+#' studies to validate the specificity of antibodies, understand cooperativity
+#' between data sets and measure the variation of motif binding across
+#' individuals and species."
+#'
+#'@format \code{\link[MotifDb]{MotifDb}} object of length 2064; to access metadata
+#' use mcols(encodemotif)
+#'\describe{
+#'  \item{providerName}{Name provided by ENCODE}
+#'  \item{providerId}{Same as providerName}
+#'  \item{dataSource}{\code{"ENCODE-motif"}}
+#'  \item{geneSymbol}{Gene symbol for the transcription factor}
+#'  \item{geneId}{Entrez gene id for the transcription factor}
+#'  \item{geneIdType}{\code{"ENTREZ"}}
+#'  \item{proteinId}{UNIPROT id for the transcription factor}
+#'  \item{proteinIdType}{\code{"UNIPROT"}}
+#'  \item{organism}{\code{"Hsapiens"}}
+#'  \item{sequenceCount}{\code{NA} not available}
+#'  \item{bindingSequence}{Consensus sequence for the motif}
+#'  \item{bindingDomain}{\code{NA} incomplete}
+#'  \item{tfFamily}{\code{NA} incomplete}
+#'  \item{experimentType}{occurs in two forms:
+#'
+#'  For motifs that were discovered in this study, the format is \code{cellType_source-LabMetadata:MotifFinder#Location} for example \code{H1-hESC_encode-Myers_seq_hsa_v041610.2_r1:MEME#2#Intergenic}.
+#'
+#'  For motifs that were "known" the format tends to be \code{TF_source_sourceId} for example \code{AP1_jaspar_MA0099.2}.
+#'}
+#'  \item{pubmedID}{\code{"24335146"} see \code{Source} for more details}
+#'}
+#'
+#'
+#' @source Pouya Kheradpour and Manolis Kellis (2013 December 13) Systematic
+#'   discovery and characterization of regulatory motifs in ENCODE TF binding
+#'   experiments. Nucleic Acids Research, doi:10.1093/nar/gkt1249
+"encodemotif"
 
 
