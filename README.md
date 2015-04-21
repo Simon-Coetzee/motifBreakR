@@ -27,7 +27,7 @@ genome curated within bioconductor.
 source("http://bioconductor.org/biocLite.R")
 biocLite(c("BiocParallel", "motifStack", "BSgenome", "BiocGenerics",
            "Biostrings", "GenomeInfoDb", "GenomicRanges", "Gviz", "S4Vectors",
-           "rtracklayer", "IRanges", "BSgenome.Hsapiens.UCSC.hg19",
+           "rtracklayer", "IRanges", "MotifDb", "BSgenome.Hsapiens.UCSC.hg19",
            "SNPlocs.Hsapiens.dbSNP.20120608"))
 # Install motifbreakR from github
 install.packages("devtools")

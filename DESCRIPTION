@@ -17,7 +17,7 @@ Description: We introduce motifbreakR, which allows the biologist to judge in
     databases, making it suitable for tasks beyond the scope of its original
     design. Lastly, it can be used to interrogate any genome curated within
     bioconductor (currently there are 22).
-Depends: R (>= 3.1.2), grid, MotifDb
+Depends: R (>= 3.1), grid, MotifDb
 Imports: BiocParallel, compiler, methods, motifStack, BSgenome, BiocGenerics,
   Biostrings, GenomeInfoDb, GenomicRanges, Gviz, S4Vectors, grDevices, grImport,
   rtracklayer, stringr, IRanges
