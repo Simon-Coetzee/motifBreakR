@@ -195,7 +195,7 @@ snps.from.bed <- function(bedfile = NULL, dbSNP = NULL, search.genome = NULL) {
     equal.to.ref <- snps.noid.alt == snps.noid.ref
     if (sum(equal.to.ref) > 0) {
       warning(paste0(sum(equal.to.ref), " user variants are the same as the reference genome ",
-                     search.genome@provider_version, " for ", search.genome@species, "\n These variants were excluded"))
+                     search.genome@provider_version, " for ", search.genome@common_name, "\n These variants were excluded"))
     }
     snps.noid <- snps.noid[alt.allele.is.valid]
     snps.noid.ref <- snps.noid.ref[alt.allele.is.valid]
@@ -203,10 +203,14 @@ snps.from.bed <- function(bedfile = NULL, dbSNP = NULL, search.genome = NULL) {
   }
   ## if alt was given calculate ambiguous base
   snps.noid.ambi <- strSort(paste0(snps.noid.alt, snps.noid.ref))
-  snps.noid.ambi <- names(IUPAC_CODE_MAP[sapply(as.list(sapply(snps.noid.ambi,
-                                                               grep, IUPAC_CODE_MAP)), "[", 1)])
+  IUPAC_code_revmap <- names(IUPAC_CODE_MAP)
+  names(IUPAC_code_revmap) <- IUPAC_CODE_MAP
+  snps.noid.ambi <- IUPAC_code_revmap[snps.noid.ambi]
+  names(snps.noid.ambi) <- NULL
+  #snps.noid.ambi <- names(IUPAC_CODE_MAP[sapply(as.list(sapply(snps.noid.ambi,
+  #                                                             grep, IUPAC_CODE_MAP)), "[", 1)])
   ## are unnamed snps found in dbsnp ?
-  if (species(search.genome) == "Human" && class(dbSNP) == "SNPlocs") {
+  if (commonName(search.genome) == "Human" && class(dbSNP) == "SNPlocs") {
     snps.noid.chrom <- as.character(seqnames(snps.noid))
     snps.noid.chrom <- unique(snps.noid.chrom)
     snps.noid.chrom <- gsub("chr", "ch", snps.noid.chrom)
