@@ -175,7 +175,7 @@ snps.from.bed <- function(bedfile = NULL, dbSNP = NULL, search.genome = NULL) {
             attributes(search.genome)$pkgname, " continuing with user specified",
             " reference allels\n", "there are ", sum(snps.noid.ref != snps.noid.ref.user),
             " differences"))
-    snps.noid.ref <- snps.noid.ref.user
+    snps.noid.ref
   }
   snps.noid.alt <- sapply(snps.noid.alt, "[", 4)
   ## check if alt was given for unnamed snps

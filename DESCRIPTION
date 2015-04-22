@@ -22,7 +22,7 @@ Imports: BiocParallel, compiler, methods, motifStack, BSgenome, BiocGenerics,
   Biostrings, GenomeInfoDb, GenomicRanges, Gviz, S4Vectors, grDevices, grImport,
   rtracklayer, stringr, IRanges
 Suggests: BSgenome.Hsapiens.UCSC.hg19, SNPlocs.Hsapiens.dbSNP.20120608,
-    knitr, kfigr
+  knitr, BiocStyle, rmarkdown
 License: GPL-3
 LazyData: true
 VignetteBuilder: knitr
