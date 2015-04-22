@@ -172,10 +172,9 @@ snps.from.bed <- function(bedfile = NULL, dbSNP = NULL, search.genome = NULL) {
     rm(snps.noid.ref.user)
   } else {
     warning(paste0("User selected reference allele differs from the sequence in ",
-            attributes(search.genome)$pkgname, " continuing with user specified",
+            attributes(search.genome)$pkgname, " continuing with genome specified",
             " reference allels\n", "there are ", sum(snps.noid.ref != snps.noid.ref.user),
             " differences"))
-    snps.noid.ref
   }
   snps.noid.alt <- sapply(snps.noid.alt, "[", 4)
   ## check if alt was given for unnamed snps
