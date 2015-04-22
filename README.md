@@ -31,7 +31,7 @@ biocLite(c("BiocParallel", "motifStack", "BSgenome", "BiocGenerics",
            "SNPlocs.Hsapiens.dbSNP.20120608"))
 # Install motifbreakR from github
 install.packages("devtools")
-devtools::install_github("Simon-Coetzee/MotifBreakR")
+devtools::install_github("Simon-Coetzee/motifBreakR")
 ```
 
 Thus far the vignette is incomplete but see the help for `motifbreakR` and 
