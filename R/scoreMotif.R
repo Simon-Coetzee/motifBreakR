@@ -28,13 +28,7 @@ defaultOmega <- function(ppm) {
 ## information content, see Stormo 2000 PMID: 10812473 eq 2
 defaultIC <- function(ppm, bkg) {
   ## for ppm with i columns containing letters a,c,g,t:
-  f_b <- ppm
-  i <- ncol(f_b)
-  p_b <- matrix(rep(bkg, i), nrow = 4)
-  row.names(p_b) <- row.names(f_b)
-  IC_i <- f_b * t(apply(f_b/p_b + 1e-07, 1, log2))
-  IC <- apply(IC_i, 2, sum)
-  IC
+  IC <- colSums(ppm * log2(ppm/bkg + 1e-07))
 }
 
 ## maxPwm will return the max function of pwm given omega constraints like the
@@ -60,8 +54,7 @@ limitPwm <- function(pwm, limitFun, method = "default", bkg = NULL) {
   } else if (method == "log") {
     vscores <- log(PWMlimit)
   } else if (method == "IC") {
-    ic_pwm <- defaultIC(pwm, bkg)
-    vscores <- PWMlimit * ic_pwm
+    vscores <- PWMlimit * defaultIC(pwm, bkg)
   }
   sum(vscores)
 }
@@ -106,8 +99,7 @@ wScore <- function(snp.seq, ppm, pwm.omega, offset, method = "default", bkg = NU
     returnScore <- sum(log(vscores))
   }
   if (method == "IC") {
-    ic_ppm <- defaultIC(ppm, bkg)
-    returnScore <- sum(vscores * ic_ppm)
+    returnScore <- sum(vscores * defaultIC(ppm, bkg))
   }
   return(returnScore)
 }
