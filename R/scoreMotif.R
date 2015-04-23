@@ -363,13 +363,14 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
   strand.opt <- c("+", "-")
   strand <- (-hit[["strand"]] + 3) / 2
   strand(result) <- strand.opt[strand]
-  result$snpPos <- start(result)
-  result$motifPos <- snp.pos
+  mresult <- mcols(result)
+  mresult[["snpPos"]] <- start(result)
+  mresult[["motifPos"]] <- snp.pos
   if (strand == 2) {
     matchs <- snp.seq[(k - hit[["window"]] + 1):(k - hit[["window"]] + len)]
     matchs[-hit[["window"]]] <- tolower(matchs[-hit[["window"]]])
     matchs <- paste(matchs, collapse = "")
-    result$seqMatch <- str_pad(matchs, width = k + hit[["window"]] - 1, side = "right")
+    mresult[["seqMatch"]] <- str_pad(matchs, width = k + hit[["window"]] - 1, side = "right")
     ## pwm pos instead of snp pos
     start(result) <- start(result) - hit[["window"]] + 1
     end(result) <- end(result) - hit[["window"]] + len
@@ -377,15 +378,16 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
     matchs <- snp.seq[(k - len + hit[["window"]]):(k + hit[["window"]] - 1)]
     matchs[-snp.pos] <- tolower(matchs[-snp.pos])
     matchs <- paste(matchs, collapse = "")
-    result$seqMatch <- str_pad(matchs, width = k + snp.pos - 1, side = "right")
+    mresult[["seqMatch"]] <- str_pad(matchs, width = k + snp.pos - 1, side = "right")
     start(result) <- start(result) - snp.pos + 1
     end(result) <- end(result) - snp.pos + len
   }
-  result$pctRef <- ref.windows[strand, hit[["window"]]]
-  result$pctAlt <- alt.windows[strand, hit[["window"]]]
-  result$alleleRef <- allelR
-  result$alleleAlt <- allelA
-  result$effect <- effect
+  mresult[["pctRef"]] <- ref.windows[strand, hit[["window"]]]
+  mresult[["pctAlt"]] <- alt.windows[strand, hit[["window"]]]
+  mresult[["alleleRef"]] <- allelR
+  mresult[["alleleAlt"]] <- allelA
+  mresult[["effect"]] <- effect
+  mcols(result) <- mresult
   return(result)
 }
 
