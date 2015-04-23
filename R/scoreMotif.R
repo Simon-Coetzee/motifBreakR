@@ -248,10 +248,6 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
     res.el$effect <- as.character(NA)
     pwm.sig <- rep(NA, length(res.el))
     for (pwm.i in seq_along(pwmList)) {
-      #if(names(res.el) == "rs10109680") && mcols(pwmList[pwm.i])$providerName == "BARHL2") {
-      #  browser();
-      #  stop()
-      #}
       ## REF
       pwm <- pwmList[[pwm.i]]
       len <- ncol(pwm)
