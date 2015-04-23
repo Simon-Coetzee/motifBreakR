@@ -277,17 +277,29 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
           effect <- snpEff(allelR, allelA)
           if (effect == "neut") {
             if (show.neutral) {
-              res.el[pwm.i] <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
-                                             hit, ref.windows, alt.windows, allelR, allelA, effect, len,
-                                             k, pwm)
+              res.el.tmp <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
+                                          hit, ref.windows, alt.windows, allelR, allelA, effect, len,
+                                          k, pwm)
+              mcols(res.el)[pwm.i, ] <- mcols(res.el.tmp)
+              ranges(res.el)[pwm.i] <- ranges(res.el.tmp)
+              strand(res.el)[pwm.i] <- strand(res.el.tmp)
+              #res.el[pwm.i] <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
+              #                               hit, ref.windows, alt.windows, allelR, allelA, effect, len,
+              #                               k, pwm)
               pwm.sig[[pwm.i]] <- TRUE
             } else {
               pwm.sig[[pwm.i]] <- FALSE
             }
           } else {
-            res.el[pwm.i] <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
-                                           hit, ref.windows, alt.windows, allelR, allelA, effect, len,
-                                           k, pwm)
+            res.el.tmp <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
+                                        hit, ref.windows, alt.windows, allelR, allelA, effect, len,
+                                        k, pwm)
+            mcols(res.el)[pwm.i, ] <- mcols(res.el.tmp)
+            ranges(res.el)[pwm.i] <- ranges(res.el.tmp)
+            strand(res.el)[pwm.i] <- strand(res.el.tmp)
+            #res.el[pwm.i] <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
+            #                               hit, ref.windows, alt.windows, allelR, allelA, effect, len,
+            #                               k, pwm)
             pwm.sig[[pwm.i]] <- TRUE
           }
         }
@@ -305,17 +317,29 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
           effect <- snpEff(allelR, allelA)
           if (effect == "neut") {
             if (show.neutral) {
-              res.el[pwm.i] <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
-                                             hit, ref.windows, alt.windows, allelR, allelA, effect, len,
-                                             k, pwm)
+              res.el.tmp <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
+                                          hit, ref.windows, alt.windows, allelR, allelA, effect, len,
+                                          k, pwm)
+              mcols(res.el)[pwm.i, ] <- mcols(res.el.tmp)
+              ranges(res.el)[pwm.i] <- ranges(res.el.tmp)
+              strand(res.el)[pwm.i] <- strand(res.el.tmp)
+              #res.el[pwm.i] <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
+              #                               hit, ref.windows, alt.windows, allelR, allelA, effect, len,
+              #                               k, pwm)
               pwm.sig[[pwm.i]] <- TRUE
             } else {
               pwm.sig[[pwm.i]] <- FALSE
             }
           } else {
-            res.el[pwm.i] <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
-                                           hit, ref.windows, alt.windows, allelR, allelA, effect, len,
-                                           k, pwm)
+            res.el.tmp <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
+                                        hit, ref.windows, alt.windows, allelR, allelA, effect, len,
+                                        k, pwm)
+            mcols(res.el)[pwm.i, ] <- mcols(res.el.tmp)
+            ranges(res.el)[pwm.i] <- ranges(res.el.tmp)
+            strand(res.el)[pwm.i] <- strand(res.el.tmp)
+            #res.el[pwm.i] <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
+            #                               hit, ref.windows, alt.windows, allelR, allelA, effect, len,
+            #                               k, pwm)
             pwm.sig[[pwm.i]] <- TRUE
           }
         }
