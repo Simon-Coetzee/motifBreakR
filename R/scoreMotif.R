@@ -29,6 +29,7 @@ defaultOmega <- function(ppm) {
 defaultIC <- function(ppm, bkg) {
   ## for ppm with i columns containing letters a,c,g,t:
   IC <- colSums(ppm * log2(ppm/bkg + 1e-07))
+  return(IC)
 }
 
 ## maxPwm will return the max function of pwm given omega constraints like the
