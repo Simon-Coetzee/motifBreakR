@@ -176,7 +176,7 @@ snpEff <- function(allelR, allelA) {
 #' @importFrom BiocGenerics width
 #' @importFrom IRanges reverse
 scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
-                         threshold = 0.8, show.neutral = FALSE, verbose = FALSE) {
+                         threshold = 0.9, show.neutral = FALSE, verbose = FALSE) {
   if (!(Reduce("&", width(fsnplist$REF) == 1)) || !(Reduce("&", width(fsnplist$ALT) == 1))) {
     drop.snp.i <- !(width(fsnplist$REF) == 1) & (width(fsnplist$ALT) == 1)
     drop.snp <- names(fsnplist[!drop.snp.i])
