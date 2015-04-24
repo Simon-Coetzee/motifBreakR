@@ -246,6 +246,7 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
     res.el$alleleRef <- as.numeric(NA)
     res.el$alleleAlt <- as.numeric(NA)
     res.el$effect <- as.character(NA)
+    res.el.e <- list2env(as.list(split(res.el, 1:length(res.el))))
     pwm.sig <- rep(NA, length(res.el))
     for (pwm.i in seq_along(pwmList)) {
       ## REF
@@ -277,12 +278,15 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
           effect <- snpEff(allelR, allelA)
           if (effect == "neut") {
             if (show.neutral) {
-              res.el.tmp <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
-                                          hit, ref.windows, alt.windows, allelR, allelA, effect, len,
-                                          k, pwm)
-              mcols(res.el)[pwm.i, ] <- mcols(res.el.tmp)
-              ranges(res.el)[pwm.i] <- ranges(res.el.tmp)
-              strand(res.el)[pwm.i] <- strand(res.el.tmp)
+              assign(paste(pwm.i), updateResults(get(paste(pwm.i), envir = res.el.e), snp.ref, snp.pos,
+                                                 hit, ref.windows, alt.windows, allelR, allelA, effect, len,
+                                                 k, pwm), envir = res.el.e)
+              #res.el.tmp <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
+              #                            hit, ref.windows, alt.windows, allelR, allelA, effect, len,
+              #                            k, pwm)
+              #mcols(res.el)[pwm.i, ] <- mcols(res.el.tmp)
+              #ranges(res.el)[pwm.i] <- ranges(res.el.tmp)
+              #strand(res.el)[pwm.i] <- strand(res.el.tmp)
               #res.el[pwm.i] <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
               #                               hit, ref.windows, alt.windows, allelR, allelA, effect, len,
               #                               k, pwm)
@@ -291,12 +295,15 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
               pwm.sig[[pwm.i]] <- FALSE
             }
           } else {
-            res.el.tmp <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
-                                        hit, ref.windows, alt.windows, allelR, allelA, effect, len,
-                                        k, pwm)
-            mcols(res.el)[pwm.i, ] <- mcols(res.el.tmp)
-            ranges(res.el)[pwm.i] <- ranges(res.el.tmp)
-            strand(res.el)[pwm.i] <- strand(res.el.tmp)
+            assign(paste(pwm.i), updateResults(get(paste(pwm.i), envir = res.el.e), snp.ref, snp.pos,
+                                               hit, ref.windows, alt.windows, allelR, allelA, effect, len,
+                                               k, pwm), envir = res.el.e)
+            #             res.el.tmp <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
+            #                                         hit, ref.windows, alt.windows, allelR, allelA, effect, len,
+            #                                         k, pwm)
+            #             mcols(res.el)[pwm.i, ] <- mcols(res.el.tmp)
+            #             ranges(res.el)[pwm.i] <- ranges(res.el.tmp)
+            #             strand(res.el)[pwm.i] <- strand(res.el.tmp)
             #res.el[pwm.i] <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
             #                               hit, ref.windows, alt.windows, allelR, allelA, effect, len,
             #                               k, pwm)
@@ -317,12 +324,15 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
           effect <- snpEff(allelR, allelA)
           if (effect == "neut") {
             if (show.neutral) {
-              res.el.tmp <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
-                                          hit, ref.windows, alt.windows, allelR, allelA, effect, len,
-                                          k, pwm)
-              mcols(res.el)[pwm.i, ] <- mcols(res.el.tmp)
-              ranges(res.el)[pwm.i] <- ranges(res.el.tmp)
-              strand(res.el)[pwm.i] <- strand(res.el.tmp)
+              assign(paste(pwm.i), updateResults(get(paste(pwm.i), envir = res.el.e), snp.ref, snp.pos,
+                                                 hit, ref.windows, alt.windows, allelR, allelA, effect, len,
+                                                 k, pwm), envir = res.el.e)
+              #               res.el.tmp <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
+              #                                           hit, ref.windows, alt.windows, allelR, allelA, effect, len,
+              #                                           k, pwm)
+              #               mcols(res.el)[pwm.i, ] <- mcols(res.el.tmp)
+              #               ranges(res.el)[pwm.i] <- ranges(res.el.tmp)
+              #               strand(res.el)[pwm.i] <- strand(res.el.tmp)
               #res.el[pwm.i] <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
               #                               hit, ref.windows, alt.windows, allelR, allelA, effect, len,
               #                               k, pwm)
@@ -331,12 +341,15 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
               pwm.sig[[pwm.i]] <- FALSE
             }
           } else {
-            res.el.tmp <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
-                                        hit, ref.windows, alt.windows, allelR, allelA, effect, len,
-                                        k, pwm)
-            mcols(res.el)[pwm.i, ] <- mcols(res.el.tmp)
-            ranges(res.el)[pwm.i] <- ranges(res.el.tmp)
-            strand(res.el)[pwm.i] <- strand(res.el.tmp)
+            assign(paste(pwm.i), updateResults(get(paste(pwm.i), envir = res.el.e), snp.ref, snp.pos,
+                                               hit, ref.windows, alt.windows, allelR, allelA, effect, len,
+                                               k, pwm), envir = res.el.e)
+            #             res.el.tmp <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
+            #                                         hit, ref.windows, alt.windows, allelR, allelA, effect, len,
+            #                                         k, pwm)
+            #             mcols(res.el)[pwm.i, ] <- mcols(res.el.tmp)
+            #             ranges(res.el)[pwm.i] <- ranges(res.el.tmp)
+            #             strand(res.el)[pwm.i] <- strand(res.el.tmp)
             #res.el[pwm.i] <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
             #                               hit, ref.windows, alt.windows, allelR, allelA, effect, len,
             #                               k, pwm)
@@ -349,6 +362,7 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
       message(names(res.el[1]))
       message(paste0("number of broken motifs = ", sum(pwm.sig)))
     }
+    res.el <- unlist(GRangesList(as.list.environment(res.el.e)), use.names = F)
     res.el <- res.el[pwm.sig]
     if (length(res.el) > 0) {
       resultSet[[snp.map.i]] <- res.el
