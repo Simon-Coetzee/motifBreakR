@@ -101,7 +101,7 @@ where \eqn{p_{s}} is the scoring vector derived from sequence \eqn{s} and matrix
 \eqn{M}, and \eqn{w_{M}} is a weight vector derived from \eqn{M}. First, we
 compute the scoring vector of position scores \eqn{p}:
 
-\emph{\strong{Equation 3}}
+\strong{Equation 3}
 
 \deqn{p( s ) = ( M_{s_{i},i} ) \textrm{\ \ \ where\ \ \ } \frac{i = 1,\ldots n}{s_{i} \in \{ A,C,G,T \}}}
 
