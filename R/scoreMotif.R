@@ -226,7 +226,7 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
   pwmList.min <- lapply(pwmList, limitPwm, limitFun = min, method = method, bkg = bkg)
   pwmList.bot <- mapply("-", pwmList.max, pwmList.min)
   strand.opt <- c("+", "-")
-  set.sig <- rep(NA, length(resultSet))
+  #set.sig <- rep(NA, length(resultSet))
   res.el.e <- new.env()
   for (snp.map.i in seq_along(snp.sequence.alt)) {
     snp.ref <- snp.sequence.ref[[snp.map.i]]
@@ -248,7 +248,7 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
     res.el$alleleAlt <- as.numeric(NA)
     res.el$effect <- as.character(NA)
     #res.el.e <- list2env(as.list(split(res.el, 1:length(res.el))), parent = emptyenv())
-    pwm.sig <- rep(NA, length(res.el))
+    #pwm.sig <- rep(NA, length(res.el))
     for (pwm.i in seq_along(pwmList)) {
       ## REF
       pwm <- pwmList[[pwm.i]]
@@ -263,7 +263,7 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
                                        len + 1, to = k)
       hit.alt <- maxThresholdWindows(alt.windows, threshold = threshold)
       if (hit.ref[["strand"]] == 0L && hit.alt[["strand"]] == 0L) {
-        pwm.sig[[pwm.i]] <- FALSE
+       # pwm.sig[[pwm.i]] <- FALSE
       } else {
         if (hit.ref[["strand"]] != 0L) {
           hit <- hit.ref
@@ -292,9 +292,9 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
               #res.el[pwm.i] <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
               #                               hit, ref.windows, alt.windows, allelR, allelA, effect, len,
               #                               k, pwm)
-              pwm.sig[[pwm.i]] <- TRUE
+             # pwm.sig[[pwm.i]] <- TRUE
             } else {
-              pwm.sig[[pwm.i]] <- FALSE
+             # pwm.sig[[pwm.i]] <- FALSE
             }
           } else {
             res.el.e[[uniquename]] <- updateResults(result, snp.ref, snp.pos,
@@ -309,7 +309,7 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
             #res.el[pwm.i] <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
             #                               hit, ref.windows, alt.windows, allelR, allelA, effect, len,
             #                               k, pwm)
-            pwm.sig[[pwm.i]] <- TRUE
+            #pwm.sig[[pwm.i]] <- TRUE
           }
         }
         if (hit.alt[["strand"]] != 0L && hit.alt[["window"]] != hit.ref[["window"]]) {
@@ -339,9 +339,9 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
               #res.el[pwm.i] <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
               #                               hit, ref.windows, alt.windows, allelR, allelA, effect, len,
               #                               k, pwm)
-              pwm.sig[[pwm.i]] <- TRUE
+              #pwm.sig[[pwm.i]] <- TRUE
             } else {
-              pwm.sig[[pwm.i]] <- FALSE
+              #pwm.sig[[pwm.i]] <- FALSE
             }
           } else {
             res.el.e[[uniquename]] <- updateResults(result, snp.ref, snp.pos,
@@ -356,7 +356,7 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
             #res.el[pwm.i] <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
             #                               hit, ref.windows, alt.windows, allelR, allelA, effect, len,
             #                               k, pwm)
-            pwm.sig[[pwm.i]] <- TRUE
+            #pwm.sig[[pwm.i]] <- TRUE
           }
         }
       }
