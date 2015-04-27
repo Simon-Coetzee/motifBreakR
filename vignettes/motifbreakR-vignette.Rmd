@@ -11,17 +11,14 @@ output:
     toc: yes
     fig_width: 4.5
     fig_height: 4
-  BiocStyle::pdf_document:
-    fig_caption: yes
-    toc: yes
 vignette: |
-  %\VignetteIndexEntry{motifbreakR: an Introduction} %\VignetteEngine{knitr::rmarkdown} \usepackage[utf8]{inputenc} \usepackage{graphicx}
+  %\VignetteIndexEntry{motifbreakR: an Introduction} %\VignetteEngine{knitr::rmarkdown}
 ---
 
 <!-- see http://rmarkdown.rstudio.com/ for details in formatting -->
 ```{r style, echo = FALSE, results='hide', message=FALSE, warning=FALSE}
 BiocStyle::markdown()
-#BiocStyle::latex()
+options(width=100)
 ```
 ### Introduction
 This document offers an introduction and overview of `r Githubpkg("Simon-Coetzee/motifBreakR")`, which allows the biologist to judge whether the sequence surrounding a polymorphism or mutation is a good match to known transcription factor binding sites, and how much information is gained or lost in one allele of the polymorphism relative to another or mutation vs. wildtype. `r Githubpkg("Simon-Coetzee/motifBreakR")` is flexible, giving a choice of algorithms for interrogation of genomes with motifs from public sources that users can choose from; these are 1) a weighted-sum, 2) log-probabilities, and 3) relative entropy. `r Githubpkg("Simon-Coetzee/motifBreakR")` can predict effects for novel or previously described variants in public databases, making it suitable for tasks beyond the scope of its original design. Lastly, it can be used to interrogate any genome curated within Bioconductor.
@@ -41,26 +38,62 @@ This guide includes a brief overview of the [processing flow](#flow), an example
   <img width="50%" src="motifbreakr-manuscript.png" />
   <p class="caption"><em>motifbreakR workflow: How inputs (trapezoids) are generated from R functions (rectangles). Diamonds represent decisions of the user.</em></p>
 </div>
-This straightforward process allows the interrogation of SNPs and SNVs in the context of the different species represented by `r Biocpkg("BSgenome")` packages (at least 22 different species) and allows the use of the full `r Biocpkg("MotifDb")` dataset that includes over 4200 motifs across 8 studies and 22 organisms that we have supplemented with over 2800 additional motifs across four additional studies in Humans see `data(encodemotif)`, `data(factorbook)`, `data(hocomoco)` and `data(homer)` for the additonal studies that we have included.
+This straightforward process allows the interrogation of SNPs and SNVs in the context of the different species represented by `r Biocpkg("BSgenome")` packages (at least 22 different species) and allows the use of the full `r Biocpkg("MotifDb")` dataset that includes over 4200 motifs across 8 studies and 22 organisms that we have supplemented with over 2800 additional motifs across four additional studies in Humans see `data(encodemotif)`[^encodemotif], `data(factorbook)`[^factorbook], `data(hocomoco)`[^hocomoco] and `data(homer)`[^homer] for the additonal studies that we have included.
 
-We can see here the full selection from MotifDb
-```{r, message=FALSE, cache=TRUE, eval=FALSE}
+[^encodemotif]: Website: [encode-motifs](http://compbio.mit.edu/encode-motifs/) Paper: [doi:10.1093/nar/gkt1249](http://dx.doi.org/10.1093/nar/gkt1249)
+[^factorbook]: Website: [Factorbook](http://factorbook.org/mediawiki/index.php/Welcome_to_factorbook) Paper: [doi:10.1101/gr.139105.112](http://dx.doi.org/10.1101/gr.139105.112)
+[^hocomoco]: Website: [HOCOMOCO](http://autosome.ru/HOCOMOCO/) Paper: [doi:10.1093/nar/gks1089](http://dx.doi.org/10.1093/nar/gks1089)
+[^homer]: Website: [Homer](http://homer.salk.edu/homer/index.html) Paper: [doi:10.1016/j.molcel.2010.05.004](http://dx.doi.org/10.1016/j.molcel.2010.05.004)
+
+Practically `r Githubpkg("Simon-Coetzee/motifBreakR")` has involves three phases.
+
+1. *Read in Single Nucleotide Variants:* The first step is to read in the list of variants.  Variants can be either a list of rs#'s if your SNPs are represented in one of the SNPlocs packages
+2. *Find broken Motifs:* lksdjflkdsj
+3. *Visualize SNPs and motifs:* sldkjf
+
+
+
+
+allows representation of the input SNPs as either a list of rs#'s if your input is human, or as a bed file if your snps are not availible in one of the SNPlocs packages or your species is not represented by a SNPlocs package. An example of a bed file can be seen below:
+```{r, message=FALSE, cache=TRUE}
+snps.file <- system.file("extdata", "snps.bed", package = "motifbreakR")
+read.delim(snps.file, header = FALSE)
+```
+
+
+Here we can see the full selection of genomes and motifs availble from Bioconductor via `r Biocpkg("BSgenome")` and `r Biocpkg("MotifDb")`
+```{r, message=FALSE, cache=TRUE}
+library(BSgenome)
+available.genomes()
 library(MotifDb)
 MotifDb
+```
+```{r, message=FALSE, cache=TRUE, eval=FALSE}
+### Here we can see which organisms are availible under which sources
+### in MotifDb
 table(mcols(MotifDb)$organism, mcols(MotifDb)$dataSource)
 ```
 ```{r, message=FALSE, cache=TRUE, echo=FALSE}
-library(MotifDb)
-MotifDb
 knitr::kable(table(mcols(MotifDb)$organism, mcols(MotifDb)$dataSource), format = "html", table.attr="class=\"table table-striped table-hover\"")
 ```
 
-Here is the additional set of motifs that we have gathered and included in this package:
+Here we can see the additional set of motifs that have been gathered and included in this package:
 ```{r, message=FALSE, cache=TRUE}
 library(motifbreakR)
 data(motifbreakR_motif)
 motifbreakR_motif
 ```
+
+
+
+The different studies included in this data set may be called individually; for example:
+```{r, message=FALSE, cache=TRUE}
+data(hocomoco)
+hocomoco
+```
+See `?motifbreakR` for more information and citations.
+
+
 
 ### Methods {#methods}
 `r Githubpkg("Simon-Coetzee/motifBreakR")` works with position probability matrices (PPM). PPM
