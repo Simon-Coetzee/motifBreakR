@@ -139,7 +139,7 @@ strSort <- function(x) {
 #'    requireNamespace("SNPlocs.Hsapiens.dbSNP.20120608", quietly = TRUE)) {
 #'    snps.bed.file <- system.file("extdata", "snps.bed", package = "motifbreakR")
 #'    # see the contents
-#'    read.table(snps.bed.file)
+#'    read.table(snps.bed.file, header = FALSE)
 #'    #import the BED file
 #'    snps.mb <- snps.from.bed(snps.bed.file,
 #'                             search.genome = BSgenome.Hsapiens.UCSC.hg19)
@@ -152,11 +152,11 @@ strSort <- function(x) {
 #' @export
 snps.from.bed <- function(bedfile = NULL, dbSNP = NULL, search.genome = NULL) {
   snps <- import.bed(bedfile)
-  if (Reduce("|", grepl("rs", snps$name)) & (class(dbSNP) != "SNPlocs")) {
+  if (Reduce("|", grepl("rs", snps$name)) & (!inherits(dbSNP, "SNPlocs"))) {
     stop(paste0(bedfile, " contains at least one variant with an rsID and no SNPlocs has been indicated\n",
                 "Please run availible.SNPs() to check for availble SNPlocs"))
   }
-  if (class(search.genome) != "BSgenome") {
+  if (!inherits(search.genome, "BSgenome")) {
     stop(paste0(search.genome, " is not a BSgenome object.\n", "Run availible.genomes() and choose the appropriate BSgenome object"))
   }
   ## spit snps into named and unnamed snps

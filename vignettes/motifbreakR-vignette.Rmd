@@ -38,7 +38,7 @@ This guide includes a brief overview of the [processing flow](#flow), an example
   <img width="50%" src="motifbreakr-manuscript.png" />
   <p class="caption"><em>motifbreakR workflow: How inputs (trapezoids) are generated from R functions (rectangles). Diamonds represent decisions of the user.</em></p>
 </div>
-This straightforward process allows the interrogation of SNPs and SNVs in the context of the different species represented by `r Biocpkg("BSgenome")` packages (at least 22 different species) and allows the use of the full `r Biocpkg("MotifDb")` dataset that includes over 4200 motifs across 8 studies and 22 organisms that we have supplemented with over 2800 additional motifs across four additional studies in Humans see `data(encodemotif)`[^encodemotif], `data(factorbook)`[^factorbook], `data(hocomoco)`[^hocomoco] and `data(homer)`[^homer] for the additonal studies that we have included.
+This straightforward process allows the interrogation of SNPs and SNVs in the context of the different species represented by `r Biocpkg("BSgenome")` packages (at least 22 different species) and allows the use of the full `r Biocpkg("MotifDb")` data set that includes over 4200 motifs across 8 studies and 22 organisms that we have supplemented with over 2800 additional motifs across four additional studies in Humans see `data(encodemotif)`[^encodemotif], `data(factorbook)`[^factorbook], `data(hocomoco)`[^hocomoco] and `data(homer)`[^homer] for the additional studies that we have included.
 
 [^encodemotif]: Website: [encode-motifs](http://compbio.mit.edu/encode-motifs/) Paper: [doi:10.1093/nar/gkt1249](http://dx.doi.org/10.1093/nar/gkt1249)
 [^factorbook]: Website: [Factorbook](http://factorbook.org/mediawiki/index.php/Welcome_to_factorbook) Paper: [doi:10.1101/gr.139105.112](http://dx.doi.org/10.1101/gr.139105.112)
@@ -47,24 +47,75 @@ This straightforward process allows the interrogation of SNPs and SNVs in the co
 
 Practically `r Githubpkg("Simon-Coetzee/motifBreakR")` has involves three phases.
 
-1. *Read in Single Nucleotide Variants:* The first step is to read in the list of variants.  Variants can be either a list of rs#'s if your SNPs are represented in one of the SNPlocs packages
-2. *Find broken Motifs:* lksdjflkdsj
-3. *Visualize SNPs and motifs:* sldkjf
+1. *Read in Single Nucleotide Variants:* The first step is to read in the list of variants.  Variants can be either a list of rs#'s if your SNPs are represented in one of the SNPlocs packages, or may be included as a [.bed](http://www.genome.ucsc.edu/FAQ/FAQformat.html#format1) file with a specifically formatted name field. We then transform this input such that it may be read my `r Githubpkg("Simon-Coetzee/motifBreakR")`.
+2. *Find Broken Motifs:* Next we present `r Githubpkg("Simon-Coetzee/motifBreakR")` with the input generated in the previous step, along with a set of motifs formatted as class `MotifList`, and your preferred [scoring method](#methods). 
+3. *Visualize SNPs and motifs:* Finally we can visualize which motifs are broken by any individual SNP using our plotting function.
 
-
-
-
-allows representation of the input SNPs as either a list of rs#'s if your input is human, or as a bed file if your snps are not availible in one of the SNPlocs packages or your species is not represented by a SNPlocs package. An example of a bed file can be seen below:
+### How To Use motifbreakR: A practical Example {#practical}
+#### *Step 1* | Read in Single Nucleotide Variants
+Variants can be input either as a list of rs#'s or as a [.bed](http://www.genome.ucsc.edu/FAQ/FAQformat.html#format1). The main factor determining which you will use is if your variants have rs#'s that are included in one of the Bioconductor SNPlocs packages.  The present selection is seen here:
+```{r, message=FALSE, cache=TRUE}
+library(BSgenome)
+available.SNPs()
+```
+For cases where your rs#'s are not available in a SNPlocs package, or you have novel variants that are not cataloged at all, variants may be entered in [BED](http://www.genome.ucsc.edu/FAQ/FAQformat.html#format1) format as seen below:
 ```{r, message=FALSE, cache=TRUE}
 snps.file <- system.file("extdata", "snps.bed", package = "motifbreakR")
 read.delim(snps.file, header = FALSE)
 ```
+Our requirements for the BED file are that it must include `chromosome`, `start`, `end`, `name`, `score` and `strand` fields -- where the name field is required to be in one of two formats, either an rs# that is present in a SNPlocs package, or in the form `chromosome:position:referenceAllele:alternateAllele` e.g., `chr2:12594018:G:A`.
+More to the point here are the two methods for reading in the variants.
 
-
-Here we can see the full selection of genomes and motifs availble from Bioconductor via `r Biocpkg("BSgenome")` and `r Biocpkg("MotifDb")`
+##### SNPs from RS#:
+```{r, message=FALSE, cache=TRUE}
+library(SNPlocs.Hsapiens.dbSNP.20120608) # dbSNP137 in hg19
+library(BSgenome.Hsapiens.UCSC.hg19)     # hg19 genome
+snps.file <- system.file("extdata", "pca.enhancer.snps", package = "motifbreakR")
+snps <- as.character(read.table(snps.file)[,1])
+head(snps)
+snps.mb <- snps.from.rsid(snps,
+                          dbSNP = SNPlocs.Hsapiens.dbSNP.20120608,
+                          search.genome = BSgenome.Hsapiens.UCSC.hg19)
+snps.mb
+```
+A far greater variety of variants may be read into `r Githubpkg("Simon-Coetzee/motifBreakR")` via the `snps.from.bed` function. In fact `r Githubpkg("Simon-Coetzee/motifBreakR")` will work with any organism present as a Bioconductor `r Biocpkg("BSgenome")` package. This includes 76 genomes representing 22 species.
 ```{r, message=FALSE, cache=TRUE}
 library(BSgenome)
-available.genomes()
+genomes <- available.genomes()
+length(genomes)
+genomes
+```
+
+##### SNPs from BED formatted file:
+```{r, message=TRUE, cache=TRUE}
+snps.bed.file <- system.file("extdata", "snps.bed", package = "motifbreakR")
+# see the contents
+read.table(snps.bed.file, header = FALSE)
+```
+Seeing as we have some snps listed by thier rs#'s we can query those by including a SNPlocs object as an argument to `snps.from.bed`
+```{r, message=TRUE, cache=TRUE}
+#import the BED file
+snps.mb.frombed <- snps.from.bed(snps.bed.file,
+                                 dbSNP = SNPlocs.Hsapiens.dbSNP.20120608,
+                                 search.genome = BSgenome.Hsapiens.UCSC.hg19)
+snps.mb.frombed
+```
+We see also that one of our custom variants `chr2:12594018:G:A` was actually already included in dbSNP, and was therefor annotated in the output as `rs7601289`
+
+If our BED file includes no rs#'s, then we may omit the `dbSNP` arguement from the function
+```{r, message=FALSE, cache=TRUE}
+library(BSgenome.Drerio.UCSC.danRer7)
+#snps.bedfile.nors <- system.file("extdata", "danRer.bed", package = "motifbreakR")
+snps.bedfile.nors <- "~/Work/motifbreakR/inst/extdata/danRer.bed"
+read.table(snps.bedfile.nors, header = FALSE)
+snps.mb.frombed <- snps.from.bed(snps.bedfile.nors,
+                                 search.genome = BSgenome.Drerio.UCSC.danRer7)
+snps.mb.frombed
+```
+
+#### *Step 2* | Find Broken Motifs
+Now that we have our data in the required format, we may continue to the task at hand, and determine which variants modify potential transcription factor binding. An important element of this task is identifying a set of transcription factor binding motifs that we wish to query. Fortunately `r Biocpkg("MotifDb")` includes a large selection of motifs across multiple species that we can see here:
+```{r, message=FALSE, cache=TRUE}
 library(MotifDb)
 MotifDb
 ```
@@ -77,22 +128,19 @@ table(mcols(MotifDb)$organism, mcols(MotifDb)$dataSource)
 knitr::kable(table(mcols(MotifDb)$organism, mcols(MotifDb)$dataSource), format = "html", table.attr="class=\"table table-striped table-hover\"")
 ```
 
-Here we can see the additional set of motifs that have been gathered and included in this package:
+And here we can see the additional set of motifs that have been gathered and included in this package:
 ```{r, message=FALSE, cache=TRUE}
 library(motifbreakR)
 data(motifbreakR_motif)
 motifbreakR_motif
 ```
-
-
-
 The different studies included in this data set may be called individually; for example:
 ```{r, message=FALSE, cache=TRUE}
 data(hocomoco)
 hocomoco
 ```
-See `?motifbreakR` for more information and citations.
-
+See `?motifbreakR_motif` for more information and citations.
+We can use
 
 
 ### Methods {#methods}
@@ -186,49 +234,5 @@ $F( s_{\textrm{REF}},M )$ and
 $F( s_{\textrm{ALT}},M )$ is greater than a user-specified
 threshold (default value of 0.85) the SNP is reported. By default
 `r Githubpkg("Simon-Coetzee/motifBreakR")` displays only strong effects
-($\Delta p_{i} > 0.7$) but this behaviour can be
+($\Delta p_{i} > 0.7$) but this behavior can be
 overridden.
-
-
-
-## Vignette Info
-
-Note the various macros within the `vignette` setion of the metadata block above. These are required in order to instruct R how to build the vignette. Note that you should change the `title` field and the `\VignetteIndexEntry` to match the title of your vignette.
-
-## Styles
-
-The `html_vignette` template includes a basic CSS theme. To override this theme you can specify your own CSS in the document metadata as follows:
-
-    output: 
-      rmarkdown::html_vignette:
-        css: mystyles.css
-
-## Figures
-
-The figure sizes have been customised so that you can easily put two images side-by-side. 
-<!-- to use with html use fig.retina=2 for proper res figures -->
-```{r test, fig.show='hold', fig.cap="test: this is a figure cap.", fig.retina=2} 
-plot(1:10)
-plot(10:1)
-```
-
-You can enable figure captions by `fig_caption: yes` in YAML:
-
-    output:
-      rmarkdown::html_vignette:
-        fig_caption: yes
-
-Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
-
-## More Examples
-
-You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`.
-
-```{r, echo=FALSE, results='asis'}
-knitr::kable(head(mtcars, 10))
-```
-
-Also a quote using `>`:
-
-> "He who gives up [code] safety for [code] speed deserves neither."
-([via](https://twitter.com/hadleywickham/status/504368538874703872))

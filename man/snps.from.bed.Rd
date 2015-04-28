@@ -42,7 +42,7 @@ if(requireNamespace("BSgenome.Hsapiens.UCSC.hg19", quietly = TRUE) &&
    requireNamespace("SNPlocs.Hsapiens.dbSNP.20120608", quietly = TRUE)) {
    snps.bed.file <- system.file("extdata", "snps.bed", package = "motifbreakR")
    # see the contents
-   read.table(snps.bed.file)
+   read.table(snps.bed.file, header = FALSE)
    #import the BED file
    snps.mb <- snps.from.bed(snps.bed.file,
                             search.genome = BSgenome.Hsapiens.UCSC.hg19)
