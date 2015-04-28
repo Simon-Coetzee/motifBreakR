@@ -63,7 +63,7 @@ For cases where your rs#'s are not available in a SNPlocs package, or you have n
 snps.file <- system.file("extdata", "snps.bed", package = "motifbreakR")
 read.delim(snps.file, header = FALSE)
 ```
-Our requirements for the BED file are that it must include `chromosome`, `start`, `end`, `name`, `score` and `strand` fields -- where the name field is required to be in one of two formats, either an rs# that is present in a SNPlocs package, or in the form `chromosome:position:referenceAllele:alternateAllele` e.g., `chr2:12594018:G:A`.
+Our requirements for the BED file are that it must include `chromosome`, `start`, `end`, `name`, `score` and `strand` fields -- where the name field is required to be in one of two formats, either an rs# that is present in a SNPlocs package, or in the form `chromosome:position:referenceAllele:alternateAllele` e.g., `chr2:12594018:G:A`.  It is also essential that the fields are TAB seperated, not a mixture of tabs and spaces.
 More to the point here are the two methods for reading in the variants.
 
 ##### SNPs from RS#:
@@ -105,8 +105,7 @@ We see also that one of our custom variants `chr2:12594018:G:A` was actually alr
 If our BED file includes no rs#'s, then we may omit the `dbSNP` arguement from the function
 ```{r, message=FALSE, cache=TRUE}
 library(BSgenome.Drerio.UCSC.danRer7)
-#snps.bedfile.nors <- system.file("extdata", "danRer.bed", package = "motifbreakR")
-snps.bedfile.nors <- "~/Work/motifbreakR/inst/extdata/danRer.bed"
+snps.bedfile.nors <- system.file("extdata", "danRer.bed", package = "motifbreakR")
 read.table(snps.bedfile.nors, header = FALSE)
 snps.mb.frombed <- snps.from.bed(snps.bedfile.nors,
                                  search.genome = BSgenome.Drerio.UCSC.danRer7)
