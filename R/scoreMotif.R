@@ -176,19 +176,12 @@ snpEff <- function(allelR, allelA) {
 #' @importFrom BiocGenerics width
 #' @importFrom IRanges reverse
 scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
-                         threshold = 0.9, show.neutral = FALSE, verbose = FALSE) {
+                         threshold = 0.9, show.neutral = FALSE, verbose = FALSE, genome.bsgenome=NULL) {
   if (!(Reduce("&", width(fsnplist$REF) == 1)) || !(Reduce("&", width(fsnplist$ALT) == 1))) {
     drop.snp.i <- !(width(fsnplist$REF) == 1) & (width(fsnplist$ALT) == 1)
     drop.snp <- names(fsnplist[!drop.snp.i])
     fsnplist <- fsnplist[drop.snp.i]
     warning(paste(drop.snp, "not valid for motif analysis...skipping", sep = " "))
-  }
-  genome.package <- attributes(fsnplist)$genome.package
-  if(requireNamespace(eval(genome.package), quietly = TRUE, character.only = TRUE)) {
-    genome.bsgenome <- eval(parse(text = paste(genome.package, genome.package, sep="::")))
-  } else {
-    stop(paste0(eval(genome.package), " is the genome selected for this snp list and \n",
-                "is not present on your system. Please install and try again."))
   }
   k <- max(sapply(pwmList, ncol))
   ## Get Reference Sequence with k bp flanking
@@ -361,10 +354,10 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
         }
       }
     }
-    if (verbose) {
-      message(names(res.el[1]))
-      message(paste0("number of broken motifs = ", sum(pwm.sig)))
-    }
+#    if (verbose) {
+#      message(names(res.el[1]))
+#      message(paste0("number of broken motifs = ", sum(pwm.sig)))
+#    }
     #res.el.sldfkjds <<- res.el.e
     #stop('here')
 
@@ -591,17 +584,35 @@ motifbreakR <- function(snpList, pwmList, threshold, method = "default",
     warning(paste0("Serial evaluation under effect, to achive parallel evaluation under\n",
             "Windows, please supply an alternative BPPARAM"))
   }
+  if(inherits(BPPARAM, "SnowParam")) {
+  }
   cores <- bpworkers(BPPARAM)
   num.snps <- length(snpList)
   if(num.snps < cores) {
     cores <- num.snps
   }
+  if(inherits(BPPARAM, "SnowParam")) {
+    bpstart(BPPARAM)
+    cl <- bpbackend(BPPARAM)
+    clusterEvalQ(cl, library("MotifDb"))
+  }
   genome.package <- attributes(snpList)$genome.package
+  if(requireNamespace(eval(genome.package), quietly = TRUE, character.only = TRUE)) {
+    genome.bsgenome <- eval(parse(text = paste(genome.package, genome.package, sep="::")))
+  } else {
+    stop(paste0(eval(genome.package), " is the genome selected for this snp list and \n",
+                "is not present on your system. Please install and try again."))
+  }
   snpList <- sapply(suppressWarnings(split(snpList, 1:cores)), list)
   bkg <- bkg[c('A', 'C', 'G', 'T')]
   x <- bplapply(snpList, scoreSnpList, pwmList = pwmList, threshold = threshold,
                 method = method, bkg = bkg, show.neutral = show.neutral,
-                verbose = ifelse(cores == 1, verbose, FALSE), BPPARAM=BPPARAM)
+                verbose = ifelse(cores == 1, verbose, FALSE), genome.bsgenome = genome.bsgenome,
+                BPPARAM=BPPARAM)
+  if(inherits(BPPARAM, "SnowParam")) {
+    bpstop(BPPARAM)
+  }
+  x.glb <<- x
   drops <- sapply(x, is.null)
   x <- x[!drops]
   if (length(x) > 1) {
@@ -842,13 +853,13 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, stackmotif = FALSE, effec
                                              ifelse(strand(result) == "-",
                                                     str_length(str_trim(result$seqMatch)) - result$motifPos + 1,
                                                     result$motifPos)),
-                            name = names(result)[[1]], selectFun = selectingfun)
+                            name = paste0(names(result)[[1]], " ", result$REF[[1]], "/", result$ALT[[1]]), selectFun = selectingfun)
   plotTracks(list(ideoT, motifT, hiT, axisT), from = from, to = to, showBandId = TRUE,
              add53 = TRUE, labelpos = "below", chromosome = chromosome, groupAnnotation = "group",
              collapse = FALSE, min.width = 1, featureAnnotation = "feature", cex.feature = 0.8,
              details.size = ifelse(stackmotif, 0.9, 0.5), detailsConnector.pch = NA, detailsConnector.lty = ifelse(stackmotif, 0, 3),
              shape = "box", cex.group = 0.8, fonts = c("sans", "Helvetica"))
-  return(NULL)
+  return(invisible(NULL))
 }
 
 
