@@ -50,7 +50,7 @@ a GRanges object containing:
  \item{alleleRef}{The proportional frequency of the reference allele at position \code{motifPos} in the motif}
  \item{alleleAlt}{The proportional frequency of the alternate allele at position \code{motifPos} in the motif}
  \item{effect}{one of weak, strong, or neutral indicating the strength of the effect.}
- each SNP in this object may be plotted with \code{\link{MBplot}}
+ each SNP in this object may be plotted with \code{\link{plotMB}}
 }
 \description{
 Predict The Disruptiveness Of Single Nucleotide Polymorphisms On
@@ -159,17 +159,20 @@ overridden.
 library(BSgenome.Hsapiens.UCSC.hg19)
  library(SNPlocs.Hsapiens.dbSNP.20120608)
  # prepare variants
- data(pca.enhancer.snps) # loads snps.mb
+ load(system.file("extdata", "pca.enhancer.snps.rda", package = "motifbreakR")) # loads snps.mb
  pca.enhancer.snps <- sample(snps.mb, 20)
  # Get motifs to interrogate
  data(hocomoco)
  motifs <- sample(hocomoco, 50)
  # run motifbreakR
- results <- motifbreakR(pca.enhancer.snps, motifs, threshold = 0.9, method = "IC")
+ results <- motifbreakR(pca.enhancer.snps,
+                        motifs, threshold = 0.9,
+                        method = "IC",
+                        BPPARAM=BiocParallel::SerialParam())
 }
 \seealso{
 See \code{\link{snps.from.rsid}} and \code{\link{snps.from.bed}} for
-  information about how to generate the input to this function and \code{\link{MBplot}}
+  information about how to generate the input to this function and \code{\link{plotMB}}
   for information on how to visualize it's output
 }
 

@@ -1,8 +1,8 @@
 #' Import SNPs from rsid for use in motifbreakR
 #'
 #' @param rsid Character; a character vector of rsid values from dbSNP
-#' @param dbSNP an object of class SNPlocs to lookup rsids; see \code{\link[BSgenome]{availible.SNPs}}
-#'   to check for availible SNPlocs
+#' @param dbSNP an object of class SNPlocs to lookup rsids; see \code{availible.SNPs} in
+#'   \code{\link[BSgenome]{injectSNPs}} to check for availible SNPlocs
 #' @param search.genome an object of class BSgenome for the species you are interrogating;
 #'  see \code{\link[BSgenome]{available.genomes}} for a list of species
 #' @seealso See \code{\link{motifbreakR}} for analysis; See \code{\link{snps.from.bed}}
@@ -16,14 +16,14 @@
 #'  \item{REF}{The reference allele for the SNP}
 #'  \item{ALT}{The alternate allele for the SNP}
 #'  @examples
-#'  if(requireNamespace("BSgenome.Hsapiens.UCSC.hg19", quietly = TRUE) &&
-#'    requireNamespace("SNPlocs.Hsapiens.dbSNP.20120608", quietly = TRUE)) {
-#'    snps.file <- system.file("extdata", "pca.enhancer.snps", package = "motifbreakR")
-#'    snps <- as.character(read.table(snps.file)[,1])
-#'    snps.mb <- snps.from.rsid(snps,
-#'                              dbSNP = SNPlocs.Hsapiens.dbSNP.20120608,
-#'                              search.genome = BSgenome.Hsapiens.UCSC.hg19)
-#'  }
+#'  library(BSgenome.Hsapiens.UCSC.hg19)
+#'  library(SNPlocs.Hsapiens.dbSNP.20120608)
+#'  snps.file <- system.file("extdata", "pca.enhancer.snps", package = "motifbreakR")
+#'  snps <- as.character(read.table(snps.file)[,1])
+#'  snps.mb <- snps.from.rsid(snps,
+#'                            dbSNP = SNPlocs.Hsapiens.dbSNP.20120608,
+#'                            search.genome = BSgenome.Hsapiens.UCSC.hg19)
+#'
 #' @importFrom BSgenome snpid2grange snplocs
 #' @importFrom Biostrings DNAStringSet
 #' @export
@@ -82,7 +82,7 @@ determine.allele.from.ambiguous <- function(ambiguous.allele, known.allele) {
 }
 
 #' @importFrom stringr str_extract
-#' @importFrom GenomeInfoDb seqinfo genome
+#' @importFrom GenomeInfoDb seqinfo genome seqlevelsStyle seqlevelsStyle<-
 #' @importFrom GenomeInfoDb seqnames seqlevels seqinfo<-
 change.to.search.genome <- function(granges.object, search.genome) {
   if (Reduce("&", !is.na(genome(granges.object)))) {
@@ -114,8 +114,8 @@ strSort <- function(x) {
 #'
 #' @param bedfile Character; a character containing the path to a bed file
 #'   see Details for a description of the required format
-#' @param dbSNP OPTIONAL; an object of class SNPlocs to lookup rsids; see \code{\link[BSgenome]{availible.SNPs}}
-#'   to check for availible SNPlocs
+#' @param dbSNP OPTIONAL; an object of class SNPlocs to lookup rsids; see \code{availible.SNPs} in
+#'   \code{\link[BSgenome]{injectSNPs}} to check for availible SNPlocs
 #' @param search.genome an object of class BSgenome for the species you are interrogating;
 #'  see \code{\link[BSgenome]{available.genomes}} for a list of species
 #' @seealso See \code{\link{motifbreakR}} for analysis; See \code{\link{snps.from.rsid}}
@@ -135,19 +135,19 @@ strSort <- function(x) {
 #'  \item{REF}{The reference allele for the SNP}
 #'  \item{ALT}{The alternate allele for the SNP}
 #'  @examples
-#'  if(requireNamespace("BSgenome.Hsapiens.UCSC.hg19", quietly = TRUE) &&
-#'    requireNamespace("SNPlocs.Hsapiens.dbSNP.20120608", quietly = TRUE)) {
-#'    snps.bed.file <- system.file("extdata", "snps.bed", package = "motifbreakR")
-#'    # see the contents
-#'    read.table(snps.bed.file, header = FALSE)
-#'    #import the BED file
-#'    snps.mb <- snps.from.bed(snps.bed.file,
-#'                             search.genome = BSgenome.Hsapiens.UCSC.hg19)
-#'  }
+#'  library(BSgenome.Drerio.UCSC.danRer7)
+#'  library(SNPlocs.Hsapiens.dbSNP.20120608)
+#'  snps.bed.file <- system.file("extdata", "danRer.bed", package = "motifbreakR")
+#'  # see the contents
+#'  read.table(snps.bed.file, header = FALSE)
+#'  #import the BED file
+#'  snps.mb <- snps.from.bed(snps.bed.file,
+#'                           search.genome = BSgenome.Drerio.UCSC.danRer7)
+#'
 #' @importFrom rtracklayer import.bed
 #' @importFrom Biostrings IUPAC_CODE_MAP
 #' @importFrom GenomicRanges findOverlaps queryHits subjectHits
-#' @importFrom GenomeInfoDb species sortSeqlevels
+#' @importFrom GenomeInfoDb commonName sortSeqlevels
 #' @importFrom BiocGenerics sapply
 #' @export
 snps.from.bed <- function(bedfile = NULL, dbSNP = NULL, search.genome = NULL) {

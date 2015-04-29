@@ -38,7 +38,7 @@ mode we started from 25 bp and searched for the best alignment decreasing the
 length by 1 bp until the minimal length of 7 bp. We also used the single (si)
 and double box (do) model positional priors in order to simulate DNA helix
 turn. For a single box, the positional weights are to be distributed as
-cos2(π n / T), where T=10.5 is the DNA helix pitch, n is the coordinate
+cos2(\eqn{pi} n / T), where T=10.5 is the DNA helix pitch, n is the coordinate
 within the alignment, and the center of the alignment of the length L is at
 n=0. During the internal cycle of PWM optimization the PWM column scores are
 multiplied by prior values so the columns closer to the center of the
@@ -46,7 +46,7 @@ alignment (n=0) receive no score penalty while the columns around (n =
 5,6,-5,-6) contribute much less to the score of the PWM under optimization.
 The single box model prior was used along with the min-to-max length
 estimation mode (si). We also used the double box model prior with a shape
-prior equal to sin2(πn / T), which was used to search for possibly longer
+prior equal to sin2(\eqn{pi}n / T), which was used to search for possibly longer
 double box models in the max-to-min length estimation mode (do).
 
 Model quality assignment

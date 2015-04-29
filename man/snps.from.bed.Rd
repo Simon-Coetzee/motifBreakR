@@ -10,8 +10,8 @@ snps.from.bed(bedfile = NULL, dbSNP = NULL, search.genome = NULL)
 \item{bedfile}{Character; a character containing the path to a bed file
 see Details for a description of the required format}
 
-\item{dbSNP}{OPTIONAL; an object of class SNPlocs to lookup rsids; see \code{\link[BSgenome]{availible.SNPs}}
-to check for availible SNPlocs}
+\item{dbSNP}{OPTIONAL; an object of class SNPlocs to lookup rsids; see \code{availible.SNPs} in
+\code{\link[BSgenome]{injectSNPs}} to check for availible SNPlocs}
 
 \item{search.genome}{an object of class BSgenome for the species you are interrogating;
 see \code{\link[BSgenome]{available.genomes}} for a list of species}
@@ -38,15 +38,14 @@ Import SNPs from a BED file for use in motifbreakR
  format it would be entered as chr7:24966446:C:A
 }
 \examples{
-if(requireNamespace("BSgenome.Hsapiens.UCSC.hg19", quietly = TRUE) &&
-   requireNamespace("SNPlocs.Hsapiens.dbSNP.20120608", quietly = TRUE)) {
-   snps.bed.file <- system.file("extdata", "snps.bed", package = "motifbreakR")
-   # see the contents
-   read.table(snps.bed.file, header = FALSE)
-   #import the BED file
-   snps.mb <- snps.from.bed(snps.bed.file,
-                            search.genome = BSgenome.Hsapiens.UCSC.hg19)
- }
+library(BSgenome.Drerio.UCSC.danRer7)
+ library(SNPlocs.Hsapiens.dbSNP.20120608)
+ snps.bed.file <- system.file("extdata", "danRer.bed", package = "motifbreakR")
+ # see the contents
+ read.table(snps.bed.file, header = FALSE)
+ #import the BED file
+ snps.mb <- snps.from.bed(snps.bed.file,
+                          search.genome = BSgenome.Drerio.UCSC.danRer7)
 }
 \seealso{
 See \code{\link{motifbreakR}} for analysis; See \code{\link{snps.from.rsid}}

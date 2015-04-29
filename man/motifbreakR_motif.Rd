@@ -30,7 +30,7 @@ Pouya Kheradpour and Manolis Kellis (2013 December 13) Systematic
 motifbreakR_motif
 }
 \description{
-This object contains all the \code{\link[MotifDb]{MotifList}} objects that were generated
+This object contains all the \code{\link[MotifDb]{MotifList-class}} objects that were generated
 for this package.  See the individual help sections for \code{\link{hocomoco}}, \code{\link{homer}},
 \code{\link{factorbook}}, and \code{\link{encodemotif}}, for how the data is formatted.
 }

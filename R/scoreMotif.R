@@ -170,7 +170,7 @@ snpEff <- function(allelR, allelA) {
 }
 
 #' @import methods
-#' @importFrom Biostrings getSeq replaceLetterAt reverseComplement
+#' @importFrom Biostrings getSeq replaceLetterAt reverseComplement complement
 #' @importFrom GenomicRanges promoters GRangesList
 #' @importFrom S4Vectors mcols mcols<-
 #' @importFrom BiocGenerics width
@@ -391,7 +391,7 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
 }
 
 #' @importFrom stringr str_pad
-#' @importFrom BiocGenerics start end start<- end<-
+#' @importFrom BiocGenerics start end start<- end<- strand<-
 updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.windows,
                           allelR, allelA, effect, len, k, pwm) {
   strand.opt <- c("+", "-")
@@ -446,7 +446,7 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #'   for example \code{BiocParallel::bpparam("SerialParam")} would allow serial
 #'   evaluation.
 #' @seealso See \code{\link{snps.from.rsid}} and \code{\link{snps.from.bed}} for
-#'   information about how to generate the input to this function and \code{\link{MBplot}}
+#'   information about how to generate the input to this function and \code{\link{plotMB}}
 #'   for information on how to visualize it's output
 #' @details \pkg{motifbreakR} works with position probability matrices (PPM). PPM
 #' are derived as the fractional occurrence of nucleotides A,C,G, and T at
@@ -560,21 +560,24 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #'  \item{alleleRef}{The proportional frequency of the reference allele at position \code{motifPos} in the motif}
 #'  \item{alleleAlt}{The proportional frequency of the alternate allele at position \code{motifPos} in the motif}
 #'  \item{effect}{one of weak, strong, or neutral indicating the strength of the effect.}
-#'  each SNP in this object may be plotted with \code{\link{MBplot}}
+#'  each SNP in this object may be plotted with \code{\link{plotMB}}
 #'  @examples
 #'  library(BSgenome.Hsapiens.UCSC.hg19)
 #'  library(SNPlocs.Hsapiens.dbSNP.20120608)
 #'  # prepare variants
-#'  data(pca.enhancer.snps) # loads snps.mb
+#'  load(system.file("extdata", "pca.enhancer.snps.rda", package = "motifbreakR")) # loads snps.mb
 #'  pca.enhancer.snps <- sample(snps.mb, 20)
 #'  # Get motifs to interrogate
 #'  data(hocomoco)
 #'  motifs <- sample(hocomoco, 50)
 #'  # run motifbreakR
-#'  results <- motifbreakR(pca.enhancer.snps, motifs, threshold = 0.9, method = "IC")
+#'  results <- motifbreakR(pca.enhancer.snps,
+#'                         motifs, threshold = 0.9,
+#'                         method = "IC",
+#'                         BPPARAM=BiocParallel::SerialParam())
 #' @import BiocParallel
 #' @importFrom BiocParallel bplapply
-#' @importFrom BiocGenerics unlist sapply
+#' @importFrom BiocGenerics unlist sapply clusterEvalQ
 #' @importFrom stringr str_length str_trim
 #' @export
 motifbreakR <- function(snpList, pwmList, threshold, method = "default",
@@ -612,7 +615,6 @@ motifbreakR <- function(snpList, pwmList, threshold, method = "default",
   if(inherits(BPPARAM, "SnowParam")) {
     bpstop(BPPARAM)
   }
-  x.glb <<- x
   drops <- sapply(x, is.null)
   x <- x[!drops]
   if (length(x) > 1) {
@@ -699,8 +701,8 @@ DNAmotifAlignment.2snp <- function(pwms, result) {
     pwm <- pwms[[pwm.i]]@mat
     ## get pwm info from result data
     pwm.name <- pwms[[pwm.i]]@name
-    pwm.name <- str_replace(pwm.name, pattern = "-:rc$", replace = "")
-    pwm.name <- str_replace(pwm.name, pattern = "-:r$", replace = "")
+    pwm.name <- str_replace(pwm.name, pattern = "-:rc$", replacement = "")
+    pwm.name <- str_replace(pwm.name, pattern = "-:r$", replacement = "")
     pwm.info <- attributes(result)$motifs
     pwm.id <- mcols(pwm.info[pwm.name, ])$providerId
     start.offset <- start(result[result$providerId == pwm.id, ]) - from
