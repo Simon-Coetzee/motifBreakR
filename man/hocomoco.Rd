@@ -116,5 +116,11 @@ for two rather distinct TFBS models. We assigned a quality rating to each
 model. HOCOMOCO contains 426 systematically curated TFBS models for 401 human
 TFs, where 172 models are based on more than one data source."
 }
+\details{
+Load with \code{data(hocomoco)}
+}
+\seealso{
+\url{http://autosome.ru/HOCOMOCO/} \url{http://cbrc.kaust.edu.sa/hocomoco/}
+}
 \keyword{datasets}
 

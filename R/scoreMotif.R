@@ -867,7 +867,7 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, stackmotif = FALSE, effec
              cex.main = 0.8, col.main = "darkgrey",
              add53 = TRUE, labelpos = "below", chromosome = chromosome, groupAnnotation = "group",
              collapse = FALSE, min.width = 1, featureAnnotation = "feature", cex.feature = 0.8,
-             details.size = ifelse(stackmotif, 0.9, 0.5), detailsConnector.pch = NA, detailsConnector.lty = ifelse(stackmotif, 0, 3),
+             details.size = ifelse(stackmotif, 0.85, 0.5), detailsConnector.pch = NA, detailsConnector.lty = ifelse(stackmotif, 0, 3),
              shape = "box", cex.group = 0.8, fonts = c("sans", "Helvetica"))
   return(invisible(NULL))
 }

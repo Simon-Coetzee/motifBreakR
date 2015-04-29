@@ -58,5 +58,11 @@ studies to validate the specificity of antibodies, understand cooperativity
 between data sets and measure the variation of motif binding across
 individuals and species."
 }
+\details{
+Load with \code{data(encodemotif)}
+}
+\seealso{
+\url{http://compbio.mit.edu/encode-motifs/}
+}
 \keyword{datasets}
 
