@@ -837,8 +837,17 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, stackmotif = FALSE, effec
     ideoT <- IdeogramTrack(genome = g, chromosome = chromosome, bands = backup.band)
   }
   seqT <- SequenceTrack(genome.bsgenome, fontcolor = colorset("DNA", "auto"))
+  ### blank alt sequence
+  altseq <- genome.bsgenome[[chromosome]]
+  wherereplace <- rep.int(TRUE, length(altseq))
+  wherereplace[result$snpPos[[1]]] <- FALSE
+  altseq <- replaceLetterAt(altseq, at = wherereplace, letter = rep.int("N", sum(wherereplace)))
+  altseq <- replaceLetterAt(altseq, at = !wherereplace, letter = result$ALT[[1]])
+  altseq <- DNAStringSet(altseq)
+  names(altseq) <- chromosome
+  seqAltT <- SequenceTrack(altseq, fontcolor = c(colorset("DNA", "auto"), N="#FFFFFF"), chromosome = chromosome)
   axisT <- GenomeAxisTrack(exponent = 0)
-  hiT <- HighlightTrack(seqT, start = result$snpPos[[1]], end = result$snpPos[[1]],
+  hiT <- HighlightTrack(trackList = list(seqT, seqAltT), start = result$snpPos[[1]], end = result$snpPos[[1]],
                         chromosome = chromosome)
   if(stackmotif){
     selectingfun <- selcor
@@ -853,8 +862,9 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, stackmotif = FALSE, effec
                                              ifelse(strand(result) == "-",
                                                     str_length(str_trim(result$seqMatch)) - result$motifPos + 1,
                                                     result$motifPos)),
-                            name = paste0(names(result)[[1]], " ", result$REF[[1]], "/", result$ALT[[1]]), selectFun = selectingfun)
-  plotTracks(list(ideoT, motifT, hiT, axisT), from = from, to = to, showBandId = TRUE,
+                            name = names(result)[[1]], selectFun = selectingfun)
+  plotTracks(list(ideoT, motifT, hiT, axisT), from = from, to = to, showBandId = TRUE, main = names(result)[[1]],
+             cex.main = 0.8, col.main = "darkgrey",
              add53 = TRUE, labelpos = "below", chromosome = chromosome, groupAnnotation = "group",
              collapse = FALSE, min.width = 1, featureAnnotation = "feature", cex.feature = 0.8,
              details.size = ifelse(stackmotif, 0.9, 0.5), detailsConnector.pch = NA, detailsConnector.lty = ifelse(stackmotif, 0, 3),
