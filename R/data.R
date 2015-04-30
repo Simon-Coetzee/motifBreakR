@@ -336,7 +336,7 @@
 #' @return \code{\link[GenomicRanges]{GRanges}} object. See \code{\link{motifbreakR}} for information on it's structure.
 #'
 #' @examples
-#' load(example.results)
+#' data(example.results)
 #' example.results
 #'
 "example.results"

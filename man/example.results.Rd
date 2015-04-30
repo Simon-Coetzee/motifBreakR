@@ -15,7 +15,7 @@ example.results
 This contains example results from motifbreaker for use in examples from the help docs
 }
 \examples{
-load(example.results)
+data(example.results)
 example.results
 }
 \keyword{datasets}
