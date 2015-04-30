@@ -102,6 +102,9 @@ Kulakovskiy,I.V., Medvedeva,Y.A., Schaefer,U., Kasianov,A.S.,
 \usage{
 hocomoco
 }
+\value{
+\code{\link[MotifDb]{MotifList-class}} object
+}
 \description{
 From the abstract:
 "We present the Homo sapiens comprehensive model collection (HOCOMOCO,
@@ -118,6 +121,10 @@ TFs, where 172 models are based on more than one data source."
 }
 \details{
 Load with \code{data(hocomoco)}
+}
+\examples{
+data(hocomoco)
+hocomoco
 }
 \seealso{
 \url{http://autosome.ru/HOCOMOCO/} \url{http://cbrc.kaust.edu.sa/hocomoco/}

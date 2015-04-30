@@ -275,7 +275,7 @@ Thus the relative entropy weight for each column $i$ of the matrix is
 given by:
 
 ## Calculating $\omega$ For Relative Entropy {#eqn4.2}
-$$\omega_{i} = \sum_{j \in \{ A,C,G,T \}}^{}{M_{j,i}\log( \frac{M_{j,i}}{b_{i}} )}\textrm{     where     }i = 1,\ldots n$$
+$$\omega_{i} = \sum_{j \in \{ A,C,G,T \}}^{}{M_{j,i}\log_2( \frac{M_{j,i}}{b_{i}} )}\textrm{     where     }i = 1,\ldots n$$
 
 where $b_{i}$ is again the background frequency of the letter $i$.
 

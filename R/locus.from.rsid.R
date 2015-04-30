@@ -213,7 +213,7 @@ snps.from.bed <- function(bedfile = NULL, dbSNP = NULL, search.genome = NULL) {
     snps.noid.chrom <- as.character(seqnames(snps.noid))
     snps.noid.chrom <- unique(snps.noid.chrom)
     snps.noid.chrom <- gsub("chr", "ch", snps.noid.chrom)
-    all.dbsnp.chrom <- snplocs(dbSNP, snps.noid.chrom, as.GRanges = T)
+    all.dbsnp.chrom <- snplocs(dbSNP, snps.noid.chrom, as.GRanges = TRUE)
     all.dbsnp.chrom <- change.to.search.genome(all.dbsnp.chrom, search.genome)
     present.in.dbsnp <- findOverlaps(snps.noid, all.dbsnp.chrom)
     ## In dbsnp

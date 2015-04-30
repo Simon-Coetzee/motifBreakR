@@ -29,6 +29,9 @@ Pouya Kheradpour and Manolis Kellis (2013 December 13) Systematic
 \usage{
 motifbreakR_motif
 }
+\value{
+\code{\link[MotifDb]{MotifList-class}} object
+}
 \description{
 This object contains all the \code{\link[MotifDb]{MotifList-class}} objects that were generated
 for this package.  See the individual help sections for \code{\link{hocomoco}}, \code{\link{homer}},
@@ -36,6 +39,10 @@ for this package.  See the individual help sections for \code{\link{hocomoco}}, 
 }
 \details{
 Load with \code{data(motifbreakR_motif)}
+}
+\examples{
+data(motifbreakR_motif)
+motifbreakR_motif
 }
 \seealso{
 \code{\link{hocomoco}}, \code{\link{homer}},

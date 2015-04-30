@@ -16,6 +16,8 @@
 #'
 #' Load with \code{data(hocomoco)}
 #'
+#'@return \code{\link[MotifDb]{MotifList-class}} object
+#'
 #'@format \code{\link[MotifDb]{MotifDb}} object of length 426; to access metadata
 #' use mcols(hocomoco)
 #'\describe{
@@ -111,6 +113,9 @@
 #'   Acids Research, \bold{41}, D195--D202.
 #'
 #' @seealso \url{http://autosome.ru/HOCOMOCO/} \url{http://cbrc.kaust.edu.sa/hocomoco/}
+#' @examples
+#' data(hocomoco)
+#' hocomoco
 "hocomoco"
 
 #' MotifDb object containing motif information from the known and discovered
@@ -137,6 +142,8 @@
 #' individuals and species."
 #'
 #' Load with \code{data(encodemotif)}
+#'
+#'@return \code{\link[MotifDb]{MotifList-class}} object
 #'
 #'@format \code{\link[MotifDb]{MotifDb}} object of length 2064; to access metadata
 #' use mcols(encodemotif)
@@ -168,6 +175,9 @@
 #'   experiments. Nucleic Acids Research, doi:10.1093/nar/gkt1249
 #'
 #' @seealso \url{http://compbio.mit.edu/encode-motifs/}
+#' @examples
+#' data(encodemotif)
+#' encodemotif
 "encodemotif"
 
 #' MotifDb object containing motif information from around the genomic regions
@@ -198,6 +208,8 @@
 #'
 #' Load with \code{data(factorbook)}
 #'
+#'@return \code{\link[MotifDb]{MotifList-class}} object
+#'
 #'
 #'@format \code{\link[MotifDb]{MotifDb}} object of length 79; to access metadata
 #' use mcols(factorbook)
@@ -224,6 +236,9 @@
 #'   factors. Genome Research, \bold{22 (9)}, 1798-1812, doi:10.1101/gr.139105.112
 #'
 #' @seealso \url{http://factorbook.org}
+#' @examples
+#' data(factorbook)
+#' factorbook
 "factorbook"
 
 #' MotifDb object containing motif information from motif databases included in
@@ -236,6 +251,8 @@
 #' for more information on how these files were generated, and Homer's sources.
 #'
 #' Load with \code{data(homer)}
+#'
+#'@return \code{\link[MotifDb]{MotifList-class}} object
 #'
 #'
 #'@format \code{\link[MotifDb]{MotifDb}} object of length 247; to access metadata
@@ -265,6 +282,9 @@
 #'
 #' @seealso \url{http://homer.salk.edu/homer/index.html} \url{http://homer.salk.edu/homer/motif/motifDatabase.html}
 #'   \url{http://homer.salk.edu/homer/motif/HomerMotifDB/homerResults.html}
+#' @examples
+#' data(homer)
+#' homer
 "homer"
 
 #' MotifDb object containing motif information from the motif databases of HOCOMOCO, Homer,
@@ -275,6 +295,8 @@
 #' \code{\link{factorbook}}, and \code{\link{encodemotif}}, for how the data is formatted.
 #'
 #' Load with \code{data(motifbreakR_motif)}
+#'
+#'@return \code{\link[MotifDb]{MotifList-class}} object
 #'
 #'@format \code{\link[MotifDb]{MotifDb}} object of length 2816; to access metadata
 #' use mcols(motifbreakR_motif)
@@ -300,5 +322,22 @@
 #' @source Pouya Kheradpour and Manolis Kellis (2013 December 13) Systematic
 #'   discovery and characterization of regulatory motifs in ENCODE TF binding
 #'   experiments. Nucleic Acids Research, doi:10.1093/nar/gkt1249
+#' @examples
+#' data(motifbreakR_motif)
+#' motifbreakR_motif
 "motifbreakR_motif"
+
+#' Example Results from motifbreakR
+#'
+#' This contains example results from motifbreaker for use in examples from the help docs
+#'
+#' @format \code{\link[GenomicRanges]{GRanges}} output from \code{motifbreakR}
+#'
+#' @return \code{\link[GenomicRanges]{GRanges}} object. See \code{\link{motifbreakR}} for information on it's structure.
+#'
+#' @examples
+#' load(example.results)
+#' example.results
+#'
+"example.results"
 

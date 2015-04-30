@@ -37,6 +37,9 @@ Pouya Kheradpour and Manolis Kellis (2013 December 13) Systematic
 \usage{
 encodemotif
 }
+\value{
+\code{\link[MotifDb]{MotifList-class}} object
+}
 \description{
 From the abstract: "Recent advances in technology have led to a dramatic
 increase in the number of available transcription factor ChIP-seq and
@@ -60,6 +63,10 @@ individuals and species."
 }
 \details{
 Load with \code{data(encodemotif)}
+}
+\examples{
+data(encodemotif)
+encodemotif
 }
 \seealso{
 \url{http://compbio.mit.edu/encode-motifs/}

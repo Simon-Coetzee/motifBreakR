@@ -129,7 +129,7 @@ scoreAllWindows <- function(snp.seq, snp.seq.rc, pwm, pwm.omega, pwm.bot, pwm.mi
                                              method, bkg, len = l)
   }
   all.window.scores <- matrix(data = c(window.scores, window.scores.rc), nrow = 2,
-                              ncol = m, byrow = T, dimnames = list(c("top", "bot"), from:to))
+                              ncol = m, byrow = TRUE, dimnames = list(c("top", "bot"), from:to))
   all.window.scores <- (all.window.scores - pwm.min)/pwm.bot
   return(all.window.scores)
 }
@@ -370,7 +370,7 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
     #}
   }
   #resultSet <- resultSet[set.sig]
-  resultSet <- unlist(GRangesList(as.list.environment(res.el.e)), use.names = F)
+  resultSet <- unlist(GRangesList(as.list.environment(res.el.e)), use.names = FALSE)
   if (length(resultSet) < 1) {
     if (verbose) {
       message(paste("reached end of SNPs list length =", length(fsnplist),
@@ -515,7 +515,7 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #'
 #' \strong{Equation 4.2}
 #'
-#' \deqn{\omega_{i} = \sum_{j \in \{ A,C,G,T \}}^{}{M_{j,i}\log( \frac{M_{j,i}}{b_{i}} )}\textrm{\ \ \ \ \ where\ \ \ \ \ }i = 1,\ldots n}
+#' \deqn{\omega_{i} = \sum_{j \in \{ A,C,G,T \}}^{}{M_{j,i}\log_2( \frac{M_{j,i}}{b_{i}} )}\textrm{\ \ \ \ \ where\ \ \ \ \ }i = 1,\ldots n}
 #'
 #' where \eqn{b_{i}} is again the background frequency of the letter \eqn{i}.
 #'
@@ -739,7 +739,13 @@ DNAmotifAlignment.2snp <- function(pwms, result) {
 #'   chromosome, the surrounding sequence of the + strand, the footprint of any
 #'   motif that is disrupted by the SNP or SNV, and the DNA sequence motif(s)
 #' @return plots a figure representing the results of \code{motifbreakR} at the
-#'   location of a single SNP, returns \code{NULL}.
+#'   location of a single SNP, returns invisible \code{NULL}.
+#' @examples
+#' data(example.results)
+#' example.results
+#' \dontrun{
+#' plotMB(example.results, "rs7837328", stackmotif = TRUE)
+#' }
 #' @importFrom grDevices postscript
 #' @import motifStack
 #' @importFrom Gviz IdeogramTrack SequenceTrack GenomeAxisTrack HighlightTrack

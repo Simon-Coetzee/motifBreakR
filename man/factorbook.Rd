@@ -32,6 +32,9 @@ J Wang, J Zhuang, S Iyer, XY Lin, et al. (2012) Sequence features and
 \usage{
 factorbook
 }
+\value{
+\code{\link[MotifDb]{MotifList-class}} object
+}
 \description{
 From the abstract: "Chromatin immunoprecipitation coupled with
 high-throughput sequencing (ChIP-seq) has become the dominant technique for
@@ -58,6 +61,10 @@ this repository as more ENCODE data are generated."
 }
 \details{
 Load with \code{data(factorbook)}
+}
+\examples{
+data(factorbook)
+factorbook
 }
 \seealso{
 \url{http://factorbook.org}

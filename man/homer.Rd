@@ -33,6 +33,9 @@ Heinz S, Benner C, Spann N, Bertolino E et al. (2010 May 28) Simple Combinations
 \usage{
 homer
 }
+\value{
+\code{\link[MotifDb]{MotifList-class}} object
+}
 \description{
 From the website: "Homer includes several motif databases that are used to help annotate
 results and conduct searches for known motifs.  HOMER contains a custom motif
@@ -42,6 +45,10 @@ for more information on how these files were generated, and Homer's sources.
 }
 \details{
 Load with \code{data(homer)}
+}
+\examples{
+data(homer)
+homer
 }
 \seealso{
 \url{http://homer.salk.edu/homer/index.html} \url{http://homer.salk.edu/homer/motif/motifDatabase.html}

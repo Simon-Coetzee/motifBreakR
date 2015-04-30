@@ -24,7 +24,7 @@ weakly effected \code{c("weak")}, or both \code{c("strg", "weak")}}
 }
 \value{
 plots a figure representing the results of \code{motifbreakR} at the
-  location of a single SNP, returns \code{NULL}.
+  location of a single SNP, returns invisible \code{NULL}.
 }
 \description{
 Plot a genomic region surrounding a genomic variant, and potentially disrupted
@@ -34,6 +34,13 @@ motifs
 \code{plotMB} produces output showing the location of the SNP on the
   chromosome, the surrounding sequence of the + strand, the footprint of any
   motif that is disrupted by the SNP or SNV, and the DNA sequence motif(s)
+}
+\examples{
+data(example.results)
+example.results
+\dontrun{
+plotMB(example.results, "rs7837328", stackmotif = TRUE)
+}
 }
 \seealso{
 See \code{\link{motifbreakR}} for the function that produces output to be
