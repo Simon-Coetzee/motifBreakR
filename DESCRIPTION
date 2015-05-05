@@ -23,7 +23,7 @@ Imports: BiocParallel, compiler, methods, motifStack, BSgenome, BiocGenerics,
   rtracklayer, stringr, IRanges
 Suggests: BSgenome.Hsapiens.UCSC.hg19, SNPlocs.Hsapiens.dbSNP.20120608,
   knitr, BiocStyle, rmarkdown, BSgenome.Drerio.UCSC.danRer7
-License: GPL-3
+License: GPL-2
 LazyData: true
 VignetteBuilder: knitr
 BugReports: https://github.com/Simon-Coetzee/motifbreakR/issues
