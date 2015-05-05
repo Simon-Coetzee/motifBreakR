@@ -1,6 +1,11 @@
 ## motifbreakR
 -----
 
+##### Documentation
+See [http://simon-coetzee.github.io/motifBreakR/](motifbreakR Vignette) for an introduction to `motifbreakR`
+See `help("motifbreakR")` for detailed help with running `motifbreakR`.
+See `help("plotMB")` for detailed help with visualization.
+
 ##### Abstract
 Functional annotation represents a key step toward the understanding and
 interpretation of germline and somatic variation as revealed by genome wide
@@ -33,6 +38,3 @@ biocLite(c("BiocParallel", "motifStack", "BSgenome", "BiocGenerics",
 install.packages("devtools")
 devtools::install_github("Simon-Coetzee/motifBreakR")
 ```
-
-Thus far the vignette is incomplete but see the help for `motifbreakR` and 
-`plotMB` to get started.
