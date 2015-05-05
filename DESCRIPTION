@@ -26,4 +26,5 @@ Suggests: BSgenome.Hsapiens.UCSC.hg19, SNPlocs.Hsapiens.dbSNP.20120608,
 License: GPL-3
 LazyData: true
 VignetteBuilder: knitr
+BugReports: https://github.com/Simon-Coetzee/motifbreakR/issues
 biocViews: ChIPSeq, Visualization, MotifAnnotation
