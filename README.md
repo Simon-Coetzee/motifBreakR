@@ -2,7 +2,7 @@
 -----
 
 ##### Documentation
-See [http://simon-coetzee.github.io/motifBreakR/](motifbreakR Vignette) for an introduction to `motifbreakR`
+See [motifbreakR vignette](http://simon-coetzee.github.io/motifBreakR/) for an introduction to `motifbreakR`
 
 See `help("motifbreakR")` for detailed help with running `motifbreakR`.
 
