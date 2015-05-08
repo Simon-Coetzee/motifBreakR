@@ -656,7 +656,8 @@ addPWM <- function(identifier, ...) {
 }
 
 addPWM.stack <- function(identifier, ...) {
-  ps.file <- "/Users/coetzeesg/stack.ps"
+  psloc <- tempdir()
+  ps.file <- paste(psloc, "stack.ps", sep = "/")
   PostScriptTrace(ps.file, paste0(ps.file, ".xml"))
   motif.figure <- readPicture(paste0(ps.file, ".xml"))
   grid.picture(motif.figure[-1], distort = FALSE)
@@ -800,7 +801,8 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, stackmotif = FALSE, effec
     pwms <- lapply(names(pwms), function(x, pwms=pwms) {new("pfm", mat=pwms[[x]],
                                                           name=x)}, pwms)
     pwms <- DNAmotifAlignment.2snp(pwms, result)
-    postscript(paste("~", "stack.ps", sep = "/"), width = 7, height =  2*length(pwm.names), paper="special", horizontal = FALSE)
+    psloc <- tempdir()
+    postscript(paste(psloc, "stack.ps", sep = "/"), width = 7, height =  2*length(pwm.names), paper="special", horizontal = FALSE)
     plotMotifLogoStack.2(pwms, ncex=1.0)
     dev.off()
   } else {
