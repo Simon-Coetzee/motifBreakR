@@ -50,7 +50,7 @@ wScore <- function(snp.seq, ppm, offset, method = "default", bkg = NULL,
   if (method == "default") {
     returnScore <- scoreDefault(ppm, snp.seq, offset)
   }
-  if (method == "IC") {
+  if (method == "ic") {
     returnScore <- scoreIC(ppm, snp.seq, bkg, offset)
   }
   return(returnScore)
