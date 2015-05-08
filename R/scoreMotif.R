@@ -14,52 +14,47 @@ revcom <- function(ltr) {
   rclist[[ltr]]
 }
 
-## omega weighting function creates weights to be passed into scoreMotif with pwm
-## should be calculated only once per funcisnp run, per motif
-defaultOmega <- function(ppm) {
-  l <- ncol(ppm)
-  omega <- rep(0, length(l))
-  for (i in 1:ncol(ppm)) {
-    omega[i] <- max(ppm[, i]) - min(ppm[, i])
-  }
-  omega
+scoreLog <- function(pwm, sequence, bkg, offset) {
+  pwm <- log(pwm) - log(bkg)
+  vscores <- scoreMotif(sequence, pwm, ncol(pwm), offset = offset)
+  m.range <- rowSums(apply(pwm, 2, function(x) { c(max(x),min(x))}))
+  return((sum(vscores)-m.range[2])/(m.range[1] - m.range[2]))
 }
 
-## information content, see Stormo 2000 PMID: 10812473 eq 2
-defaultIC <- function(ppm, bkg) {
-  ## for ppm with i columns containing letters a,c,g,t:
-  IC <- colSums(ppm * log2(ppm/bkg + 1e-07))
-  return(IC)
+scoreIC <- function(pwm, sequence, bkg, offset) {
+  omegaic <- colSums(pwm * log2(pwm/bkg))
+  vscores <- scoreMotif(sequence, pwm, ncol(pwm), offset = offset)
+  m.range <- rowSums(apply(pwm, 2, function(x) { c(max(x),min(x))}))
+  return((sum(vscores * omegaic)-m.range[2])/(m.range[1] - m.range[2]))
 }
 
-## maxPwm will return the max function of pwm given omega constraints like the
-## defaultOmega fxn, it should be run at a high level w/in the script to reduce
-## overhead
-limitPwm <- function(pwm, limitFun, method = "default", bkg = NULL) {
+#' @importFrom Biostrings maxWeights minWeights
+scoreDefault <- function(pwm, sequence, offset) {
+  omegadefault <- apply(pwm, 2, function(x) {max(x) - min(x)})
+  vscores <- scoreMotif(sequence, pwm, ncol(pwm), offset = offset)
+  m.range <- rowSums(apply(pwm, 2, function(x) { c(max(x),min(x))}))
+  return((sum(vscores * omegadefault)-m.range[2])/(m.range[1] - m.range[2]))
+}
+
+wScore <- function(snp.seq, ppm, offset, method = "default", bkg = NULL,
+                   scount = 20, len) {
   if (is.null(bkg)) {
     bkg <- c(0.25, 0.25, 0.25, 0.25)
   } else {
     bkg <- bkg[c(1, 2, 2, 1)]
   }
-  names(bkg) <- c("A", "C", "G", "T")
-  if (method != "default") {
-    pwm <- pwm/bkg
-  }
-  PWMlimit <- apply(pwm, 2, limitFun)
-  if (method != "default") {
-    PWMlimit <- PWMlimit + 1e-07
+  ppm <- (ppm * scount + 0.25)/(scount + 1)
+  if(method == "log") {
+    returnScore <- scoreLog(ppm, snp.seq, bkg, offset)
   }
   if (method == "default") {
-    omega <- defaultOmega(pwm)
-    vscores <- PWMlimit * omega
-  } else if (method == "log") {
-    vscores <- log(PWMlimit)
-  } else if (method == "IC") {
-    vscores <- PWMlimit * defaultIC(pwm, bkg)
+    returnScore <- scoreDefault(ppm, snp.seq, offset)
   }
-  sum(vscores)
+  if (method == "IC") {
+    returnScore <- scoreIC(ppm, snp.seq, bkg, offset)
+  }
+  return(returnScore)
 }
-
 
 pctScore <- function(score, min.score, max.score) {
   (score - min.score)/(max.score - min.score)
@@ -68,9 +63,7 @@ pctScore <- function(score, min.score, max.score) {
 ## motif scorer, using MotifDb objects returns vector of probabilities based on
 ## the PPM
 #' @importFrom compiler cmpfun
-scoreMotif.a <- function(snp.seq, ppm, len, method = "default",
-                       ag = c(A = 0.25, C = 0.25, G = 0.25, T = 0.25),
-                       offset = 1) {
+scoreMotif.a <- function(snp.seq, ppm, len, offset = 1) {
   snp.seq <- snp.seq[offset:(offset + len - 1)]
   ## diag code
   position.probs <- c(ppm[snp.seq, ])[1 + 0L:(len - 1L) * (len + 1)]
@@ -78,37 +71,9 @@ scoreMotif.a <- function(snp.seq, ppm, len, method = "default",
 }
 scoreMotif <- cmpfun(scoreMotif.a, options = list(optimize = 3))
 
-## create an all purpose scoring algorithm 'w' for weighted
-wScore <- function(snp.seq, ppm, pwm.omega, offset, method = "default", bkg = NULL,
-                   len) {
-  if (is.null(bkg)) {
-    bkg <- c(0.25, 0.25, 0.25, 0.25)
-  } else {
-    bkg <- bkg[c(1, 2, 2, 1)]
-  }
-  if(method != "default") {
-    ppm <- ppm/bkg
-  }
-  vscores <- scoreMotif(snp.seq, ppm, len, method = method, ag = bkg, offset = offset)
-  if (method != "default") {
-    vscores <- vscores + 1e-07
-  }
-  if (method == "default") {
-    returnScore <- sum(vscores * pwm.omega)
-  }
-  if (method == "log") {
-    returnScore <- sum(log(vscores))
-  }
-  if (method == "IC") {
-    returnScore <- sum(vscores * defaultIC(ppm, bkg))
-  }
-  return(returnScore)
-}
-
 ## take a sequence and score all its windows for a pwm
-
-scoreAllWindows <- function(snp.seq, snp.seq.rc, pwm, pwm.omega, pwm.bot, pwm.min,
-                            method = "default", bkg = NULL, from = "default", to = "default") {
+scoreAllWindows <- function(snp.seq, snp.seq.rc, pwm, method = "default",
+                            bkg = NULL, from = "default", to = "default") {
   ## frequently used variables;
   l <- ncol(pwm)
   if (from == "default") {
@@ -123,14 +88,13 @@ scoreAllWindows <- function(snp.seq, snp.seq.rc, pwm, pwm.omega, pwm.bot, pwm.mi
   window.scores <- rep(NA, m)
   window.scores.rc <- rep(NA, m)
   for (i in from:to) {
-    window.scores[i - from + 1] <- wScore(snp.seq, pwm, pwm.omega, offset = i,
+    window.scores[i - from + 1] <- wScore(snp.seq, pwm, offset = i,
                                           method, bkg, len = l)
-    window.scores.rc[i - from + 1] <- wScore(snp.seq.rc, pwm, pwm.omega, offset = i,
+    window.scores.rc[i - from + 1] <- wScore(snp.seq.rc, pwm, offset = i,
                                              method, bkg, len = l)
   }
   all.window.scores <- matrix(data = c(window.scores, window.scores.rc), nrow = 2,
                               ncol = m, byrow = TRUE, dimnames = list(c("top", "bot"), from:to))
-  all.window.scores <- (all.window.scores - pwm.min)/pwm.bot
   return(all.window.scores)
 }
 
@@ -151,7 +115,9 @@ maxThresholdWindows <- function(window.frame, threshold = 0.8) {
     arraycol <- floor(arraymax/2) + arraymax%%2  ## dereference the column (window coord)
     strand <- (2 * (arraymax%%2)) - 1  ## top or bottom strand from odd or even idx
     c(window = arraycol, strand = strand)
-  } else c(window = 0L, strand = 0L)
+  } else {
+    c(window = 0L, strand = 0L)
+  }
 }
 
 ## An evaluator function for SNP effect
@@ -214,10 +180,6 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
   resultSet <- lapply(fsnplist, function(x, l = length(pwmList)) {
     return(rep(x, l))
   })
-  pwmList.omega <- lapply(pwmList, defaultOmega)
-  pwmList.max <- lapply(pwmList, limitPwm, limitFun = max, method = method, bkg = bkg)
-  pwmList.min <- lapply(pwmList, limitPwm, limitFun = min, method = method, bkg = bkg)
-  pwmList.bot <- mapply("-", pwmList.max, pwmList.min)
   strand.opt <- c("+", "-")
   #set.sig <- rep(NA, length(resultSet))
   res.el.e <- new.env()
@@ -246,14 +208,12 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
       ## REF
       pwm <- pwmList[[pwm.i]]
       len <- ncol(pwm)
-      ref.windows <- scoreAllWindows(snp.ref, snp.ref.rc, pwm, pwmList.omega[[pwm.i]],
-                                     pwmList.bot[[pwm.i]], pwmList.min[[pwm.i]], method, bkg = bkg, from = k -
-                                       len + 1, to = k)
+      ref.windows <- scoreAllWindows(snp.ref, snp.ref.rc, pwm, method, bkg = bkg,
+                                     from = k - len + 1, to = k)
       hit.ref <- maxThresholdWindows(ref.windows, threshold = threshold)
       ## ALT
-      alt.windows <- scoreAllWindows(snp.alt, snp.alt.rc, pwm, pwmList.omega[[pwm.i]],
-                                     pwmList.bot[[pwm.i]], pwmList.min[[pwm.i]], method, bkg = bkg, from = k -
-                                       len + 1, to = k)
+      alt.windows <- scoreAllWindows(snp.alt, snp.alt.rc, pwm, method, bkg = bkg,
+                                     from = k - len + 1, to = k)
       hit.alt <- maxThresholdWindows(alt.windows, threshold = threshold)
       if (hit.ref[["strand"]] == 0L && hit.alt[["strand"]] == 0L) {
        # pwm.sig[[pwm.i]] <- FALSE
@@ -670,7 +630,6 @@ selcor <- function(identifier, GdObject, ... ) {
     return(FALSE)
   }
 }
-
 
 selall <- function(identifier, GdObject, ... ) {
     return(TRUE)
