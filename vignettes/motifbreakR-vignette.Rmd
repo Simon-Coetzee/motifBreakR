@@ -57,7 +57,7 @@ Practically `r Githubpkg("Simon-Coetzee/motifBreakR")` has involves three phases
 # How To Use motifbreakR: A Practical Example {#practical}
 This section offers an example of how to use `r Githubpkg("Simon-Coetzee/motifBreakR")` to identify potentially disrupted transcription factor binding sites due to 701 SNPs output from a `r Biocpkg("FunciSNP")` analysis of Prostate Cancer (PCa) genome wide association studies (GWAS) risk loci.
 The SNPs are included in this package here:
-```{r start, cache=TRUE}
+```{r start, cache=TRUE, message=FALSE}
 library(motifbreakR)
 pca.snps.file <- system.file("extdata", "pca.enhancer.snps", package = "motifbreakR")
 pca.snps <- as.character(read.table(pca.snps.file)[,1])
@@ -95,7 +95,7 @@ This first way of importing variants uses the PCa SNPs we found above [`pca.snps
 We use the `r Biocannopkg("SNPlocs.Hsapiens.dbSNP.20120608")` which is the SNP locations and alleles defined in [dbSNP137](http://www.ncbi.nlm.nih.gov/projects/SNP/snp_summary.cgi?view+summary=view+summary&build_id=137) as a source for looking up our rsIDs and `r Biocannopkg("BSgenome.Hsapiens.UCSC.hg19")` which holds the reference sequence for [UCSC genome build hg19](http://www.ncbi.nlm.nih.gov/assembly/2758/)
 
 ```{r fromrsid, message=FALSE, cache=TRUE}
-library(SNPlocs.Hsapiens.dbSNP.20120608) # dbSNP137 in hg19
+library(SNPlocs.Hsapiens.dbSNP142.GRCh37) # dbSNP142 in hg19
 library(BSgenome.Hsapiens.UCSC.hg19)     # hg19 genome
 head(pca.snps)
 snps.mb <- snps.from.rsid(rsid = pca.snps,
@@ -104,7 +104,7 @@ snps.mb <- snps.from.rsid(rsid = pca.snps,
 snps.mb
 ```
 
-A far greater variety of variants may be read into `r Githubpkg("Simon-Coetzee/motifBreakR")` via the `snps.from.bed` function. In fact `r Githubpkg("Simon-Coetzee/motifBreakR")` will work with any organism present as a Bioconductor `r Biocpkg("BSgenome")` package. This includes 76 genomes representing 22 species.
+A far greater variety of variants may be read into `r Githubpkg("Simon-Coetzee/motifBreakR")` via the `snps.from.file` function. In fact `r Githubpkg("Simon-Coetzee/motifBreakR")` will work with any organism present as a Bioconductor `r Biocpkg("BSgenome")` package. This includes 76 genomes representing 22 species.
 
 ```{r whichgenome, message=FALSE, cache=TRUE}
 library(BSgenome)
@@ -121,12 +121,13 @@ snps.bed.file <- system.file("extdata", "snps.bed", package = "motifbreakR")
 # see the contents
 read.table(snps.bed.file, header = FALSE)
 ```
-Seeing as we have some SNPs listed by their rsIDs we can query those by including a SNPlocs object as an argument to `snps.from.bed`
+Seeing as we have some SNPs listed by their rsIDs we can query those by including a SNPlocs object as an argument to `snps.from.file`
 ```{r getbedrs, message=TRUE, cache=TRUE}
 #import the BED file
-snps.mb.frombed <- snps.from.bed(bedfile = snps.bed.file,
-                                 dbSNP = SNPlocs.Hsapiens.dbSNP.20120608,
-                                 search.genome = BSgenome.Hsapiens.UCSC.hg19)
+snps.mb.frombed <- snps.from.file(bedfile = snps.bed.file,
+                                  dbSNP = SNPlocs.Hsapiens.dbSNP.20120608,
+                                  search.genome = BSgenome.Hsapiens.UCSC.hg19,
+                                  format = "bed")
 snps.mb.frombed
 ```
 We see also that one of our custom variants `chr2:12594018:G:A` was actually already included in dbSNP, and was therefor annotated in the output as `rs7601289`
@@ -136,10 +137,13 @@ If our BED file includes no rsIDs, then we may omit the `dbSNP` argument from th
 library(BSgenome.Drerio.UCSC.danRer7)
 snps.bedfile.nors <- system.file("extdata", "danRer.bed", package = "motifbreakR")
 read.table(snps.bedfile.nors, header = FALSE)
-snps.mb.frombed <- snps.from.bed(bedfile = snps.bedfile.nors,
-                                 search.genome = BSgenome.Drerio.UCSC.danRer7)
+snps.mb.frombed <- snps.from.file(bedfile = snps.bedfile.nors,
+                                  search.genome = BSgenome.Drerio.UCSC.danRer7,
+                                  format = "bed")
 snps.mb.frombed
 ```
+
+`snps.from.file` also can take as input a vcf file with SNVs, by using `format = "vcf"`.
 
 ## *Step 2* | Find Broken Motifs
 Now that we have our data in the required format, we may continue to the task at hand, and determine which variants modify potential transcription factor binding. An important element of this task is identifying a set of transcription factor binding motifs that we wish to query. Fortunately `r Biocpkg("MotifDb")` includes a large selection of motifs across multiple species that we can see here:
@@ -176,7 +180,7 @@ Now that we have the three necessary components to run `r Githubpkg("Simon-Coetz
 
 We get to the task of actually running the function `motifbreakR()`.
 
-We have several options that we may pass to the function, the main ones that will dictate how long the function will run with a given set of variants and motifs are the `threshold` we pass and the `method` we use to [score](#methods).  In order of stringency with regard to `method`s are `IC`, `default`, and `log`.  This means that for a given threshold `method="log"` will give the most results and have the lowest specificity, whereas `method="IC"` will give the fewest results with the highest specificity; `method="default"` falls in between, generally closer to `method="IC"`. In order of time to complete, we have `default`, `IC`, and `log` from quickest to slowest.  Default is very computationally inexpensive and returns relatively few results, so it is the fastest, `IC` also returns few results and therefor is second fastest, `log` while the simplest to calculate, returns ~10x the number of results at a given threshold and is therefor much slower.
+We have several options that we may pass to the function, the main ones that will dictate how long the function will run with a given set of variants and motifs are the `threshold` we pass and the `method` we use to [score](#methods).  In order of stringency with regard to `method`s are `ic`, `default`, and `log`.  This means that for a given threshold `method="log"` will give the most results and have the lowest specificity, whereas `method="ic"` will give the fewest results with the highest specificity; `method="default"` falls in between, generally closer to `method="ic"`. In order of time to complete, we have `default`, `ic`, and `log` from quickest to slowest.  Default is very computationally inexpensive and returns relatively few results, so it is the fastest, `ic` also returns few results and therefor is second fastest, `log` while the simplest to calculate, returns ~10x the number of results at a given threshold and is therefor much slower.
 
 Here we specify the `snpList`, `pwmList`, `threshold` that we declare as the cutoff for reporting results, the `method`, and `bkg` the relative nucleotide frequency of A, C, G, and T.
 
@@ -184,7 +188,7 @@ Here we specify the `snpList`, `pwmList`, `threshold` that we declare as the cut
 results <- motifbreakR(snpList = snps.mb,
                        pwmList =  hocomoco,
                        threshold = 0.9,
-                       method = "IC",
+                       method = "ic",
                        bkg = c(A=0.25, C=0.25, G=0.25, T=0.25),
                        BPPARAM = BiocParallel::bpparam())
 results
@@ -207,7 +211,7 @@ By default `motifbreakR` uses `bpparam()` as an arguemnt to `BPPARAM` and will u
 ## *Step 3* | Visualize
 Now that we have our results, we can visualize them with the function `plotMB`.  Lets take a look at rs7837328.
 ```{r plotting, cache=TRUE, fig.retina=2, fig.align='center', fig.height=6, fig.width=6}
-plotMB(results = results, rsid = "rs7837328", stackmotif = TRUE)
+plotMB(results = results, rsid = "rs7837328", stackmotif = TRUE, effect = "strg")
 ```
 
 
@@ -282,7 +286,7 @@ where $b_{i}$ is again the background frequency of the letter $i$.
 Thus, there are 3 possible algorithms to apply via the `method`
 argument. The first is the standard summation of log probabilities
 (`method='log'`). The second and third are the weighted sum and
-information content methods (`method=default` and `method='IC'`) specified by
+information content methods (`method=default` and `method='ic'`) specified by
 equations for [Weighted Sum](#eqn4.1) and [Relative Entropy](#eqn4.2), respectively. `r Githubpkg("Simon-Coetzee/motifBreakR")` assumes a
 uniform background nucleotide distribution ($b$) in equations [4.1](#eqn1) and
 [4.5](#eqn4.1) unless otherwise specified by the user. Since we are primarily

@@ -17,23 +17,31 @@ revcom <- function(ltr) {
 scoreLog <- function(pwm, sequence, bkg, offset) {
   pwm <- log(pwm) - log(bkg)
   vscores <- scoreMotif(sequence, pwm, ncol(pwm), offset = offset)
-  m.range <- rowSums(apply(pwm, 2, function(x) { c(max(x),min(x))}))
+  m.range <- rowSums(apply(pwm, 2, function(x) { c(max(x),
+                                                   min(x))}))
   return((sum(vscores)-m.range[2])/(m.range[1] - m.range[2]))
 }
 
 scoreIC <- function(pwm, sequence, bkg, offset) {
   omegaic <- colSums(pwm * log2(pwm/bkg))
-  vscores <- scoreMotif(sequence, pwm, ncol(pwm), offset = offset)
-  m.range <- rowSums(apply(pwm, 2, function(x) { c(max(x),min(x))}))
-  return((sum(vscores * omegaic)-m.range[2])/(m.range[1] - m.range[2]))
+  vscores <- scoreMotif(sequence, pwm, ncol(pwm), offset = offset) * omegaic
+  omegaic2 <- matrix(data = c(omegaic, omegaic),
+                          nrow = 2,
+                          byrow = TRUE)
+  m.range <- rowSums(apply(pwm, 2, function(x) { c(max(x),
+                                                   min(x))}) * omegaic2)
+  return((sum(vscores)-m.range[2])/(m.range[1] - m.range[2]))
 }
 
-#' @importFrom Biostrings maxWeights minWeights
 scoreDefault <- function(pwm, sequence, offset) {
   omegadefault <- apply(pwm, 2, function(x) {max(x) - min(x)})
-  vscores <- scoreMotif(sequence, pwm, ncol(pwm), offset = offset)
-  m.range <- rowSums(apply(pwm, 2, function(x) { c(max(x),min(x))}))
-  return((sum(vscores * omegadefault)-m.range[2])/(m.range[1] - m.range[2]))
+  vscores <- scoreMotif(sequence, pwm, ncol(pwm), offset = offset) * omegadefault
+  omegadefault2 <- matrix(data = c(omegadefault, omegadefault),
+                          nrow = 2,
+                          byrow = TRUE)
+  m.range <- rowSums(apply(pwm, 2, function(x) { c(max(x),
+                                                   min(x))}) * omegadefault2)
+  return((sum(vscores)-m.range[2])/(m.range[1] - m.range[2]))
 }
 
 wScore <- function(snp.seq, ppm, offset, method = "default", bkg = NULL,
@@ -43,6 +51,7 @@ wScore <- function(snp.seq, ppm, offset, method = "default", bkg = NULL,
   } else {
     bkg <- bkg[c(1, 2, 2, 1)]
   }
+#  ppm <- ppm + 1e-7
   ppm <- (ppm * scount + 0.25)/(scount + 1)
   if(method == "log") {
     returnScore <- scoreLog(ppm, snp.seq, bkg, offset)
@@ -54,10 +63,6 @@ wScore <- function(snp.seq, ppm, offset, method = "default", bkg = NULL,
     returnScore <- scoreIC(ppm, snp.seq, bkg, offset)
   }
   return(returnScore)
-}
-
-pctScore <- function(score, min.score, max.score) {
-  (score - min.score)/(max.score - min.score)
 }
 
 ## motif scorer, using MotifDb objects returns vector of probabilities based on
@@ -73,7 +78,8 @@ scoreMotif <- cmpfun(scoreMotif.a, options = list(optimize = 3))
 
 ## take a sequence and score all its windows for a pwm
 scoreAllWindows <- function(snp.seq, snp.seq.rc, pwm, method = "default",
-                            bkg = NULL, from = "default", to = "default") {
+                            bkg = NULL, from = "default", to = "default",
+                            scount = 20) {
   ## frequently used variables;
   l <- ncol(pwm)
   if (from == "default") {
@@ -89,21 +95,13 @@ scoreAllWindows <- function(snp.seq, snp.seq.rc, pwm, method = "default",
   window.scores.rc <- rep(NA, m)
   for (i in from:to) {
     window.scores[i - from + 1] <- wScore(snp.seq, pwm, offset = i,
-                                          method, bkg, len = l)
+                                          method, bkg, scount, len = l)
     window.scores.rc[i - from + 1] <- wScore(snp.seq.rc, pwm, offset = i,
-                                             method, bkg, len = l)
+                                             method, bkg, scount, len = l)
   }
   all.window.scores <- matrix(data = c(window.scores, window.scores.rc), nrow = 2,
                               ncol = m, byrow = TRUE, dimnames = list(c("top", "bot"), from:to))
   return(all.window.scores)
-}
-
-## argument window.frame is the matrix return value from scoreAllWindows convert
-## scores to percentage score
-
-pctPwm <- function(window.frame, pwm.max, pwm.min, method = "default", bkg = NULL) {
-  window.pcts <- pctScore(window.frame, pwm.min, pwm.max)
-  window.pcts
 }
 
 ## filter percent results to a threshold, e.g. 0.8 (%80), report only max value
@@ -207,13 +205,15 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
     for (pwm.i in seq_along(pwmList)) {
       ## REF
       pwm <- pwmList[[pwm.i]]
+      scount <- as.integer(mcols(pwmList[pwm.i])$sequenceCount)
+      if(is.na(scount)) scount <- 20L
       len <- ncol(pwm)
       ref.windows <- scoreAllWindows(snp.ref, snp.ref.rc, pwm, method, bkg = bkg,
-                                     from = k - len + 1, to = k)
+                                     from = k - len + 1, to = k, scount = scount)
       hit.ref <- maxThresholdWindows(ref.windows, threshold = threshold)
       ## ALT
       alt.windows <- scoreAllWindows(snp.alt, snp.alt.rc, pwm, method, bkg = bkg,
-                                     from = k - len + 1, to = k)
+                                     from = k - len + 1, to = k, scount = scount)
       hit.alt <- maxThresholdWindows(alt.windows, threshold = threshold)
       if (hit.ref[["strand"]] == 0L && hit.alt[["strand"]] == 0L) {
        # pwm.sig[[pwm.i]] <- FALSE
@@ -394,10 +394,10 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #'   you wish to interrogate
 #' @param threshold Numeric; the minimum disruptiveness score for which to
 #'   report results
-#' @param method Character; one of \code{default}, \code{log}, or \code{IC}; see
+#' @param method Character; one of \code{default}, \code{log}, or \code{ic}; see
 #'   details.
 #' @param bkg Numeric Vector; the background probabilites of the nucleotides
-#'   used with method=\code{log} method=\code{IC}
+#'   used with method=\code{log} method=\code{ic}
 #' @param show.neutral Logical; include neutral changes in the output
 #' @param verbose Logical; if running serially, show verbose messages
 #' @param BPPARAM a BiocParallel object see \code{\link[BiocParallel]{register}}
@@ -441,7 +441,7 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #' As an alternative to this method, we introduced a scoring method to
 #' directly weight the score by the importance of the position within the
 #' match sequence. This method of weighting is accessed by specifying
-#' \code{method='IC'} (information content). A general representation
+#' \code{method='ic'} (information content). A general representation
 #' of this scoring method is given by:
 #'
 #' \strong{Equation 2}
@@ -482,7 +482,7 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #' Thus, there are 3 possible algorithms to apply via the \code{method}
 #' argument. The first is the standard summation of log probabilities
 #' (\code{method='log'}). The second and third are the weighted sum and
-#' information content methods (\code{method=default} and \code{method='IC'}) specified by
+#' information content methods (\code{method=default} and \code{method='ic'}) specified by
 #' equations 4.1 and 4.2, respectively. \pkg{motifbreakR} assumes a
 #' uniform background nucleotide distribution (\eqn{b}) in equations 1 and
 #' 4.2 unless otherwise specified by the user. Since we are primarily
@@ -533,7 +533,7 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #'  # run motifbreakR
 #'  results <- motifbreakR(pca.enhancer.snps,
 #'                         motifs, threshold = 0.9,
-#'                         method = "IC",
+#'                         method = "ic",
 #'                         BPPARAM=BiocParallel::SerialParam())
 #' @import BiocParallel
 #' @importFrom BiocParallel bplapply

@@ -18,11 +18,11 @@ you wish to interrogate}
 \item{threshold}{Numeric; the minimum disruptiveness score for which to
 report results}
 
-\item{method}{Character; one of \code{default}, \code{log}, or \code{IC}; see
+\item{method}{Character; one of \code{default}, \code{log}, or \code{ic}; see
 details.}
 
 \item{bkg}{Numeric Vector; the background probabilites of the nucleotides
-used with method=\code{log} method=\code{IC}}
+used with method=\code{log} method=\code{ic}}
 
 \item{show.neutral}{Logical; include neutral changes in the output}
 
@@ -90,7 +90,7 @@ the genome of interest. This method can be specified by the user as
 As an alternative to this method, we introduced a scoring method to
 directly weight the score by the importance of the position within the
 match sequence. This method of weighting is accessed by specifying
-\code{method='IC'} (information content). A general representation
+\code{method='ic'} (information content). A general representation
 of this scoring method is given by:
 
 \strong{Equation 2}
@@ -131,7 +131,7 @@ where \eqn{b_{i}} is again the background frequency of the letter \eqn{i}.
 Thus, there are 3 possible algorithms to apply via the \code{method}
 argument. The first is the standard summation of log probabilities
 (\code{method='log'}). The second and third are the weighted sum and
-information content methods (\code{method=default} and \code{method='IC'}) specified by
+information content methods (\code{method=default} and \code{method='ic'}) specified by
 equations 4.1 and 4.2, respectively. \pkg{motifbreakR} assumes a
 uniform background nucleotide distribution (\eqn{b}) in equations 1 and
 4.2 unless otherwise specified by the user. Since we are primarily
@@ -167,7 +167,7 @@ library(BSgenome.Hsapiens.UCSC.hg19)
  # run motifbreakR
  results <- motifbreakR(pca.enhancer.snps,
                         motifs, threshold = 0.9,
-                        method = "IC",
+                        method = "ic",
                         BPPARAM=BiocParallel::SerialParam())
 }
 \seealso{

@@ -5,7 +5,7 @@
 #'   \code{\link[BSgenome]{injectSNPs}} to check for availible SNPlocs
 #' @param search.genome an object of class BSgenome for the species you are interrogating;
 #'  see \code{\link[BSgenome]{available.genomes}} for a list of species
-#' @seealso See \code{\link{motifbreakR}} for analysis; See \code{\link{snps.from.bed}}
+#' @seealso See \code{\link{motifbreakR}} for analysis; See \code{\link{snps.from.file}}
 #'   for an alternate method for generating a list of variants.
 #' @details \code{snps.from.rsid} take an rsid, or character vector of rsids and
 #'  generates the required object to input into \code{motifbreakR}
@@ -42,7 +42,7 @@ snps.from.rsid <- function(rsid = NULL, dbSNP = NULL,
   }
   if (Reduce("&", !grepl("rs", rsid))) {
     bad.names <- rsid[!grepl("rs", rsid)]
-    stop(paste(paste(bad.names, collapse = " "), "are not rsids, perhaps you want to import your snps from a bed file with snps.from.bed()?"))
+    stop(paste(paste(bad.names, collapse = " "), "are not rsids, perhaps you want to import your snps from a bed or vcf file with snps.from.file()?"))
   }
   rsid.grange <- snpid2grange(dbSNP, rsid)
   rsid.grange <- change.to.search.genome(rsid.grange, search.genome)
@@ -110,7 +110,7 @@ change.to.search.genome <- function(granges.object, search.genome) {
 strSort <- function(x) {
   sapply(lapply(strsplit(x, NULL), sort), paste, collapse = "")
 }
-#' Import SNPs from a BED file for use in motifbreakR
+#' Import SNPs from a BED file or VCF file for use in motifbreakR
 #'
 #' @param bedfile Character; a character containing the path to a bed file
 #'   see Details for a description of the required format
@@ -118,9 +118,10 @@ strSort <- function(x) {
 #'   \code{\link[BSgenome]{injectSNPs}} to check for availible SNPlocs
 #' @param search.genome an object of class BSgenome for the species you are interrogating;
 #'  see \code{\link[BSgenome]{available.genomes}} for a list of species
+#' @param format Character; one of \code{bed} or \code{vcf}
 #' @seealso See \code{\link{motifbreakR}} for analysis; See \code{\link{snps.from.rsid}}
 #'   for an alternate method for generating a list of variants.
-#' @details \code{snps.from.bed} takes a character vector describing the file path
+#' @details \code{snps.from.file} takes a character vector describing the file path
 #'  to a bed file that contains the necissary information to generate the input for
 #'  \code{motifbreakR} see \url{http://www.genome.ucsc.edu/FAQ/FAQformat.html#format1}
 #'  for a complete description of the BED format.  Our convention deviates in that there
@@ -141,23 +142,77 @@ strSort <- function(x) {
 #'  # see the contents
 #'  read.table(snps.bed.file, header = FALSE)
 #'  #import the BED file
-#'  snps.mb <- snps.from.bed(snps.bed.file,
-#'                           search.genome = BSgenome.Drerio.UCSC.danRer7)
+#'  snps.mb <- snps.from.file(snps.bed.file,
+#'                            search.genome = BSgenome.Drerio.UCSC.danRer7,
+#'                            format = "bed")
 #'
 #' @importFrom rtracklayer import.bed
 #' @importFrom Biostrings IUPAC_CODE_MAP
-#' @importFrom GenomicRanges findOverlaps queryHits subjectHits
+#' @importFrom GenomicRanges findOverlaps queryHits subjectHits rowRanges
 #' @importFrom GenomeInfoDb commonName sortSeqlevels
 #' @importFrom BiocGenerics sapply
+#' @importFrom VariantAnnotation readVcf
 #' @export
-snps.from.bed <- function(bedfile = NULL, dbSNP = NULL, search.genome = NULL) {
-  snps <- import.bed(bedfile)
-  if (Reduce("|", grepl("rs", snps$name)) & (!inherits(dbSNP, "SNPlocs"))) {
-    stop(paste0(bedfile, " contains at least one variant with an rsID and no SNPlocs has been indicated\n",
-                "Please run availible.SNPs() to check for availble SNPlocs"))
+snps.from.file <- function(bedfile = NULL, dbSNP = NULL, search.genome = NULL, format = "bed") {
+  if(format != "bed" | format != "vcf") {
+    stop("format must be one of 'vcf' or 'bed'; currently set as ", format)
   }
-  if (!inherits(search.genome, "BSgenome")) {
-    stop(paste0(search.genome, " is not a BSgenome object.\n", "Run availible.genomes() and choose the appropriate BSgenome object"))
+  if(format == "vcf"){
+    if (!inherits(search.genome, "BSgenome")) {
+      stop(paste0(search.genome, " is not a BSgenome object.\n", "Run availible.genomes() and choose the appropriate BSgenome object"))
+    }
+    genome.name <- genome(search.genome)[[1]]
+    snps <- rowRanges(readVcf(vcf), genome.name)
+    numsplits <- lapply(snps$ALT, length)
+    snpnames <- names(snps)
+    snps <- split(snps, names(snps))
+    snps <- snps[order(match(names(snps), snpnames)), ]
+    snps <- Map(rep.int, snps, numsplits)
+    for(index in seq_along(numsplits)) {
+      numsplit <- 1:numsplits[[index]]
+      for(num in numsplit) {
+        snps[[index]]$ALT[[num]] <- snps[[index]]$ALT[[num]][[num]]
+        if(length(numsplit) > 1) {
+          names(snps[[index]])[num] <- paste(names(snps[[index]][num]), snps[[index]]$ALT[[num]], sep = ":")
+        }
+      }
+    }
+    snps <- unlist(GRangesList(snps), use.names = FALSE)
+    snps$ALT <- sapply(snps$ALT, as.character)
+    snps$REF <- sapply(snps$REF, as.character)
+    snps.ambi <- motifbreakR:::strSort(paste0(snps$ALT, snps$REF))
+    IUPAC_code_revmap <- names(IUPAC_CODE_MAP)
+    names(IUPAC_code_revmap) <- IUPAC_CODE_MAP
+    snps.ambi <- IUPAC_code_revmap[snps.ambi]
+    names(snps.ambi) <- NULL
+    snps$alleles_as_ambig <- snps.ambi
+    snps$SNP_id <- names(snps)
+    mcols(snps) <- mcols(snps)[, c("SNP_id", "alleles_as_ambig", "REF", "ALT")]
+    snps$REF <- DNAStringSet(snps$REF)
+    snps$ALT <- DNAStringSet(snps$ALT)
+    snps$alleles_as_ambig[is.na(snps$alleles_as_ambig)] <- ""
+    snps$alleles_as_ambig <- DNAStringSet(snps$alleles_as_ambig)
+    seqlevels(snps) <- paste0("chr", seqlevels(snps))
+    snps <- change.to.search.genome(snps, search.genome)
+    can.ref <- getSeq(search.genome, snps)
+    if(isTRUE(all.equal(snps.noid.ref, snps.noid.ref.user))) {
+      rm(can.ref)
+    } else {
+      warning(paste0("User selected reference allele differs from the sequence in ",
+                     attributes(search.genome)$pkgname, " continuing with genome specified",
+                     " reference allels\n", "there are ", sum(snps$REF != can.ref),
+                     " differences"))
+    }
+  }
+  if(format == "bed") {
+    snps <- import.bed(bedfile)
+    if (Reduce("|", grepl("rs", snps$name)) & (!inherits(dbSNP, "SNPlocs"))) {
+      stop(paste0(bedfile, " contains at least one variant with an rsID and no SNPlocs has been indicated\n",
+                  "Please run availible.SNPs() to check for availble SNPlocs"))
+    }
+    if (!inherits(search.genome, "BSgenome")) {
+      stop(paste0(search.genome, " is not a BSgenome object.\n", "Run availible.genomes() and choose the appropriate BSgenome object"))
+    }
   }
   ## spit snps into named and unnamed snps
   snps.noid <- snps[!grepl("rs", snps$name), ]
@@ -261,3 +316,4 @@ snps.from.bed <- function(bedfile = NULL, dbSNP = NULL, search.genome = NULL) {
   attributes(snps.out)$genome.package <- attributes(search.genome)$pkgname
   return(snps.out)
 }
+
