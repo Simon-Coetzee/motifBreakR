@@ -2,7 +2,7 @@
 % Please edit documentation in R/locus.from.rsid.R
 \name{snps.from.file}
 \alias{snps.from.file}
-\title{Import SNPs from a BED file for use in motifbreakR}
+\title{Import SNPs from a BED file or VCF file for use in motifbreakR}
 \usage{
 snps.from.file(bedfile = NULL, dbSNP = NULL, search.genome = NULL,
   format = "bed")
@@ -16,6 +16,8 @@ see Details for a description of the required format}
 
 \item{search.genome}{an object of class BSgenome for the species you are interrogating;
 see \code{\link[BSgenome]{available.genomes}} for a list of species}
+
+\item{format}{Character; one of \code{bed} or \code{vcf}}
 }
 \value{
 a GRanges object containing:
@@ -26,10 +28,10 @@ a GRanges object containing:
  \item{ALT}{The alternate allele for the SNP}
 }
 \description{
-Import SNPs from a BED file for use in motifbreakR
+Import SNPs from a BED file or VCF file for use in motifbreakR
 }
 \details{
-\code{snps.from.bed} takes a character vector describing the file path
+\code{snps.from.file} takes a character vector describing the file path
  to a bed file that contains the necissary information to generate the input for
  \code{motifbreakR} see \url{http://www.genome.ucsc.edu/FAQ/FAQformat.html#format1}
  for a complete description of the BED format.  Our convention deviates in that there
@@ -45,8 +47,9 @@ library(BSgenome.Drerio.UCSC.danRer7)
  # see the contents
  read.table(snps.bed.file, header = FALSE)
  #import the BED file
- snps.mb <- snps.from.bed(snps.bed.file,
-                          search.genome = BSgenome.Drerio.UCSC.danRer7)
+ snps.mb <- snps.from.file(snps.bed.file,
+                           search.genome = BSgenome.Drerio.UCSC.danRer7,
+                           format = "bed")
 }
 \seealso{
 See \code{\link{motifbreakR}} for analysis; See \code{\link{snps.from.rsid}}

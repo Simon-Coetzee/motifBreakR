@@ -154,7 +154,7 @@ strSort <- function(x) {
 #' @importFrom VariantAnnotation readVcf
 #' @export
 snps.from.file <- function(bedfile = NULL, dbSNP = NULL, search.genome = NULL, format = "bed") {
-  if(format != "bed" | format != "vcf") {
+  if(format != "bed" & format != "vcf") {
     stop("format must be one of 'vcf' or 'bed'; currently set as ", format)
   }
   if(format == "vcf"){

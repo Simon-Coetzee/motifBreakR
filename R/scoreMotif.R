@@ -14,53 +14,40 @@ revcom <- function(ltr) {
   rclist[[ltr]]
 }
 
-scoreLog <- function(pwm, sequence, bkg, offset) {
+scoreLog <- function(pwm, sequence, bkg, offset, pwm.range) {
   pwm <- log(pwm) - log(bkg)
   vscores <- scoreMotif(sequence, pwm, ncol(pwm), offset = offset)
-  m.range <- rowSums(apply(pwm, 2, function(x) { c(max(x),
-                                                   min(x))}))
-  return((sum(vscores)-m.range[2])/(m.range[1] - m.range[2]))
+  return((sum(vscores)-pwm.range[1])/(pwm.range[2] - pwm.range[1]))
 }
 
-scoreIC <- function(pwm, sequence, bkg, offset) {
-  omegaic <- colSums(pwm * log2(pwm/bkg))
-  vscores <- scoreMotif(sequence, pwm, ncol(pwm), offset = offset) * omegaic
-  omegaic2 <- matrix(data = c(omegaic, omegaic),
-                          nrow = 2,
-                          byrow = TRUE)
-  m.range <- rowSums(apply(pwm, 2, function(x) { c(max(x),
-                                                   min(x))}) * omegaic2)
-  return((sum(vscores)-m.range[2])/(m.range[1] - m.range[2]))
+#' @importFrom matrixStats colRanges
+scoreIC <- function(pwm, sequence, bkg, offset, pwm.range, omega) {
+  vscores <- scoreMotif(sequence, pwm, ncol(pwm), offset = offset) * omega
+  return((sum(vscores)-pwm.range[1])/(pwm.range[2] - pwm.range[1]))
 }
 
-scoreDefault <- function(pwm, sequence, offset) {
-  omegadefault <- apply(pwm, 2, function(x) {max(x) - min(x)})
-  vscores <- scoreMotif(sequence, pwm, ncol(pwm), offset = offset) * omegadefault
-  omegadefault2 <- matrix(data = c(omegadefault, omegadefault),
-                          nrow = 2,
-                          byrow = TRUE)
-  m.range <- rowSums(apply(pwm, 2, function(x) { c(max(x),
-                                                   min(x))}) * omegadefault2)
-  return((sum(vscores)-m.range[2])/(m.range[1] - m.range[2]))
+#' @importFrom matrixStats colMaxs colMins
+scoreDefault <- function(pwm, sequence, offset, pwm.range, omega) {
+  vscores <- scoreMotif(sequence, pwm, ncol(pwm), offset = offset) * omega
+  return((sum(vscores)-pwm.range[1])/(pwm.range[2] - pwm.range[1]))
 }
 
 wScore <- function(snp.seq, ppm, offset, method = "default", bkg = NULL,
-                   scount = 20, len) {
+                   pwm.range, omega, len) {
   if (is.null(bkg)) {
     bkg <- c(0.25, 0.25, 0.25, 0.25)
   } else {
     bkg <- bkg[c(1, 2, 2, 1)]
   }
 #  ppm <- ppm + 1e-7
-  ppm <- (ppm * scount + 0.25)/(scount + 1)
   if(method == "log") {
-    returnScore <- scoreLog(ppm, snp.seq, bkg, offset)
+    returnScore <- scoreLog(ppm, snp.seq, bkg, offset, pwm.range)
   }
   if (method == "default") {
-    returnScore <- scoreDefault(ppm, snp.seq, offset)
+    returnScore <- scoreDefault(ppm, snp.seq, offset, pwm.range, omega)
   }
   if (method == "ic") {
-    returnScore <- scoreIC(ppm, snp.seq, bkg, offset)
+    returnScore <- scoreIC(ppm, snp.seq, bkg, offset, pwm.range, omega)
   }
   return(returnScore)
 }
@@ -79,7 +66,7 @@ scoreMotif <- cmpfun(scoreMotif.a, options = list(optimize = 3))
 ## take a sequence and score all its windows for a pwm
 scoreAllWindows <- function(snp.seq, snp.seq.rc, pwm, method = "default",
                             bkg = NULL, from = "default", to = "default",
-                            scount = 20) {
+                            pwm.range, omega) {
   ## frequently used variables;
   l <- ncol(pwm)
   if (from == "default") {
@@ -95,9 +82,9 @@ scoreAllWindows <- function(snp.seq, snp.seq.rc, pwm, method = "default",
   window.scores.rc <- rep(NA, m)
   for (i in from:to) {
     window.scores[i - from + 1] <- wScore(snp.seq, pwm, offset = i,
-                                          method, bkg, scount, len = l)
+                                          method, bkg, pwm.range, omega, len = l)
     window.scores.rc[i - from + 1] <- wScore(snp.seq.rc, pwm, offset = i,
-                                             method, bkg, scount, len = l)
+                                             method, bkg, pwm.range, omega, len = l)
   }
   all.window.scores <- matrix(data = c(window.scores, window.scores.rc), nrow = 2,
                               ncol = m, byrow = TRUE, dimnames = list(c("top", "bot"), from:to))
@@ -178,6 +165,28 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
   resultSet <- lapply(fsnplist, function(x, l = length(pwmList)) {
     return(rep(x, l))
   })
+  scounts <- as.integer(mcols(pwmList)$sequenceCount)
+  scounts[is.na(scounts)] <- 20L
+  pwmList.pc <- Map(function(pwm, scount) {
+                      pwm <- (pwm * scount + 0.25)/(scount + 1)
+                    }, pwmList, scounts)
+  if(method == "ic") {
+    pwmOmegas <- lapply(pwmList, function(pwm, b=bkg) {
+                          omegaic <- colSums(pwm * log2(pwm/b))
+                        })
+  }
+  if(method == "default") {
+    pwmOmegas <- lapply(pwmList, function(pwm) {
+                          omegadefault <- colMaxs(pwm) - colMins(pwm)
+                        })
+  }
+  if(method == "log") {
+    pwmOmegas <- 1
+  }
+  pwmRanges <- Map(function(pwm, omega) {
+                     x <- colSums(colRanges(pwm) * omega)
+                     return(x)
+                   }, pwmList, pwmOmegas)
   strand.opt <- c("+", "-")
   #set.sig <- rep(NA, length(resultSet))
   res.el.e <- new.env()
@@ -204,16 +213,16 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
     #pwm.sig <- rep(NA, length(res.el))
     for (pwm.i in seq_along(pwmList)) {
       ## REF
-      pwm <- pwmList[[pwm.i]]
-      scount <- as.integer(mcols(pwmList[pwm.i])$sequenceCount)
-      if(is.na(scount)) scount <- 20L
+      pwm <- pwmList.pc[[pwm.i]]
       len <- ncol(pwm)
       ref.windows <- scoreAllWindows(snp.ref, snp.ref.rc, pwm, method, bkg = bkg,
-                                     from = k - len + 1, to = k, scount = scount)
+                                     from = k - len + 1, to = k, pwm.range = pwmRanges[[pwm.i]],
+                                     omega = pwmOmegas[[pwm.i]])
       hit.ref <- maxThresholdWindows(ref.windows, threshold = threshold)
       ## ALT
       alt.windows <- scoreAllWindows(snp.alt, snp.alt.rc, pwm, method, bkg = bkg,
-                                     from = k - len + 1, to = k, scount = scount)
+                                     from = k - len + 1, to = k, pwm.range = pwmRanges[[pwm.i]],
+                                     omega = pwmOmegas[[pwm.i]])
       hit.alt <- maxThresholdWindows(alt.windows, threshold = threshold)
       if (hit.ref[["strand"]] == 0L && hit.alt[["strand"]] == 0L) {
        # pwm.sig[[pwm.i]] <- FALSE

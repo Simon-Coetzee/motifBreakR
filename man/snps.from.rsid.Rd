@@ -40,7 +40,7 @@ library(BSgenome.Hsapiens.UCSC.hg19)
                            search.genome = BSgenome.Hsapiens.UCSC.hg19)
 }
 \seealso{
-See \code{\link{motifbreakR}} for analysis; See \code{\link{snps.from.bed}}
+See \code{\link{motifbreakR}} for analysis; See \code{\link{snps.from.file}}
   for an alternate method for generating a list of variants.
 }
 
