@@ -39,7 +39,6 @@ wScore <- function(snp.seq, ppm, offset, method = "default", bkg = NULL,
   } else {
     bkg <- bkg[c(1, 2, 2, 1)]
   }
-#  ppm <- ppm + 1e-7
   if(method == "log") {
     returnScore <- scoreLog(ppm, snp.seq, bkg, offset, pwm.range)
   }
@@ -171,12 +170,12 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
                       pwm <- (pwm * scount + 0.25)/(scount + 1)
                     }, pwmList, scounts)
   if(method == "ic") {
-    pwmOmegas <- lapply(pwmList, function(pwm, b=bkg) {
+    pwmOmegas <- lapply(pwmList.pc, function(pwm, b=bkg) {
                           omegaic <- colSums(pwm * log2(pwm/b))
                         })
   }
   if(method == "default") {
-    pwmOmegas <- lapply(pwmList, function(pwm) {
+    pwmOmegas <- lapply(pwmList.pc, function(pwm) {
                           omegadefault <- colMaxs(pwm) - colMins(pwm)
                         })
   }
@@ -186,7 +185,7 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
   pwmRanges <- Map(function(pwm, omega) {
                      x <- colSums(colRanges(pwm) * omega)
                      return(x)
-                   }, pwmList, pwmOmegas)
+                   }, pwmList.pc, pwmOmegas)
   strand.opt <- c("+", "-")
   #set.sig <- rep(NA, length(resultSet))
   res.el.e <- new.env()
@@ -209,8 +208,6 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
     res.el$alleleRef <- as.numeric(NA)
     res.el$alleleAlt <- as.numeric(NA)
     res.el$effect <- as.character(NA)
-    #res.el.e <- list2env(as.list(split(res.el, 1:length(res.el))), parent = emptyenv())
-    #pwm.sig <- rep(NA, length(res.el))
     for (pwm.i in seq_along(pwmList)) {
       ## REF
       pwm <- pwmList.pc[[pwm.i]]
@@ -224,121 +221,40 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
                                      from = k - len + 1, to = k, pwm.range = pwmRanges[[pwm.i]],
                                      omega = pwmOmegas[[pwm.i]])
       hit.alt <- maxThresholdWindows(alt.windows, threshold = threshold)
-      if (hit.ref[["strand"]] == 0L && hit.alt[["strand"]] == 0L) {
-       # pwm.sig[[pwm.i]] <- FALSE
+      if (hit.ref[["strand"]] != 0L) {
+        hit <- hit.ref
       } else {
-        if (hit.ref[["strand"]] != 0L) {
-          hit <- hit.ref
-          snp.pos <- len - hit[["window"]] + 1
-          result <- res.el[pwm.i]
-          uniquename <- paste(names(result), result$dataSource, result$providerName, result$providerId, sep = "%%")
-          if (hit[["strand"]] == 1L) {
-            allelR <- pwm[as.character(result$REF), snp.pos]
-            allelA <- pwm[as.character(result$ALT), snp.pos]
-          } else {
-            allelR <- pwm[as.character(complement(result$REF)), snp.pos]
-            allelA <- pwm[as.character(complement(result$ALT)), snp.pos]
-          }
-          effect <- snpEff(allelR, allelA)
-          if (effect == "neut") {
-            if (show.neutral) {
-              res.el.e[[uniquename]] <- updateResults(result, snp.ref, snp.pos,
-                                                      hit, ref.windows, alt.windows, allelR, allelA, effect, len,
-                                                      k, pwm)
-              #res.el.tmp <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
-              #                            hit, ref.windows, alt.windows, allelR, allelA, effect, len,
-              #                            k, pwm)
-              #mcols(res.el)[pwm.i, ] <- mcols(res.el.tmp)
-              #ranges(res.el)[pwm.i] <- ranges(res.el.tmp)
-              #strand(res.el)[pwm.i] <- strand(res.el.tmp)
-              #res.el[pwm.i] <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
-              #                               hit, ref.windows, alt.windows, allelR, allelA, effect, len,
-              #                               k, pwm)
-             # pwm.sig[[pwm.i]] <- TRUE
-            } else {
-             # pwm.sig[[pwm.i]] <- FALSE
-            }
-          } else {
-            res.el.e[[uniquename]] <- updateResults(result, snp.ref, snp.pos,
-                                                    hit, ref.windows, alt.windows, allelR, allelA, effect, len,
-                                                    k, pwm)
-            #             res.el.tmp <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
-            #                                         hit, ref.windows, alt.windows, allelR, allelA, effect, len,
-            #                                         k, pwm)
-            #             mcols(res.el)[pwm.i, ] <- mcols(res.el.tmp)
-            #             ranges(res.el)[pwm.i] <- ranges(res.el.tmp)
-            #             strand(res.el)[pwm.i] <- strand(res.el.tmp)
-            #res.el[pwm.i] <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
-            #                               hit, ref.windows, alt.windows, allelR, allelA, effect, len,
-            #                               k, pwm)
-            #pwm.sig[[pwm.i]] <- TRUE
-          }
-        }
-        if (hit.alt[["strand"]] != 0L && hit.alt[["window"]] != hit.ref[["window"]]) {
+        if(hit.alt[["strand"]] != 0L && hit.alt[["window"]] != hit.ref[["window"]]) {
           hit <- hit.alt
-          snp.pos <- len - hit[["window"]] + 1
-          result <- res.el[pwm.i]
-          uniquename <- paste(names(result), result$dataSource, result$providerName, result$providerId, sep = "%%")
-          if (hit[["strand"]] == 1L) {
-            allelR <- pwm[as.character(result$REF), snp.pos]
-            allelA <- pwm[as.character(result$ALT), snp.pos]
-          } else {
-            allelR <- pwm[as.character(complement(result$REF)), snp.pos]
-            allelA <- pwm[as.character(complement(result$ALT)), snp.pos]
-          }
-          effect <- snpEff(allelR, allelA)
-          if (effect == "neut") {
-            if (show.neutral) {
-              res.el.e[[uniquename]] <- updateResults(result, snp.ref, snp.pos,
-                                                      hit, ref.windows, alt.windows, allelR, allelA, effect, len,
-                                                      k, pwm)
-              #               res.el.tmp <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
-              #                                           hit, ref.windows, alt.windows, allelR, allelA, effect, len,
-              #                                           k, pwm)
-              #               mcols(res.el)[pwm.i, ] <- mcols(res.el.tmp)
-              #               ranges(res.el)[pwm.i] <- ranges(res.el.tmp)
-              #               strand(res.el)[pwm.i] <- strand(res.el.tmp)
-              #res.el[pwm.i] <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
-              #                               hit, ref.windows, alt.windows, allelR, allelA, effect, len,
-              #                               k, pwm)
-              #pwm.sig[[pwm.i]] <- TRUE
-            } else {
-              #pwm.sig[[pwm.i]] <- FALSE
-            }
-          } else {
+        }
+        hit <-NULL
+      }
+      if(!is.null(hit)) {
+        snp.pos <- len - hit[["window"]] + 1
+        result <- res.el[pwm.i]
+        uniquename <- paste(names(result), result$dataSource, result$providerName, result$providerId, sep = "%%")
+        if (hit[["strand"]] == 1L) {
+          allelR <- pwm[as.character(result$REF), snp.pos]
+          allelA <- pwm[as.character(result$ALT), snp.pos]
+        } else {
+          allelR <- pwm[as.character(complement(result$REF)), snp.pos]
+          allelA <- pwm[as.character(complement(result$ALT)), snp.pos]
+        }
+        effect <- snpEff(allelR, allelA)
+        if (effect == "neut") {
+          if (show.neutral) {
             res.el.e[[uniquename]] <- updateResults(result, snp.ref, snp.pos,
                                                     hit, ref.windows, alt.windows, allelR, allelA, effect, len,
                                                     k, pwm)
-            #             res.el.tmp <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
-            #                                         hit, ref.windows, alt.windows, allelR, allelA, effect, len,
-            #                                         k, pwm)
-            #             mcols(res.el)[pwm.i, ] <- mcols(res.el.tmp)
-            #             ranges(res.el)[pwm.i] <- ranges(res.el.tmp)
-            #             strand(res.el)[pwm.i] <- strand(res.el.tmp)
-            #res.el[pwm.i] <- updateResults(res.el[pwm.i], snp.ref, snp.pos,
-            #                               hit, ref.windows, alt.windows, allelR, allelA, effect, len,
-            #                               k, pwm)
-            #pwm.sig[[pwm.i]] <- TRUE
           }
+        } else {
+          res.el.e[[uniquename]] <- updateResults(result, snp.ref, snp.pos,
+                                                hit, ref.windows, alt.windows, allelR, allelA, effect, len,
+                                                k, pwm)
         }
       }
     }
-#    if (verbose) {
-#      message(names(res.el[1]))
-#      message(paste0("number of broken motifs = ", sum(pwm.sig)))
-#    }
-    #res.el.sldfkjds <<- res.el.e
-    #stop('here')
-
-    #res.el <- res.el[pwm.sig]
-    #if (length(res.el) > 0) {
-    #  resultSet[[snp.map.i]] <- res.el
-    #  set.sig[[snp.map.i]] <- TRUE
-    #} else {
-    #  set.sig[[snp.map.i]] <- FALSE
-    #}
   }
-  #resultSet <- resultSet[set.sig]
   resultSet <- unlist(GRangesList(as.list.environment(res.el.e)), use.names = FALSE)
   if (length(resultSet) < 1) {
     if (verbose) {
@@ -348,7 +264,6 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
     }
     return(NULL)
   } else {
-    #resultSet <- unlist(GRangesList(resultSet), use.names = F)
     mcols(resultSet) <- mcols(resultSet)[, -(1:2)]
     if (verbose) {
       message(paste("reached end of SNPs list length =", length(fsnplist),
@@ -368,7 +283,7 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
   strand(result) <- strand.opt[strand]
   mresult <- mcols(result)
   mresult[["snpPos"]] <- start(result)
-  mresult[["motifPos"]] <- snp.pos
+  mresult[["motifPos"]] <- as.integer(snp.pos)
   if (strand == 2) {
     matchs <- snp.seq[(k - hit[["window"]] + 1):(k - hit[["window"]] + len)]
     matchs[-hit[["window"]]] <- tolower(matchs[-hit[["window"]]])

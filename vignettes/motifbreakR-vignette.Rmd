@@ -172,6 +172,9 @@ hocomoco
 ```
 See `?motifbreakR_motif` for more information and citations.
 
+
+Some of our datasets include a sequenceCount. These include `FlyFactorSurvey`, `hPDI`, `JASPAR_2014`, `JASPAR_CORE`, and `jolma2013` from `r Biocpkg("MotifDb")` and `HOCOMOCO` from the set of `motifbreakR_motif`. Using these we calculate a pseudocount to allow us to calculate the logarithms in the case where we have a `0` in a pwm.  The calculation for incorporating pseudocounts is `ppm <- (ppm * sequenceCount + 0.25)/(sequenceCount + 1)`.  If the sequenceCount for a particular ppm is `NA` we use 20 as a default sequenceCount.
+
 Now that we have the three necessary components to run `r Githubpkg("Simon-Coetzee/motifBreakR")`:
 
 1. A `BSgenome` object for our organism, in this case `BSgenome.Hsapiens.UCSC.hg19`
