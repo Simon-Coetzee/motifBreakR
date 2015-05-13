@@ -112,7 +112,7 @@ strSort <- function(x) {
 }
 #' Import SNPs from a BED file or VCF file for use in motifbreakR
 #'
-#' @param bedfile Character; a character containing the path to a bed file
+#' @param file Character; a character containing the path to a bed file or a vcf file
 #'   see Details for a description of the required format
 #' @param dbSNP OPTIONAL; an object of class SNPlocs to lookup rsids; see \code{availible.SNPs} in
 #'   \code{\link[BSgenome]{injectSNPs}} to check for availible SNPlocs
@@ -153,7 +153,7 @@ strSort <- function(x) {
 #' @importFrom BiocGenerics sapply
 #' @importFrom VariantAnnotation readVcf
 #' @export
-snps.from.file <- function(bedfile = NULL, dbSNP = NULL, search.genome = NULL, format = "bed") {
+snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, format = "bed") {
   if(format != "bed" & format != "vcf") {
     stop("format must be one of 'vcf' or 'bed'; currently set as ", format)
   }
