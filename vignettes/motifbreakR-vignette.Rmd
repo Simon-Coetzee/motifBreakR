@@ -92,10 +92,10 @@ More to the point here are the two methods for reading in the variants.
 
 This first way of importing variants uses the PCa SNPs we found above [`pca.snps`](#practical).
 
-We use the `r Biocannopkg("SNPlocs.Hsapiens.dbSNP.20120608")` which is the SNP locations and alleles defined in [dbSNP137](http://www.ncbi.nlm.nih.gov/projects/SNP/snp_summary.cgi?view+summary=view+summary&build_id=137) as a source for looking up our rsIDs and `r Biocannopkg("BSgenome.Hsapiens.UCSC.hg19")` which holds the reference sequence for [UCSC genome build hg19](http://www.ncbi.nlm.nih.gov/assembly/2758/)
+We use the `r Biocannopkg("SNPlocs.Hsapiens.dbSNP.20120608")` which is the SNP locations and alleles defined in [dbSNP137](http://www.ncbi.nlm.nih.gov/projects/SNP/snp_summary.cgi?view+summary=view+summary&build_id=137) as a source for looking up our rsIDs and `r Biocannopkg("BSgenome.Hsapiens.UCSC.hg19")` which holds the reference sequence for [UCSC genome build hg19](http://www.ncbi.nlm.nih.gov/assembly/2758/). `r Biocannopkg("SNPlocs.Hsapiens.dbSNP142.GRCh37")` is also available now.
 
 ```{r fromrsid, message=FALSE, cache=TRUE}
-library(SNPlocs.Hsapiens.dbSNP142.GRCh37) # dbSNP142 in hg19
+library(SNPlocs.Hsapiens.dbSNP.20120608) # dbSNP137 in hg19
 library(BSgenome.Hsapiens.UCSC.hg19)     # hg19 genome
 head(pca.snps)
 snps.mb <- snps.from.rsid(rsid = pca.snps,
@@ -173,7 +173,7 @@ hocomoco
 See `?motifbreakR_motif` for more information and citations.
 
 
-Some of our datasets include a sequenceCount. These include `FlyFactorSurvey`, `hPDI`, `JASPAR_2014`, `JASPAR_CORE`, and `jolma2013` from `r Biocpkg("MotifDb")` and `HOCOMOCO` from the set of `motifbreakR_motif`. Using these we calculate a pseudocount to allow us to calculate the logarithms in the case where we have a `0` in a pwm.  The calculation for incorporating pseudocounts is `ppm <- (ppm * sequenceCount + 0.25)/(sequenceCount + 1)`.  If the sequenceCount for a particular ppm is `NA` we use 20 as a default sequenceCount.
+Some of our data sets include a sequenceCount. These include `FlyFactorSurvey`, `hPDI`, `JASPAR_2014`, `JASPAR_CORE`, and `jolma2013` from `r Biocpkg("MotifDb")` and `HOCOMOCO` from the set of `motifbreakR_motif`. Using these we calculate a pseudocount to allow us to calculate the logarithms in the case where we have a `0` in a pwm.  The calculation for incorporating pseudocounts is `ppm <- (ppm * sequenceCount + 0.25)/(sequenceCount + 1)`.  If the sequenceCount for a particular ppm is `NA` we use 20 as a default sequenceCount.
 
 Now that we have the three necessary components to run `r Githubpkg("Simon-Coetzee/motifBreakR")`:
 
@@ -201,15 +201,15 @@ The results reveal which variants disrupt which motifs, and to which degree.  If
 rs7837328 <- results[names(results) %in% "rs7837328"]
 rs7837328
 ```
-Here we can see that snp rs7837328 disrupts multiple motifs to a degree above the 0.9 threshold that we required. The `seqMatch` column shows what the reference genome sequence is at that location, with the variant position appearing in an uppercase letter. pctRef and pctAlt display the the score for the motif in the sequence as a percentage of the best score that motif could achieve on an ideal sequence. In other words $(scoreVariant-minscorePWM)/(maxscorePWM-minscorePWM)$ 
+Here we can see that SNP rs7837328 disrupts multiple motifs to a degree above the 0.9 threshold that we required. The `seqMatch` column shows what the reference genome sequence is at that location, with the variant position appearing in an uppercase letter. pctRef and pctAlt display the the score for the motif in the sequence as a percentage of the best score that motif could achieve on an ideal sequence. In other words $(scoreVariant-minscorePWM)/(maxscorePWM-minscorePWM)$ 
 
 ### Parallel Evaluation (an aside)
-Important to note, is that `motifbreakR` uses the `r Biocpkg("BiocParallel")` parallel backend, and one may modify what type of parallel evaluation it uses (or if it runs in parallel at all).  Here we can see the versions availble on the machine this vignette was compiled on.
+Important to note, is that `motifbreakR` uses the `r Biocpkg("BiocParallel")` parallel back-end, and one may modify what type of parallel evaluation it uses (or if it runs in parallel at all).  Here we can see the versions available on the machine this vignette was compiled on.
 ```{r aboutparallel, message=TRUE, cache=TRUE}
 BiocParallel::registered()
 BiocParallel::bpparam()
 ```
-By default `motifbreakR` uses `bpparam()` as an arguemnt to `BPPARAM` and will use all availble cores on the machine on which it is running. However on Windows machines this reverts to using a serial evaluation model, so if you wish to run in parallel on a Windows machine consider using a different parameter shown in `BiocParallel::registered()` such as `SnowParam` passing `BPPARAM = SnowParam()`.
+By default `motifbreakR` uses `bpparam()` as an argument to `BPPARAM` and will use all available cores on the machine on which it is running. However on Windows machines this reverts to using a serial evaluation model, so if you wish to run in parallel on a Windows machine consider using a different parameter shown in `BiocParallel::registered()` such as `SnowParam` passing `BPPARAM = SnowParam()`.
 
 ## *Step 3* | Visualize
 Now that we have our results, we can visualize them with the function `plotMB`.  Lets take a look at rs7837328.

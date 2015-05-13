@@ -226,8 +226,9 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
       } else {
         if(hit.alt[["strand"]] != 0L && hit.alt[["window"]] != hit.ref[["window"]]) {
           hit <- hit.alt
+        } else {
+          hit <-NULL
         }
-        hit <-NULL
       }
       if(!is.null(hit)) {
         snp.pos <- len - hit[["window"]] + 1
@@ -540,8 +541,7 @@ addPWM <- function(identifier, ...) {
 }
 
 addPWM.stack <- function(identifier, ...) {
-  psloc <- tempdir()
-  ps.file <- paste(psloc, "stack.ps", sep = "/")
+  ps.file <- paste(tempdir(), "stack.ps", sep = "/")
   PostScriptTrace(ps.file, paste0(ps.file, ".xml"))
   motif.figure <- readPicture(paste0(ps.file, ".xml"))
   grid.picture(motif.figure[-1], distort = FALSE)
@@ -717,7 +717,6 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, stackmotif = FALSE, effec
         }
       }
       p <- new("pfm", mat = pwm[[1]], name = names(pwm[1]))
-      message(paste(temp.dir, names(pwm[1]), sep="/"))
       postscript(paste(temp.dir, names(pwm[1]), sep = "/"), width = 10, height = 3, horizontal = FALSE,
                  fonts = c("sans", "Helvetica"))
       motifStack::plotMotifLogo(p, motifName = p@name)
