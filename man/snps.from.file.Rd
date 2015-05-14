@@ -4,11 +4,11 @@
 \alias{snps.from.file}
 \title{Import SNPs from a BED file or VCF file for use in motifbreakR}
 \usage{
-snps.from.file(bedfile = NULL, dbSNP = NULL, search.genome = NULL,
+snps.from.file(file = NULL, dbSNP = NULL, search.genome = NULL,
   format = "bed")
 }
 \arguments{
-\item{bedfile}{Character; a character containing the path to a bed file
+\item{file}{Character; a character containing the path to a bed file or a vcf file
 see Details for a description of the required format}
 
 \item{dbSNP}{OPTIONAL; an object of class SNPlocs to lookup rsids; see \code{availible.SNPs} in
