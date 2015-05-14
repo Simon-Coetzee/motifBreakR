@@ -28,15 +28,30 @@ the scope of its original design. Lastly, it can be used to interrogate any
 genome curated within bioconductor.
 
 ### Install
+#### Prepairing to install
 
+You will need ghostscript: the full path to the executable can be set by the environment variable R_GSCMD. If this is unset a GhostScript executable will be searched by name on your path. For example on a Unix, Linux, or Mac environment `gs` will be used for searching, and on a Windows environment the setting of the environment variable GSC is used, otherwise commands `gswi64c.exe` and then `gswin32c.exe` are tried.
+
+For example on Windows, assume that the gswin32c.exe is installed at `C:\Program Files\gs\gs9.06\bin`, open R then try:
 ```{r}
-# Install prerequisite packages from Bioconductor
+Sys.setenv(R_GSCMD="\"C:\\Program Files\\gs\\gs9.06\\bin\\gswin32c.exe\"")
+```
+
+In Linux try your package manager to search for ghostscript.
+In Mac [Homebrew](http://brew.sh/) serves as a great package manager.
+Windows can find it [here](http://ghostscript.com/download/gsdnld.html)
+
+#### Getting prerequisite packages from Bioconductor
+```{r}
 source("http://bioconductor.org/biocLite.R")
 biocLite(c("BiocParallel", "motifStack", "BSgenome", "BiocGenerics",
            "Biostrings", "GenomeInfoDb", "GenomicRanges", "Gviz", "S4Vectors",
            "rtracklayer", "IRanges", "MotifDb", "BSgenome.Hsapiens.UCSC.hg19",
            "SNPlocs.Hsapiens.dbSNP.20120608", "SNPlocs.Hsapiens.dbSNP142.GRCh37"))
-# Install motifbreakR from github
+```
+
+#### Install motifbreakR from github
+```{r}
 install.packages("devtools")
 devtools::install_github("Simon-Coetzee/motifBreakR")
 ```
