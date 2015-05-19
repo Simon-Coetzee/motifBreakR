@@ -124,7 +124,7 @@ read.table(snps.bed.file, header = FALSE)
 Seeing as we have some SNPs listed by their rsIDs we can query those by including a SNPlocs object as an argument to `snps.from.file`
 ```{r getbedrs, message=TRUE, cache=TRUE}
 #import the BED file
-snps.mb.frombed <- snps.from.file(bedfile = snps.bed.file,
+snps.mb.frombed <- snps.from.file(file = snps.bed.file,
                                   dbSNP = SNPlocs.Hsapiens.dbSNP.20120608,
                                   search.genome = BSgenome.Hsapiens.UCSC.hg19,
                                   format = "bed")
@@ -137,7 +137,7 @@ If our BED file includes no rsIDs, then we may omit the `dbSNP` argument from th
 library(BSgenome.Drerio.UCSC.danRer7)
 snps.bedfile.nors <- system.file("extdata", "danRer.bed", package = "motifbreakR")
 read.table(snps.bedfile.nors, header = FALSE)
-snps.mb.frombed <- snps.from.file(bedfile = snps.bedfile.nors,
+snps.mb.frombed <- snps.from.file(file = snps.bedfile.nors,
                                   search.genome = BSgenome.Drerio.UCSC.danRer7,
                                   format = "bed")
 snps.mb.frombed
