@@ -193,7 +193,6 @@ results <- motifbreakR(snpList = snps.mb,
                        threshold = 0.9,
                        method = "ic",
                        emp.p.value = TRUE,
-                       bootstrap.location = "ic.bootstrap.rda",
                        bkg = c(A=0.25, C=0.25, G=0.25, T=0.25),
                        BPPARAM = BiocParallel::bpparam())
 results
@@ -214,7 +213,7 @@ BiocParallel::bpparam()
 By default `motifbreakR` uses `bpparam()` as an argument to `BPPARAM` and will use all available cores on the machine on which it is running. However on Windows machines this reverts to using a serial evaluation model, so if you wish to run in parallel on a Windows machine consider using a different parameter shown in `BiocParallel::registered()` such as `SnowParam` passing `BPPARAM = SnowParam()`.
 
 ## *Step 3* | Visualize
-Now that we have our results, we can visualize them with the function `plotMB`.  Lets take a look at rs7837328.
+Now that we have our results, we can visualize them with the function `plotMB`.  Lets take a look at rs11891426.
 ```{r plotting, cache=TRUE, fig.retina=2, fig.align='center', fig.height=8, fig.width=6}
 plotMB(results = results, rsid = "rs11891426", stackmotif = TRUE, effect = "strg")
 ```

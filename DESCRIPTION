@@ -1,4 +1,4 @@
-Package: motifbreakR
+dePackage: motifbreakR
 Title: A Package For Predicting The Disruptiveness Of Single Nucleotide Polymorphisms On Transcription Factor Binding Sites
 Version: 0.99.10
 Authors@R: c(person(given="Simon Gert", family="Coetzee", email="simon.coetzee@cshs.org",
@@ -20,7 +20,7 @@ Description: We introduce motifbreakR, which allows the biologist to judge in
 Depends: R (>= 3.2), grid, MotifDb
 Imports: BiocParallel, compiler, methods, motifStack, BSgenome, BiocGenerics,
   Biostrings, GenomeInfoDb, GenomicRanges, Gviz, S4Vectors, grDevices, grImport,
-  rtracklayer, stringr, IRanges
+  rtracklayer, stringr, IRanges, VariantAnnotation, matrixStats
 Suggests: BSgenome.Hsapiens.UCSC.hg19, SNPlocs.Hsapiens.dbSNP.20120608,
   knitr, BiocStyle, rmarkdown, BSgenome.Drerio.UCSC.danRer7
 License: GPL-2
