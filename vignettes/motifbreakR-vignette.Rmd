@@ -192,16 +192,18 @@ results <- motifbreakR(snpList = snps.mb,
                        pwmList =  hocomoco,
                        threshold = 0.9,
                        method = "ic",
+                       emp.p.value = TRUE,
+                       bootstrap.location = "ic.bootstrap.rda",
                        bkg = c(A=0.25, C=0.25, G=0.25, T=0.25),
                        BPPARAM = BiocParallel::bpparam())
 results
 ```
 The results reveal which variants disrupt which motifs, and to which degree.  If we want to examine a single variant, we can select one like this:
 ```{r getonesnp, cache=TRUE}
-rs7837328 <- results[names(results) %in% "rs7837328"]
-rs7837328
+rs11891426 <- results[names(results) %in% "rs11891426"]
+rs11891426
 ```
-Here we can see that SNP rs7837328 disrupts multiple motifs to a degree above the 0.9 threshold that we required. The `seqMatch` column shows what the reference genome sequence is at that location, with the variant position appearing in an uppercase letter. pctRef and pctAlt display the the score for the motif in the sequence as a percentage of the best score that motif could achieve on an ideal sequence. In other words $(scoreVariant-minscorePWM)/(maxscorePWM-minscorePWM)$ 
+Here we can see that SNP rs11891426 disrupts multiple motifs with at least one allele achieving the 0.9 threshold that we required. The `seqMatch` column shows what the reference genome sequence is at that location, with the variant position appearing in an uppercase letter. pctRef and pctAlt display the the score for the motif in the sequence as a percentage of the best score that motif could achieve on an ideal sequence. In other words $(scoreVariant-minscorePWM)/(maxscorePWM-minscorePWM)$ 
 
 ### Parallel Evaluation (an aside)
 Important to note, is that `motifbreakR` uses the `r Biocpkg("BiocParallel")` parallel back-end, and one may modify what type of parallel evaluation it uses (or if it runs in parallel at all).  Here we can see the versions available on the machine this vignette was compiled on.
@@ -214,7 +216,7 @@ By default `motifbreakR` uses `bpparam()` as an argument to `BPPARAM` and will u
 ## *Step 3* | Visualize
 Now that we have our results, we can visualize them with the function `plotMB`.  Lets take a look at rs7837328.
 ```{r plotting, cache=TRUE, fig.retina=2, fig.align='center', fig.height=6, fig.width=6}
-plotMB(results = results, rsid = "rs7837328", stackmotif = TRUE, effect = "strg")
+plotMB(results = results, rsid = "rs11891426", stackmotif = TRUE, effect = "strg")
 ```
 
 
