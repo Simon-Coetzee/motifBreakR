@@ -47,7 +47,8 @@ source("http://bioconductor.org/biocLite.R")
 biocLite(c("BiocParallel", "motifStack", "BSgenome", "BiocGenerics",
            "Biostrings", "GenomeInfoDb", "GenomicRanges", "Gviz", "S4Vectors",
            "rtracklayer", "IRanges", "MotifDb", "BSgenome.Hsapiens.UCSC.hg19",
-           "SNPlocs.Hsapiens.dbSNP.20120608", "SNPlocs.Hsapiens.dbSNP142.GRCh37"))
+           "SNPlocs.Hsapiens.dbSNP.20120608", "SNPlocs.Hsapiens.dbSNP142.GRCh37",
+           "VariantAnnotation", "matrixStats"))
 ```
 
 #### Install motifbreakR from github
