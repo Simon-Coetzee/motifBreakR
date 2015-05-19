@@ -864,7 +864,7 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, stackmotif = FALSE, effec
                                                     str_length(str_trim(result$seqMatch)) - result$motifPos + 1,
                                                     result$motifPos)),
                             name = names(result)[[1]], selectFun = selectingfun)
-  plotTracks(list(ideoT, motifT, hiT, axisT), from = from, to = to, showBandId = TRUE, main = names(result)[[1]],
+  plotTracks(list(ideoT, motifT, hiT, axisT), from = from, to = to, showBandId = TRUE,
              cex.main = 0.8, col.main = "darkgrey",
              add53 = TRUE, labelpos = "below", chromosome = chromosome, groupAnnotation = "group",
              collapse = FALSE, min.width = 1, featureAnnotation = "feature", cex.feature = 0.8,

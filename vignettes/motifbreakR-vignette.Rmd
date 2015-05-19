@@ -215,7 +215,7 @@ By default `motifbreakR` uses `bpparam()` as an argument to `BPPARAM` and will u
 
 ## *Step 3* | Visualize
 Now that we have our results, we can visualize them with the function `plotMB`.  Lets take a look at rs7837328.
-```{r plotting, cache=TRUE, fig.retina=2, fig.align='center', fig.height=6, fig.width=6}
+```{r plotting, cache=TRUE, fig.retina=2, fig.align='center', fig.height=8, fig.width=6}
 plotMB(results = results, rsid = "rs11891426", stackmotif = TRUE, effect = "strg")
 ```
 
