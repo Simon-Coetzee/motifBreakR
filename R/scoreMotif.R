@@ -375,14 +375,21 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #'   used with method=\code{log} method=\code{ic}
 #' @param show.neutral Logical; include neutral changes in the output
 #' @param verbose Logical; if running serially, show verbose messages
+#' @param emp.p.value Logical; Calculate empirical p value based upon
+#'   bootstrapping 10,000 random sequences. \code{phat = (r+1)/(n+1)} where
+#'   \code{n} is the number of replicate samples that have been simulated and
+#'   \code{r} are the number of these replicates that produce a test statistic
+#'   greater or equal to that calculated for the actual data.
+#' @param bootstrap.location Character; where to look for, or save the results
+#'   of simulating the test statistics.
 #' @param BPPARAM a BiocParallel object see \code{\link[BiocParallel]{register}}
 #'   and see \code{getClass("BiocParallelParam")} for additional parameter
 #'   classes.  Try \code{BiocParallel::registered()} to see what's availible and
 #'   for example \code{BiocParallel::bpparam("SerialParam")} would allow serial
 #'   evaluation.
 #' @seealso See \code{\link{snps.from.rsid}} and \code{\link{snps.from.bed}} for
-#'   information about how to generate the input to this function and \code{\link{plotMB}}
-#'   for information on how to visualize it's output
+#'   information about how to generate the input to this function and
+#'   \code{\link{plotMB}} for information on how to visualize it's output
 #' @details \pkg{motifbreakR} works with position probability matrices (PPM). PPM
 #' are derived as the fractional occurrence of nucleotides A,C,G, and T at
 #' each position of a position frequency matrix (PFM). PFM are simply the

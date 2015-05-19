@@ -7,7 +7,7 @@ Transcription Factor Binding Sites.}
 \usage{
 motifbreakR(snpList, pwmList, threshold, method = "default", bkg = c(A =
   0.25, C = 0.25, G = 0.25, T = 0.25), show.neutral = FALSE,
-  verbose = FALSE, emp.p.value = TRUE, bootstrap.location = NULL,
+  verbose = FALSE, emp.p.value = FALSE, bootstrap.location = NULL,
   BPPARAM = bpparam())
 }
 \arguments{
@@ -28,6 +28,15 @@ used with method=\code{log} method=\code{ic}}
 \item{show.neutral}{Logical; include neutral changes in the output}
 
 \item{verbose}{Logical; if running serially, show verbose messages}
+
+\item{emp.p.value}{Logical; Calculate empirical p value based upon
+bootstrapping 10,000 random sequences. \code{phat = (r+1)/(n+1)} where
+\code{n} is the number of replicate samples that have been simulated and
+\code{r} are the number of these replicates that produce a test statistic
+greater or equal to that calculated for the actual data.}
+
+\item{bootstrap.location}{Character; where to look for, or save the results
+of simulating the test statistics.}
 
 \item{BPPARAM}{a BiocParallel object see \code{\link[BiocParallel]{register}}
 and see \code{getClass("BiocParallelParam")} for additional parameter
@@ -174,7 +183,7 @@ library(BSgenome.Hsapiens.UCSC.hg19)
 }
 \seealso{
 See \code{\link{snps.from.rsid}} and \code{\link{snps.from.bed}} for
-  information about how to generate the input to this function and \code{\link{plotMB}}
-  for information on how to visualize it's output
+  information about how to generate the input to this function and
+  \code{\link{plotMB}} for information on how to visualize it's output
 }
 
