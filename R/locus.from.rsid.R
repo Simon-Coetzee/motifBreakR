@@ -196,9 +196,9 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
     return(snps)
   } else {
     if(format == "bed") {
-      snps <- import(bedfile, format = "bed")
+      snps <- import(file, format = "bed")
       if (Reduce("|", grepl("rs", snps$name)) & (!inherits(dbSNP, "SNPlocs"))) {
-        stop(paste0(bedfile, " contains at least one variant with an rsID and no SNPlocs has been indicated\n",
+        stop(paste0(file, " contains at least one variant with an rsID and no SNPlocs has been indicated\n",
                     "Please run availible.SNPs() to check for availble SNPlocs"))
       }
       if (!inherits(search.genome, "BSgenome")) {
