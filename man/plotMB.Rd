@@ -44,7 +44,7 @@ plotMB(example.results, "rs7837328", stackmotif = TRUE)
 }
 \seealso{
 See \code{\link{motifbreakR}} for the function that produces output to be
-  visualized here, also \code{\link{snps.from.rsid}} and \code{\link{snps.from.bed}}
+  visualized here, also \code{\link{snps.from.rsid}} and \code{\link{snps.from.file}}
   for information about how to generate the input to \code{\link{motifbreakR}}
   function.
 }

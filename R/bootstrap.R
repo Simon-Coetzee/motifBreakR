@@ -1,4 +1,5 @@
-bootstrap.for.empirical.pvalue <- function(pwmList, methods = c("default", "ic", "log"), BPPARAM) {
+#' @importFrom Biostrings DNAString
+bootstrap.for.empirical.pvalue <- function(pwmList, method = c("default", "ic", "log"), BPPARAM) {
   seq <- sample(c("A", "C", "G", "T"), 11000, replace = TRUE)
   seq <- DNAString(paste(seq, collapse = ""))
   seq.rc <- reverseComplement(seq)
@@ -6,7 +7,7 @@ bootstrap.for.empirical.pvalue <- function(pwmList, methods = c("default", "ic",
   seq.rc <- strsplit(as.character(seq.rc), "")[[1]]
   results <- list()
   bkg <- c(A=0.25, C=0.25, G=0.25, T=0.25)
-  for(meth in methods) {
+  for(meth in method) {
     scounts <- as.integer(mcols(pwmList)$sequenceCount)
     scounts[is.na(scounts)] <- 20L
     pwmList.pc <- Map(function(pwm, scount) {

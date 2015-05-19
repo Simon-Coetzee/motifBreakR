@@ -11,7 +11,7 @@ motifbreakR(snpList, pwmList, threshold, method = "default", bkg = c(A =
   BPPARAM = bpparam())
 }
 \arguments{
-\item{snpList}{The output of \code{snps.from.rsid} or \code{snps.from.bed}}
+\item{snpList}{The output of \code{snps.from.rsid} or \code{snps.from.file}}
 
 \item{pwmList}{An object of class \code{MotifList} containing the motifs that
 you wish to interrogate}
@@ -191,7 +191,7 @@ library(BSgenome.Hsapiens.UCSC.hg19)
                         BPPARAM=BiocParallel::SerialParam())
 }
 \seealso{
-See \code{\link{snps.from.rsid}} and \code{\link{snps.from.bed}} for
+See \code{\link{snps.from.rsid}} and \code{\link{snps.from.file}} for
   information about how to generate the input to this function and
   \code{\link{plotMB}} for information on how to visualize it's output
 }

@@ -146,12 +146,13 @@ strSort <- function(x) {
 #'                            search.genome = BSgenome.Drerio.UCSC.danRer7,
 #'                            format = "bed")
 #'
-#' @importFrom rtracklayer import.bed
+#' @importFrom rtracklayer import
 #' @importFrom Biostrings IUPAC_CODE_MAP
 #' @importFrom GenomicRanges findOverlaps queryHits subjectHits rowRanges
 #' @importFrom GenomeInfoDb commonName sortSeqlevels
 #' @importFrom BiocGenerics sapply
 #' @importFrom VariantAnnotation readVcf
+#' @importFrom IRanges elementLengths
 #' @export
 snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, format = "bed") {
   if(format == "vcf"){
@@ -166,7 +167,7 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
     snps$ALT <- ALTS
     snps$ALT <- as.character(snps$ALT)
     snps$REF <- as.character(snps$REF)
-    snps.ambi <- motifbreakR:::strSort(paste0(snps$ALT, snps$REF))
+    snps.ambi <- strSort(paste0(snps$ALT, snps$REF))
     IUPAC_code_revmap <- names(IUPAC_CODE_MAP)
     names(IUPAC_code_revmap) <- IUPAC_CODE_MAP
     snps.ambi <- IUPAC_code_revmap[snps.ambi]
@@ -179,9 +180,9 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
     snps$alleles_as_ambig[is.na(snps$alleles_as_ambig)] <- ""
     snps$alleles_as_ambig <- DNAStringSet(snps$alleles_as_ambig)
     snps <- snps[seqnames(snps) != "MT"]
-    seqlevels(snps) <- paste0("chr", seqlevels(snps))
+    VariantAnnotation::seqlevels(snps) <- paste0("chr", VariantAnnotation::seqlevels(snps))
     browser()
-    snps <- motifbreakR:::change.to.search.genome(snps, search.genome)
+    snps <- change.to.search.genome(snps, search.genome)
     can.ref <- getSeq(search.genome, snps)
     names(can.ref) <- NULL
     if(isTRUE(all.equal(can.ref, snps$REF))) {

@@ -89,13 +89,14 @@ wScore2 <- function(snp.seq, ppm, offset, method = "default", bkg = NULL,
 
 ## motif scorer, using MotifDb objects returns vector of probabilities based on
 ## the PPM
-#' @importFrom compiler cmpfun
+
 scoreMotif.a <- function(snp.seq, ppm, len, offset = 1) {
   snp.seq <- snp.seq[offset:(offset + len - 1)]
   ## diag code
   position.probs <- c(ppm[snp.seq, ])[1 + 0L:(len - 1L) * (len + 1)]
   return(position.probs)
 }
+#' @importFrom compiler cmpfun
 scoreMotif <- cmpfun(scoreMotif.a, options = list(optimize = 3))
 
 ## take a sequence and score all its windows for a pwm
@@ -364,7 +365,7 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #' Predict The Disruptiveness Of Single Nucleotide Polymorphisms On
 #' Transcription Factor Binding Sites.
 #'
-#' @param snpList The output of \code{snps.from.rsid} or \code{snps.from.bed}
+#' @param snpList The output of \code{snps.from.rsid} or \code{snps.from.file}
 #' @param pwmList An object of class \code{MotifList} containing the motifs that
 #'   you wish to interrogate
 #' @param threshold Numeric; the minimum disruptiveness score for which to
@@ -387,7 +388,7 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #'   classes.  Try \code{BiocParallel::registered()} to see what's availible and
 #'   for example \code{BiocParallel::bpparam("SerialParam")} would allow serial
 #'   evaluation.
-#' @seealso See \code{\link{snps.from.rsid}} and \code{\link{snps.from.bed}} for
+#' @seealso See \code{\link{snps.from.rsid}} and \code{\link{snps.from.file}} for
 #'   information about how to generate the input to this function and
 #'   \code{\link{plotMB}} for information on how to visualize it's output
 #' @details \pkg{motifbreakR} works with position probability matrices (PPM). PPM
@@ -718,7 +719,7 @@ DNAmotifAlignment.2snp <- function(pwms, result) {
 #' @param effect Character; show motifs that are strongly effected \code{c("strg")},
 #'   weakly effected \code{c("weak")}, or both \code{c("strg", "weak")}
 #' @seealso See \code{\link{motifbreakR}} for the function that produces output to be
-#'   visualized here, also \code{\link{snps.from.rsid}} and \code{\link{snps.from.bed}}
+#'   visualized here, also \code{\link{snps.from.rsid}} and \code{\link{snps.from.file}}
 #'   for information about how to generate the input to \code{\link{motifbreakR}}
 #'   function.
 #' @details \code{plotMB} produces output showing the location of the SNP on the
