@@ -55,8 +55,10 @@ a GRanges object containing:
  \item{providerName, providerId}{the name and id provided by the source}
  \item{seqMatch}{the sequence on the 5' -> 3' direction of the "+" strand
  that corresponds to DNA at the position that the TF binding motif was found.}
- \item{Refscore}{The score as determined by the scoring method, when the sequence contains the reference SNP allele}
- \item{Altscore}{The score as determined by the scoring method, when the sequence contains the alternate SNP allele}
+ \item{pctRef}{The score as determined by the scoring method, when the sequence contains the reference SNP allele}
+ \item{pctAlt}{The score as determined by the scoring method, when the sequence contains the alternate SNP allele}
+ \item{Refpvalue}{The estimated empirical p-value for the match for the pctRef score}
+ \item{Altpvalue}{The estimated empirical p-value for the match for the pctAlt score}
  \item{alleleRef}{The proportional frequency of the reference allele at position \code{motifPos} in the motif}
  \item{alleleAlt}{The proportional frequency of the alternate allele at position \code{motifPos} in the motif}
  \item{effect}{one of weak, strong, or neutral indicating the strength of the effect.}
@@ -164,6 +166,13 @@ threshold (default value of 0.85) the SNP is reported. By default
 \pkg{motifbreakR} displays only strong effects
 (\eqn{\Delta p_{i} > 0.7}) but this behaviour can be
 overridden.
+
+\strong{Calculating The Empirical p-value}
+ We calculate empirical p-value based upon
+  bootstrapping 10,000 random sequences. \eqn{\hat{p} = (r+1)/(n+1)} where
+  \eqn{n} is the number of replicate samples that have been simulated and
+  \eqn{r} are the number of these replicates that produce a test statistic
+  greater or equal to that calculated for the actual data.
 }
 \examples{
 library(BSgenome.Hsapiens.UCSC.hg19)

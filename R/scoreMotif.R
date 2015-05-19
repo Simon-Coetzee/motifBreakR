@@ -248,8 +248,8 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
     res.el$providerName <- mcols(pwmList)$providerName
     res.el$providerId <- mcols(pwmList)$providerId
     res.el$seqMatch <- as.character(NA)
-    res.el$Refscore <- as.numeric(NA)
-    res.el$Altscore <- as.numeric(NA)
+    res.el$pctRef <- as.numeric(NA)
+    res.el$pctAlt <- as.numeric(NA)
     res.el$Refpvalue <- as.numeric(NA)
     res.el$Altpvalue <- as.numeric(NA)
     res.el$alleleRef <- as.numeric(NA)
@@ -349,10 +349,10 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
     start(result) <- start(result) - snp.pos + 1
     end(result) <- end(result) - snp.pos + len
   }
-  mresult[["Refscore"]] <- ref.windows[strand, hit[["window"]]]
-  mresult[["Refpvalue"]] <- (sum(mresult[["Refscore"]] < boot) + 1)/(length(boot) + 1)
-  mresult[["Altscore"]] <- alt.windows[strand, hit[["window"]]]
-  mresult[["Altpvalue"]] <- (sum(mresult[["Altscore"]] < boot) + 1)/(length(boot) + 1)
+  mresult[["pctRef"]] <- ref.windows[strand, hit[["window"]]]
+  mresult[["Refpvalue"]] <- (sum(mresult[["pctRef"]] < boot) + 1)/(length(boot) + 1)
+  mresult[["pctAlt"]] <- alt.windows[strand, hit[["window"]]]
+  mresult[["Altpvalue"]] <- (sum(mresult[["pctAlt"]] < boot) + 1)/(length(boot) + 1)
   mresult[["alleleRef"]] <- allelR
   mresult[["alleleAlt"]] <- allelA
   mresult[["effect"]] <- effect
@@ -487,6 +487,14 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #' \pkg{motifbreakR} displays only strong effects
 #' (\eqn{\Delta p_{i} > 0.7}) but this behaviour can be
 #' overridden.
+#'
+#' \strong{Calculating The Empirical p-value}
+#'  We calculate empirical p-value based upon
+#'   bootstrapping 10,000 random sequences. \eqn{\hat{p} = (r+1)/(n+1)} where
+#'   \eqn{n} is the number of replicate samples that have been simulated and
+#'   \eqn{r} are the number of these replicates that produce a test statistic
+#'   greater or equal to that calculated for the actual data.
+#'
 #' @return a GRanges object containing:
 #'  \item{REF}{the reference allele for the SNP}
 #'  \item{ALT}{the alternate allele for the SNP}
@@ -497,8 +505,10 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #'  \item{providerName, providerId}{the name and id provided by the source}
 #'  \item{seqMatch}{the sequence on the 5' -> 3' direction of the "+" strand
 #'  that corresponds to DNA at the position that the TF binding motif was found.}
-#'  \item{Refscore}{The score as determined by the scoring method, when the sequence contains the reference SNP allele}
-#'  \item{Altscore}{The score as determined by the scoring method, when the sequence contains the alternate SNP allele}
+#'  \item{pctRef}{The score as determined by the scoring method, when the sequence contains the reference SNP allele}
+#'  \item{pctAlt}{The score as determined by the scoring method, when the sequence contains the alternate SNP allele}
+#'  \item{Refpvalue}{The estimated empirical p-value for the match for the pctRef score}
+#'  \item{Altpvalue}{The estimated empirical p-value for the match for the pctAlt score}
 #'  \item{alleleRef}{The proportional frequency of the reference allele at position \code{motifPos} in the motif}
 #'  \item{alleleAlt}{The proportional frequency of the alternate allele at position \code{motifPos} in the motif}
 #'  \item{effect}{one of weak, strong, or neutral indicating the strength of the effect.}
@@ -575,10 +585,14 @@ motifbreakR <- function(snpList, pwmList, threshold, method = "default",
   } else {
     boot <- NULL
   }
-  x <- bplapply(snpList, scoreSnpList, pwmList = pwmList, threshold = threshold,
-                method = method, bkg = bkg, show.neutral = show.neutral,
-                verbose = ifelse(cores == 1, verbose, FALSE), genome.bsgenome = genome.bsgenome,
-                bootstrap = boot, BPPARAM=BPPARAM)
+  x <- try(bplapply(snpList, scoreSnpList, pwmList = pwmList, threshold = threshold,
+                    method = method, bkg = bkg, show.neutral = show.neutral,
+                    verbose = ifelse(cores == 1, verbose, FALSE), genome.bsgenome = genome.bsgenome,
+                    bootstrap = boot, BPPARAM=BPPARAM))
+  if(inherits(x, "try-error")) {
+    bpstop(BPPARAM)
+    stop(attributes(x)$condition)
+  }
   if(inherits(BPPARAM, "SnowParam")) {
     bpstop(BPPARAM)
   }
@@ -676,8 +690,9 @@ DNAmotifAlignment.2snp <- function(pwms, result) {
     pwm.name <- str_replace(pwm.name, pattern = "-:r$", replacement = "")
     pwm.info <- attributes(result)$motifs
     pwm.id <- mcols(pwm.info[pwm.name, ])$providerId
-    start.offset <- start(result[result$providerId == pwm.id, ]) - from
-    end.offset <- to - end(result[result$providerId == pwm.id, ])
+    pwm.name <- mcols(pwm.info[pwm.name, ])$providerName
+    start.offset <- start(result[result$providerId == pwm.id & result$providerName == pwm.name, ]) - from
+    end.offset <- to - end(result[result$providerId == pwm.id & result$providerName == pwm.name, ])
     if(start.offset > 0){
       pwm <- cbind(matrix(c(0.25, 0.25, 0.25, 0.25), ncol = start.offset, nrow = 4), pwm)
     }
@@ -739,13 +754,15 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, stackmotif = FALSE, effec
   pwmList <- attributes(result)$motifs
   pwm.names <- result$providerId
   if(stackmotif && length(result) > 1) {
-    pwms <- pwmList[mcols(pwmList)$providerId %in% pwm.names, ]
+    getmotifs <- mcols(pwmList)$providerId %in% result$providerId & mcols(pwmList)$providerName %in% result$providerName
+    pwms <- pwmList[getmotifs, ]
     pwms <- pwms[order(match(mcols(pwms)$providerId, result$providerId))]
     if(reverseMotif) {
       for(pwm.i in seq_along(pwms)) {
         pwm.name <- names(pwms[pwm.i])
         pwm.id <- mcols(pwms[pwm.name, ])$providerId
-        doRev <- as.logical(strand(result[result$providerId == pwm.id, ]) == "-")
+        pwm.name <- mcols(pwms[pwm.name, ])$providerName
+        doRev <- as.logical(strand(result[result$providerId == pwm.id & result$providerName == pwm.name, ]) == "-")
         if(doRev) {
           pwm <- pwms[[pwm.i]]
           pwm <- pwm[, rev(1:ncol(pwm))]
@@ -759,7 +776,8 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, stackmotif = FALSE, effec
       for(pwm.i in seq_along(pwms)) {
         pwm.name <- names(pwms[pwm.i])
         pwm.id <- mcols(pwms[pwm.name, ])$providerId
-        doRev <- as.logical(strand(result[result$providerId == pwm.id, ]) == "-")
+        pwm.name <- mcols(pwms[pwm.name, ])$providerName
+        doRev <- as.logical(strand(result[result$providerId == pwm.id & result$providerName == pwm.name, ]) == "-")
         if(doRev) {
           pwm <- pwms[[pwm.i]]
           pwm <- pwm[, rev(1:ncol(pwm))]
@@ -773,12 +791,12 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, stackmotif = FALSE, effec
     pwms <- DNAmotifAlignment.2snp(pwms, result)
     pwmwide <- max(sapply(pwms, function(x) { ncol(x@mat)}))
     psloc <- tempdir()
-    browser()
     postscript(paste(psloc, "stack.ps", sep = "/"), width = pwmwide * (7/11), height =  2*length(pwm.names), paper="special", horizontal = FALSE)
     plotMotifLogoStack.2(pwms, ncex=1.0)
     dev.off()
   } else {
-    pwmList <- pwmList[mcols(pwmList)$providerId %in% pwm.names, ]
+    getmotifs <- mcols(pwmList)$providerId %in% result$providerId & mcols(pwmList)$providerName %in% result$providerName
+    pwmList <- pwmList[getmotifs, ]
     pwmList <- pwmList[order(match(mcols(pwmList)$providerId, result$providerId))]
     for(pwm.i in seq_along(pwmList)) {
       pwm <- pwmList[pwm.i]
