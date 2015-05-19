@@ -7,7 +7,8 @@ Transcription Factor Binding Sites.}
 \usage{
 motifbreakR(snpList, pwmList, threshold, method = "default", bkg = c(A =
   0.25, C = 0.25, G = 0.25, T = 0.25), show.neutral = FALSE,
-  verbose = FALSE, BPPARAM = bpparam())
+  verbose = FALSE, emp.p.value = TRUE, bootstrap.location = NULL,
+  BPPARAM = bpparam())
 }
 \arguments{
 \item{snpList}{The output of \code{snps.from.rsid} or \code{snps.from.bed}}
@@ -45,8 +46,8 @@ a GRanges object containing:
  \item{providerName, providerId}{the name and id provided by the source}
  \item{seqMatch}{the sequence on the 5' -> 3' direction of the "+" strand
  that corresponds to DNA at the position that the TF binding motif was found.}
- \item{pctRef}{The score as determined by the scoring method, when the sequence contains the reference SNP allele}
- \item{pctAlt}{The score as determined by the scoring method, when the sequence contains the alternate SNP allele}
+ \item{Refscore}{The score as determined by the scoring method, when the sequence contains the reference SNP allele}
+ \item{Altscore}{The score as determined by the scoring method, when the sequence contains the alternate SNP allele}
  \item{alleleRef}{The proportional frequency of the reference allele at position \code{motifPos} in the motif}
  \item{alleleAlt}{The proportional frequency of the alternate allele at position \code{motifPos} in the motif}
  \item{effect}{one of weak, strong, or neutral indicating the strength of the effect.}
@@ -168,6 +169,7 @@ library(BSgenome.Hsapiens.UCSC.hg19)
  results <- motifbreakR(pca.enhancer.snps,
                         motifs, threshold = 0.9,
                         method = "ic",
+                        emp.p.value = FALSE,
                         BPPARAM=BiocParallel::SerialParam())
 }
 \seealso{
