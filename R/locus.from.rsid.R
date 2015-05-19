@@ -181,7 +181,6 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
     snps$alleles_as_ambig <- DNAStringSet(snps$alleles_as_ambig)
     snps <- snps[seqnames(snps) != "MT"]
     VariantAnnotation::seqlevels(snps) <- paste0("chr", VariantAnnotation::seqlevels(snps))
-    browser()
     snps <- change.to.search.genome(snps, search.genome)
     can.ref <- getSeq(search.genome, snps)
     names(can.ref) <- NULL
