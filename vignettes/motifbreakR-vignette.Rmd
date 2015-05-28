@@ -50,7 +50,7 @@ This straightforward process allows the interrogation of SNPs and SNVs in the co
 
 Practically `r Githubpkg("Simon-Coetzee/motifBreakR")` has involves three phases.
 
-1. *Read in Single Nucleotide Variants:* The first step is to read in the list of variants.  Variants can be either a list of rsIDs if your SNPs are represented in one of the SNPlocs packages, or may be included as a [.bed](http://www.genome.ucsc.edu/FAQ/FAQformat.html#format1) file with a specifically formatted name field. We then transform this input such that it may be read my `r Githubpkg("Simon-Coetzee/motifBreakR")`.
+1. *Read in Single Nucleotide Variants:* The first step is to read in the list of variants.  Variants can be a list of rsIDs if your SNPs are represented in one of the SNPlocs packages, may be included as a [.bed](http://www.genome.ucsc.edu/FAQ/FAQformat.html#format1) file with a specifically formatted name field, or may be provided as a [.vcf](http://www.1000genomes.org/wiki/analysis/variant%20call%20format/vcf-variant-call-format-version-41) file. We then transform these input such that it may be read my `r Githubpkg("Simon-Coetzee/motifBreakR")`.
 2. *Find Broken Motifs:* Next we present `r Githubpkg("Simon-Coetzee/motifBreakR")` with the input generated in the previous step, along with a set of motifs formatted as class `MotifList`, and your preferred [scoring method](#methods). 
 3. *Visualize SNPs and motifs:* Finally we can visualize which motifs are broken by any individual SNP using our plotting function.
 
@@ -183,18 +183,17 @@ Now that we have the three necessary components to run `r Githubpkg("Simon-Coetz
 
 We get to the task of actually running the function `motifbreakR()`.
 
-We have several options that we may pass to the function, the main ones that will dictate how long the function will run with a given set of variants and motifs are the `threshold` we pass and the `method` we use to [score](#methods).  In order of stringency with regard to `method`s are `ic`, `default`, and `log`.  This means that for a given threshold `method="log"` will give the most results and have the lowest specificity, whereas `method="ic"` will give the fewest results with the highest specificity; `method="default"` falls in between, generally closer to `method="ic"`. In order of time to complete, we have `default`, `ic`, and `log` from quickest to slowest.  Default is very computationally inexpensive and returns relatively few results, so it is the fastest, `ic` also returns few results and therefor is second fastest, `log` while the simplest to calculate, returns ~10x the number of results at a given threshold and is therefor much slower.
+We have several options that we may pass to the function, the main ones that will dictate how long the function will run with a given set of variants and motifs are the `threshold` we pass and the `method` we use to [score](#methods).
 
 Here we specify the `snpList`, `pwmList`, `threshold` that we declare as the cutoff for reporting results, the `method`, and `bkg` the relative nucleotide frequency of A, C, G, and T.
 
 ```{r runmotifbreakr, message=TRUE, cache=TRUE}
-results <- motifbreakR(snpList = snps.mb,
+system.time(results2 <- motifbreakR(snpList = snps.mb2, filterp = T,
                        pwmList =  hocomoco,
-                       threshold = 0.9,
+                       threshold = 1e-4,
                        method = "ic",
-                       emp.p.value = TRUE,
                        bkg = c(A=0.25, C=0.25, G=0.25, T=0.25),
-                       BPPARAM = BiocParallel::bpparam())
+                       BPPARAM = BiocParallel::bpparam()))
 results
 ```
 The results reveal which variants disrupt which motifs, and to which degree.  If we want to examine a single variant, we can select one like this:

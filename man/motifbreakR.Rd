@@ -6,9 +6,8 @@
 Transcription Factor Binding Sites.}
 \usage{
 motifbreakR(snpList, pwmList, threshold, method = "default", bkg = c(A =
-  0.25, C = 0.25, G = 0.25, T = 0.25), show.neutral = FALSE,
-  verbose = FALSE, emp.p.value = FALSE, bootstrap.location = NULL,
-  BPPARAM = bpparam())
+  0.25, C = 0.25, G = 0.25, T = 0.25), filterp = TRUE, show.neutral = FALSE,
+  verbose = FALSE, BPPARAM = bpparam())
 }
 \arguments{
 \item{snpList}{The output of \code{snps.from.rsid} or \code{snps.from.file}}
@@ -16,8 +15,7 @@ motifbreakR(snpList, pwmList, threshold, method = "default", bkg = c(A =
 \item{pwmList}{An object of class \code{MotifList} containing the motifs that
 you wish to interrogate}
 
-\item{threshold}{Numeric; the minimum disruptiveness score for which to
-report results}
+\item{threshold}{Numeric; the maximum p-value for a match to be called or a minimum score threshold}
 
 \item{method}{Character; one of \code{default}, \code{log}, or \code{ic}; see
 details.}
@@ -28,15 +26,6 @@ used with method=\code{log} method=\code{ic}}
 \item{show.neutral}{Logical; include neutral changes in the output}
 
 \item{verbose}{Logical; if running serially, show verbose messages}
-
-\item{emp.p.value}{Logical; Calculate empirical p value based upon
-bootstrapping 10,000 random sequences. \code{phat = (r+1)/(n+1)} where
-\code{n} is the number of replicate samples that have been simulated and
-\code{r} are the number of these replicates that produce a test statistic
-greater or equal to that calculated for the actual data.}
-
-\item{bootstrap.location}{Character; where to look for, or save the results
-of simulating the test statistics.}
 
 \item{BPPARAM}{a BiocParallel object see \code{\link[BiocParallel]{register}}
 and see \code{getClass("BiocParallelParam")} for additional parameter
@@ -57,8 +46,8 @@ a GRanges object containing:
  that corresponds to DNA at the position that the TF binding motif was found.}
  \item{pctRef}{The score as determined by the scoring method, when the sequence contains the reference SNP allele}
  \item{pctAlt}{The score as determined by the scoring method, when the sequence contains the alternate SNP allele}
- \item{Refpvalue}{The estimated empirical p-value for the match for the pctRef score}
- \item{Altpvalue}{The estimated empirical p-value for the match for the pctAlt score}
+ \item{Refpvalue}{p-value for the match for the pctRef score}
+ \item{Altpvalue}{p-value for the match for the pctAlt score}
  \item{alleleRef}{The proportional frequency of the reference allele at position \code{motifPos} in the motif}
  \item{alleleAlt}{The proportional frequency of the alternate allele at position \code{motifPos} in the motif}
  \item{effect}{one of weak, strong, or neutral indicating the strength of the effect.}
@@ -166,13 +155,6 @@ threshold (default value of 0.85) the SNP is reported. By default
 \pkg{motifbreakR} displays only strong effects
 (\eqn{\Delta p_{i} > 0.7}) but this behaviour can be
 overridden.
-
-\strong{Calculating The Empirical p-value}
- We calculate empirical p-value based upon
-  bootstrapping 10,000 random sequences. \eqn{\hat{p} = (r+1)/(n+1)} where
-  \eqn{n} is the number of replicate samples that have been simulated and
-  \eqn{r} are the number of these replicates that produce a test statistic
-  greater or equal to that calculated for the actual data.
 }
 \examples{
 library(BSgenome.Hsapiens.UCSC.hg19)
@@ -185,9 +167,8 @@ library(BSgenome.Hsapiens.UCSC.hg19)
  motifs <- sample(hocomoco, 50)
  # run motifbreakR
  results <- motifbreakR(pca.enhancer.snps,
-                        motifs, threshold = 0.9,
+                        motifs, threshold = 0.001,
                         method = "ic",
-                        emp.p.value = FALSE,
                         BPPARAM=BiocParallel::SerialParam())
 }
 \seealso{

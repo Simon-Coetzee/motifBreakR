@@ -14,81 +14,16 @@ revcom <- function(ltr) {
   rclist[[ltr]]
 }
 
-scoreLog <- function(pwm, sequence, bkg, offset, pwm.range) {
-  vscores <- scoreMotif(sequence, pwm, ncol(pwm), offset = offset)
-  return((sum(vscores)-pwm.range[1])/(pwm.range[2] - pwm.range[1]))
-}
-
 #' @importFrom matrixStats colRanges
-scoreIC <- function(pwm, sequence, bkg, offset, pwm.range, omega) {
-  vscores <- scoreMotif(sequence, pwm, ncol(pwm), offset = offset) * omega
-  return((sum(vscores)-pwm.range[1])/(pwm.range[2] - pwm.range[1]))
-}
-
 #' @importFrom matrixStats colMaxs colMins
-scoreDefault <- function(pwm, sequence, offset, pwm.range, omega) {
-  vscores <- scoreMotif(sequence, pwm, ncol(pwm), offset = offset) * omega
-  return((sum(vscores)-pwm.range[1])/(pwm.range[2] - pwm.range[1]))
-}
-
-
-scoreLog2 <- function(pwm, sequence, bkg, offset) {
-  vscores <- scoreMotif(sequence, pwm, ncol(pwm), offset = offset)
-  return(sum(vscores))
-}
-
-scoreIC2 <- function(pwm, sequence, bkg, offset, omega) {
-  vscores <- scoreMotif(sequence, pwm, ncol(pwm), offset = offset) * omega
-  return(sum(vscores))
-}
-
-scoreDefault2 <- function(pwm, sequence, offset, omega) {
-  vscores <- scoreMotif(sequence, pwm, ncol(pwm), offset = offset) * omega
-  return(sum(vscores))
-}
-
-
-wScore <- function(snp.seq, ppm, offset, method = "default", bkg = NULL,
-                   pwm.range, omega, len) {
-  if (is.null(bkg)) {
-    bkg <- c(0.25, 0.25, 0.25, 0.25)
+wScore <- function(snp.seq, ppm, offset, ppm.range = NULL) {
+  returnScore <- scoreMotif(snp.seq, ppm, ncol(ppm), offset = offset)
+  if(is.null(ppm.range)){
+    return(sum(returnScore))
   } else {
-    bkg <- bkg[c(1, 2, 2, 1)]
+    return((sum(returnScore)-ppm.range[1])/(ppm.range[2] - ppm.range[1]))
   }
-  if(method == "log") {
-    returnScore <- scoreLog(ppm, snp.seq, bkg, offset, pwm.range)
-  }
-  if (method == "default") {
-    returnScore <- scoreDefault(ppm, snp.seq, offset, pwm.range, omega)
-  }
-  if (method == "ic") {
-    returnScore <- scoreIC(ppm, snp.seq, bkg, offset, pwm.range, omega)
-  }
-  return(returnScore)
 }
-
-wScore2 <- function(snp.seq, ppm, offset, method = "default", bkg = NULL,
-                   pwm.range, omega, len) {
-  if (is.null(bkg)) {
-    bkg <- c(0.25, 0.25, 0.25, 0.25)
-  } else {
-    bkg <- bkg[c(1, 2, 2, 1)]
-  }
-  if(method == "log") {
-    returnScore <- scoreLog2(ppm, snp.seq, bkg, offset)
-  }
-  if (method == "default") {
-    returnScore <- scoreDefault2(ppm, snp.seq, offset, omega)
-  }
-  if (method == "ic") {
-    returnScore <- scoreIC2(ppm, snp.seq, bkg, offset, omega)
-  }
-  return(returnScore)
-}
-
-
-## motif scorer, using MotifDb objects returns vector of probabilities based on
-## the PPM
 
 scoreMotif.a <- function(snp.seq, ppm, len, offset = 1) {
   snp.seq <- snp.seq[offset:(offset + len - 1)]
@@ -100,9 +35,9 @@ scoreMotif.a <- function(snp.seq, ppm, len, offset = 1) {
 scoreMotif <- cmpfun(scoreMotif.a, options = list(optimize = 3))
 
 ## take a sequence and score all its windows for a pwm
-scoreAllWindows <- function(snp.seq, snp.seq.rc, pwm, method = "default",
-                            bkg = NULL, from = "default", to = "default",
-                            pwm.range, omega, pvalue = NULL) {
+scoreAllWindows <- function(snp.seq, snp.seq.rc, pwm,
+                            from = "default", to = "default",
+                            pwm.range = NULL) {
   ## frequently used variables;
   l <- ncol(pwm)
   if (from == "default") {
@@ -117,10 +52,8 @@ scoreAllWindows <- function(snp.seq, snp.seq.rc, pwm, method = "default",
   window.scores <- rep(NA, m)
   window.scores.rc <- rep(NA, m)
   for (i in from:to) {
-    window.scores[i - from + 1] <- wScore(snp.seq, pwm, offset = i,
-                                          method, bkg, pwm.range, omega, len = l)
-    window.scores.rc[i - from + 1] <- wScore(snp.seq.rc, pwm, offset = i,
-                                             method, bkg, pwm.range, omega, len = l)
+    window.scores[i - from + 1] <- wScore(snp.seq, pwm, offset = i, ppm.range = pwm.range)
+    window.scores.rc[i - from + 1] <- wScore(snp.seq.rc, pwm, offset = i, ppm.range = pwm.range)
   }
   all.window.scores <- matrix(data = c(window.scores, window.scores.rc), nrow = 2,
                               ncol = m, byrow = TRUE, dimnames = list(c("top", "bot"), from:to))
@@ -162,9 +95,10 @@ snpEff <- function(allelR, allelA) {
 #' @importFrom S4Vectors mcols mcols<-
 #' @importFrom BiocGenerics width
 #' @importFrom IRanges reverse
+#' @importFrom TFMPvalue TFMpv2sc
 scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
-                         threshold = 0.9, show.neutral = FALSE, verbose = FALSE, genome.bsgenome=NULL,
-                         bootstrap = NULL) {
+                         threshold = 0.05, show.neutral = FALSE, verbose = FALSE,
+                         genome.bsgenome=NULL, pwmList.pc = NULL, pwmRanges = NULL) {
   if (!(Reduce("&", width(fsnplist$REF) == 1)) || !(Reduce("&", width(fsnplist$ALT) == 1))) {
     drop.snp.i <- !(width(fsnplist$REF) == 1) & (width(fsnplist$ALT) == 1)
     drop.snp <- names(fsnplist[!drop.snp.i])
@@ -202,36 +136,6 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
   resultSet <- lapply(fsnplist, function(x, l = length(pwmList)) {
     return(rep(x, l))
   })
-  scounts <- as.integer(mcols(pwmList)$sequenceCount)
-  scounts[is.na(scounts)] <- 20L
-  pwmList.pc <- Map(function(pwm, scount) {
-                      pwm <- (pwm * scount + 0.25)/(scount + 1)
-                    }, pwmList, scounts)
-  if(method == "ic") {
-    pwmOmegas <- lapply(pwmList.pc, function(pwm, b=bkg) {
-                          omegaic <- colSums(pwm * log2(pwm/b))
-                        })
-  }
-  if(method == "default") {
-    pwmOmegas <- lapply(pwmList.pc, function(pwm) {
-                          omegadefault <- colMaxs(pwm) - colMins(pwm)
-                        })
-  }
-  if(method == "log") {
-    pwmList.pc <- lapply(pwmList.pc, function(pwm, b) {
-      pwm <- log(pwm) - log(b)
-    }, b = bkg)
-    pwmOmegas <- 1
-  }
-  pwmRanges <- Map(function(pwm, omega) {
-                     x <- colSums(colRanges(pwm) * omega)
-                     return(x)
-                   }, pwmList.pc, pwmOmegas)
-  if(!is.null(bootstrap)){
-    pwmThresh <- lapply(bootstrap, quantile, probs = threshold)
-  } else {
-    pwmThresh <- NULL
-  }
   strand.opt <- c("+", "-")
   #set.sig <- rep(NA, length(resultSet))
   res.el.e <- new.env()
@@ -249,28 +153,32 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
     res.el$providerName <- mcols(pwmList)$providerName
     res.el$providerId <- mcols(pwmList)$providerId
     res.el$seqMatch <- as.character(NA)
-    res.el$pctRef <- as.numeric(NA)
-    res.el$pctAlt <- as.numeric(NA)
-    res.el$Refpvalue <- as.numeric(NA)
-    res.el$Altpvalue <- as.numeric(NA)
+    if(!is.null(pwmRanges)) {
+      res.el$pctRef <- as.numeric(NA)
+      res.el$pctAlt <- as.numeric(NA)
+    } else {
+      res.el$scoreRef <- as.numeric(NA)
+      res.el$scoreAlt <- as.numeric(NA)
+      res.el$Refpvalue <- as.numeric(NA)
+      res.el$Altpvalue <- as.numeric(NA)
+    }
     res.el$alleleRef <- as.numeric(NA)
     res.el$alleleAlt <- as.numeric(NA)
     res.el$effect <- as.character(NA)
     for (pwm.i in seq_along(pwmList)) {
       cat(names(pwmList[pwm.i]), "\n")
       ## REF
+      pwm.basic <- pwmList[[pwm.i]]
       pwm <- pwmList.pc[[pwm.i]]
       len <- ncol(pwm)
-      thresh <- pwmThresh[[pwm.i]]
-      ref.windows <- scoreAllWindows(snp.ref, snp.ref.rc, pwm, method, bkg = bkg,
-                                     from = k - len + 1, to = k, pwm.range = pwmRanges[[pwm.i]],
-                                     omega = pwmOmegas[[pwm.i]], pvalue = thresh)
-      hit.ref <- maxThresholdWindows(ref.windows, threshold = threshold)
+      thresh <- threshold[[pwm.i]]
+      ref.windows <- scoreAllWindows(snp.ref, snp.ref.rc, pwm,
+                                     from = k - len + 1, to = k, pwm.range = pwmRanges[[pwm.i]])
+      hit.ref <- maxThresholdWindows(ref.windows, threshold = thresh)
       ## ALT
-      alt.windows <- scoreAllWindows(snp.alt, snp.alt.rc, pwm, method, bkg = bkg,
-                                     from = k - len + 1, to = k, pwm.range = pwmRanges[[pwm.i]],
-                                     omega = pwmOmegas[[pwm.i]], pvalue = thresh)
-      hit.alt <- maxThresholdWindows(alt.windows, threshold = threshold)
+      alt.windows <- scoreAllWindows(snp.alt, snp.alt.rc, pwm,
+                                     from = k - len + 1, to = k, pwm.range = pwmRanges[[pwm.i]])
+      hit.alt <- maxThresholdWindows(alt.windows, threshold = thresh)
       if (hit.ref[["strand"]] != 0L) {
         hit <- hit.ref
       } else {
@@ -282,25 +190,57 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
       if(!is.null(hit)) {
         snp.pos <- len - hit[["window"]] + 1
         result <- res.el[pwm.i]
-        uniquename <- paste(names(result), result$dataSource, result$providerName, result$providerId, sep = "%%")
+        uniquename <- paste("ref", names(result), result$dataSource, result$providerName, result$providerId, sep = "%%")
         if (hit[["strand"]] == 1L) {
-          allelR <- pwm[as.character(result$REF), snp.pos]
-          allelA <- pwm[as.character(result$ALT), snp.pos]
+          allelR <- pwm.basic[as.character(result$REF), snp.pos]
+          allelA <- pwm.basic[as.character(result$ALT), snp.pos]
         } else {
-          allelR <- pwm[as.character(complement(result$REF)), snp.pos]
-          allelA <- pwm[as.character(complement(result$ALT)), snp.pos]
+          allelR <- pwm.basic[as.character(complement(result$REF)), snp.pos]
+          allelA <- pwm.basic[as.character(complement(result$ALT)), snp.pos]
         }
         effect <- snpEff(allelR, allelA)
         if (effect == "neut") {
           if (show.neutral) {
             res.el.e[[uniquename]] <- updateResults(result, snp.ref, snp.pos,
                                                     hit, ref.windows, alt.windows, allelR, allelA, effect, len,
-                                                    k, pwm, bootstrap[, pwm.i])
+                                                    k, pwm, calcp=is.null(pwmRanges))
           }
         } else {
           res.el.e[[uniquename]] <- updateResults(result, snp.ref, snp.pos,
                                                 hit, ref.windows, alt.windows, allelR, allelA, effect, len,
-                                                k, pwm, bootstrap[, pwm.i])
+                                                k, pwm, calcp=is.null(pwmRanges))
+        }
+      }
+      if (hit.alt[["strand"]] != 0L) {
+        hit <- hit.alt
+      } else {
+        if(hit.ref[["strand"]] != 0L && hit.ref[["window"]] != hit.alt[["window"]]) {
+          hit <- hit.ref
+        }
+        hit <- NULL
+      }
+      if(!is.null(hit)) {
+        snp.pos <- len - hit[["window"]] + 1
+        result <- res.el[pwm.i]
+        uniquename <- paste("alt", names(result), result$dataSource, result$providerName, result$providerId, sep = "%%")
+        if (hit[["strand"]] == 1L) {
+          allelR <- pwm.basic[as.character(result$REF), snp.pos]
+          allelA <- pwm.basic[as.character(result$ALT), snp.pos]
+        } else {
+          allelR <- pwm.basic[as.character(complement(result$REF)), snp.pos]
+          allelA <- pwm.basic[as.character(complement(result$ALT)), snp.pos]
+        }
+        effect <- snpEff(allelR, allelA)
+        if (effect == "neut") {
+          if (show.neutral) {
+            res.el.e[[uniquename]] <- updateResults(result, snp.ref, snp.pos,
+                                                    hit, ref.windows, alt.windows, allelR, allelA, effect, len,
+                                                    k, pwm, calcp=is.null(pwmRanges))
+          }
+        } else {
+          res.el.e[[uniquename]] <- updateResults(result, snp.ref, snp.pos,
+                                                  hit, ref.windows, alt.windows, allelR, allelA, effect, len,
+                                                  k, pwm, calcp=is.null(pwmRanges))
         }
       }
     }
@@ -326,8 +266,9 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
 
 #' @importFrom stringr str_pad
 #' @importFrom BiocGenerics start end start<- end<- strand<-
+#' @importFrom TFMPvalue TFMsc2pv
 updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.windows,
-                          allelR, allelA, effect, len, k, pwm, boot) {
+                          allelR, allelA, effect, len, k, pwm, calcp) {
   strand.opt <- c("+", "-")
   strand <- (-hit[["strand"]] + 3) / 2
   strand(result) <- strand.opt[strand]
@@ -350,10 +291,15 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
     start(result) <- start(result) - snp.pos + 1
     end(result) <- end(result) - snp.pos + len
   }
-  mresult[["pctRef"]] <- ref.windows[strand, hit[["window"]]]
-  mresult[["Refpvalue"]] <- (sum(mresult[["pctRef"]] < boot) + 1)/(length(boot) + 1)
-  mresult[["pctAlt"]] <- alt.windows[strand, hit[["window"]]]
-  mresult[["Altpvalue"]] <- (sum(mresult[["pctAlt"]] < boot) + 1)/(length(boot) + 1)
+  if(calcp) {
+    mresult[["scoreRef"]] <- ref.windows[strand, hit[["window"]]]
+    mresult[["scoreAlt"]] <- alt.windows[strand, hit[["window"]]]
+  } else {
+    mresult[["pctRef"]] <- ref.windows[strand, hit[["window"]]]
+    mresult[["pctAlt"]] <- alt.windows[strand, hit[["window"]]]
+  }
+  mresult[["Refpvalue"]] <- NA
+  mresult[["Altpvalue"]] <- NA
   mresult[["alleleRef"]] <- allelR
   mresult[["alleleAlt"]] <- allelA
   mresult[["effect"]] <- effect
@@ -368,21 +314,13 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #' @param snpList The output of \code{snps.from.rsid} or \code{snps.from.file}
 #' @param pwmList An object of class \code{MotifList} containing the motifs that
 #'   you wish to interrogate
-#' @param threshold Numeric; the minimum disruptiveness score for which to
-#'   report results
+#' @param threshold Numeric; the maximum p-value for a match to be called or a minimum score threshold
 #' @param method Character; one of \code{default}, \code{log}, or \code{ic}; see
 #'   details.
 #' @param bkg Numeric Vector; the background probabilites of the nucleotides
 #'   used with method=\code{log} method=\code{ic}
 #' @param show.neutral Logical; include neutral changes in the output
 #' @param verbose Logical; if running serially, show verbose messages
-#' @param emp.p.value Logical; Calculate empirical p value based upon
-#'   bootstrapping 10,000 random sequences. \code{phat = (r+1)/(n+1)} where
-#'   \code{n} is the number of replicate samples that have been simulated and
-#'   \code{r} are the number of these replicates that produce a test statistic
-#'   greater or equal to that calculated for the actual data.
-#' @param bootstrap.location Character; where to look for, or save the results
-#'   of simulating the test statistics.
 #' @param BPPARAM a BiocParallel object see \code{\link[BiocParallel]{register}}
 #'   and see \code{getClass("BiocParallelParam")} for additional parameter
 #'   classes.  Try \code{BiocParallel::registered()} to see what's availible and
@@ -489,13 +427,6 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #' (\eqn{\Delta p_{i} > 0.7}) but this behaviour can be
 #' overridden.
 #'
-#' \strong{Calculating The Empirical p-value}
-#'  We calculate empirical p-value based upon
-#'   bootstrapping 10,000 random sequences. \eqn{\hat{p} = (r+1)/(n+1)} where
-#'   \eqn{n} is the number of replicate samples that have been simulated and
-#'   \eqn{r} are the number of these replicates that produce a test statistic
-#'   greater or equal to that calculated for the actual data.
-#'
 #' @return a GRanges object containing:
 #'  \item{REF}{the reference allele for the SNP}
 #'  \item{ALT}{the alternate allele for the SNP}
@@ -508,8 +439,8 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #'  that corresponds to DNA at the position that the TF binding motif was found.}
 #'  \item{pctRef}{The score as determined by the scoring method, when the sequence contains the reference SNP allele}
 #'  \item{pctAlt}{The score as determined by the scoring method, when the sequence contains the alternate SNP allele}
-#'  \item{Refpvalue}{The estimated empirical p-value for the match for the pctRef score}
-#'  \item{Altpvalue}{The estimated empirical p-value for the match for the pctAlt score}
+#'  \item{Refpvalue}{p-value for the match for the pctRef score}
+#'  \item{Altpvalue}{p-value for the match for the pctAlt score}
 #'  \item{alleleRef}{The proportional frequency of the reference allele at position \code{motifPos} in the motif}
 #'  \item{alleleAlt}{The proportional frequency of the alternate allele at position \code{motifPos} in the motif}
 #'  \item{effect}{one of weak, strong, or neutral indicating the strength of the effect.}
@@ -525,9 +456,8 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #'  motifs <- sample(hocomoco, 50)
 #'  # run motifbreakR
 #'  results <- motifbreakR(pca.enhancer.snps,
-#'                         motifs, threshold = 0.9,
+#'                         motifs, threshold = 0.001,
 #'                         method = "ic",
-#'                         emp.p.value = FALSE,
 #'                         BPPARAM=BiocParallel::SerialParam())
 #' @import BiocParallel
 #' @importFrom BiocParallel bplapply
@@ -535,9 +465,8 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #' @importFrom stringr str_length str_trim
 #' @export
 motifbreakR <- function(snpList, pwmList, threshold, method = "default",
-                        bkg = c(A=0.25, C=0.25, G=0.25, T=0.25),
-                        show.neutral = FALSE, verbose = FALSE, emp.p.value = FALSE,
-                        bootstrap.location = NULL, BPPARAM=bpparam()) {
+                        bkg = c(A=0.25, C=0.25, G=0.25, T=0.25), filterp = TRUE,
+                        show.neutral = FALSE, verbose = FALSE, BPPARAM=bpparam()) {
   if(.Platform$OS.type == "windows" && inherits(BPPARAM, "MulticoreParam")) {
     warning(paste0("Serial evaluation under effect, to achive parallel evaluation under\n",
             "Windows, please supply an alternative BPPARAM"))
@@ -563,33 +492,48 @@ motifbreakR <- function(snpList, pwmList, threshold, method = "default",
   }
   snpList <- sapply(suppressWarnings(split(snpList, 1:cores)), list)
   bkg <- bkg[c('A', 'C', 'G', 'T')]
-  if(emp.p.value) {
-    if(!is.null(bootstrap.location) && file.exists(bootstrap.location)) {
-      load(bootstrap.location)
-      gotmethod <- method %in% names(boot)
-      gotpwm <- Reduce("&", names(pwmList) %in% colnames(boot[[method]]))
-      if(!(gotmethod && gotpwm)) {
-        warning("no values found for some pwms or methods, recalculating")
-        boot2 <- bootstrap.for.empirical.pvalue(pwmList, method = method, BPPARAM=BPPARAM)
-        boot[[method]] <- boot2
-      }
-    } else {
-      boot <- bootstrap.for.empirical.pvalue(pwmList, method = method, BPPARAM=BPPARAM)
-    }
-    if(!is.null(bootstrap.location)) {
-      message("saving bootstrap")
-      save(boot, file=bootstrap.location)
-    }
-    boot <- boot[[method]]
-    boot <- boot[, names(pwmList)]
-    gc()
-  } else {
-    boot <- NULL
+
+  scounts <- as.integer(mcols(pwmList)$sequenceCount)
+  scounts[is.na(scounts)] <- 20L
+  pwmList.pc <- Map(function(pwm, scount) {
+    pwm <- (pwm * scount + 0.25)/(scount + 1)
+  }, pwmList, scounts)
+  if(method == "ic") {
+    pwmOmegas <- lapply(pwmList.pc, function(pwm, b=bkg) {
+      omegaic <- colSums(pwm * log2(pwm/b))
+    })
   }
-  x <- try(bplapply(snpList, scoreSnpList, pwmList = pwmList, threshold = threshold,
-                    method = method, bkg = bkg, show.neutral = show.neutral,
+  if(method == "default") {
+    pwmOmegas <- lapply(pwmList.pc, function(pwm) {
+      omegadefault <- colMaxs(pwm) - colMins(pwm)
+    })
+  }
+  if(method == "log") {
+    pwmList.pc <- lapply(pwmList.pc, function(pwm, b) {
+      pwm <- log(pwm) - log(b)
+    }, b = bkg)
+    pwmOmegas <- 1
+  }
+  pwmList.pc <- Map(function(pwm, omega) {
+    omegamatrix <- matrix(rep(omega, 4), nrow = 4, byrow=TRUE)
+    pwm <- pwm * omegamatrix
+  }, pwmList.pc, pwmOmegas)
+  if(filterp) {
+    pwmRanges <- NULL
+    pwmList.pc2 <- lapply(pwmList.pc, round, digits = 2)
+    pwmThresh <- bplapply(pwmList.pc2, TFMpv2sc, pvalue = threshold, bg = bkg, type = "PWM", BPPARAM=BPPARAM)
+    pwmThresh <- Map("+", pwmThresh, -0.02)
+  } else {
+    pwmRanges <- Map(function(pwm, omega) {
+      x <- colSums(colRanges(pwm))
+      return(x)
+    }, pwmList.pc, pwmOmegas)
+    pwmThresh <- rep.int(threshold, times = length(pwmRanges))
+  }
+  x <- try(bplapply(snpList, scoreSnpList, pwmList = pwmList, threshold = pwmThresh,
+                    method = method, bkg = bkg, show.neutral = show.neutral, pwmList.pc = pwmList.pc,
                     verbose = ifelse(cores == 1, verbose, FALSE), genome.bsgenome = genome.bsgenome,
-                    bootstrap = boot, BPPARAM=BPPARAM))
+                    pwmRanges = pwmRanges, BPPARAM=BPPARAM))
   if(inherits(x, "try-error")) {
     bpstop(BPPARAM)
     stop(attributes(x)$condition)
@@ -603,12 +547,16 @@ motifbreakR <- function(snpList, pwmList, threshold, method = "default",
     x <- unlist(GRangesList(unname(x)))
     x <- x[order(match(names(x), names(snpList)), x$geneSymbol), ]
     attributes(x)$genome.package <- genome.package
-    attributes(x)$motifs <- pwmList[mcols(pwmList)$providerId %in% unique(x$providerId), ]
+    attributes(x)$motifs <- pwmList[mcols(pwmList)$providerId %in% unique(x$providerId) &
+                                         mcols(pwmList)$providerName %in% unique(x$providerName), ]
+    attributes(x)$scoremotifs <- pwmList.pc[names(attributes(x)$motifs)]
   } else {
     if (length(x) == 1L) {
       x <- x[[1]]
       attributes(x)$genome.package <- genome.package
-      attributes(x)$motifs <- pwmList[mcols(pwmList)$providerId %in% unique(x$providerId), ]
+      attributes(x)$motifs <- pwmList[mcols(pwmList)$providerId %in% unique(x$providerId) &
+                                           mcols(pwmList)$providerName %in% unique(x$providerName), ]
+      attributes(x)$scoremotifs <- pwmList.pc[names(attributes(x)$motifs)]
     } else {
       warning("No SNP/Motif Interactions reached threshold")
       x <- NULL
@@ -625,11 +573,31 @@ motifbreakR <- function(snpList, pwmList, threshold, method = "default",
                     "of", length(pwmList), "motifs."))
     }
   }
-  if(!is.null(x) && !emp.p.value){
-    x$Refpvalue <- NA
-    x$Altpvalue <- NA
-  }
   return(x)
+}
+
+
+#' @export
+calculatePvalue <- function(results) {
+  if("pctRef" %in% names(mcols(results))) {
+    stop('incorrect results format; please rerun analysis with filterp=TRUE')
+  } else {
+    pwmListmeta <- mcols(attributes(results)$motifs)
+    pwmList <- attributes(results)$scoremotifs
+    pvalues <- lapply(results, function(result, pwmList, pwmListmeta) {
+      pwm.id <- result$providerId
+      pwm.name.f <- result$providerName
+      pwmmeta <- pwmListmeta[pwmListmeta$providerId == pwm.id & pwmListmeta$providerName == pwm.name.f, ]
+      pwm <- pwmList[[rownames(pwmmeta)]]
+      ref <- TFMsc2pv(pwm, mcols(result)[["scoreRef"]], type="PWM")
+      alt <- TFMsc2pv(pwm, mcols(result)[["scoreAlt"]], type="PWM")
+      return(data.frame(ref=ref, alt=alt))
+    }, pwmList=pwmList, pwmListmeta=pwmListmeta)
+    pvalues.df <- base::do.call("rbind", c(pvalues, make.row.names = FALSE))
+    results$Refpvalue <- pvalues.df[, "ref"]
+    results$Altpvalue <- pvalues.df[, "alt"]
+    return(results)
+  }
 }
 
 #' @importFrom grImport PostScriptTrace readPicture grid.picture
@@ -762,8 +730,8 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, stackmotif = FALSE, effec
       for(pwm.i in seq_along(pwms)) {
         pwm.name <- names(pwms[pwm.i])
         pwm.id <- mcols(pwms[pwm.name, ])$providerId
-        pwm.name <- mcols(pwms[pwm.name, ])$providerName
-        doRev <- as.logical(strand(result[result$providerId == pwm.id & result$providerName == pwm.name, ]) == "-")
+        pwm.name.f <- mcols(pwms[pwm.name, ])$providerName
+        doRev <- as.logical(strand(result[result$providerId == pwm.id & result$providerName == pwm.name.f, ]) == "-")
         if(doRev) {
           pwm <- pwms[[pwm.i]]
           pwm <- pwm[, rev(1:ncol(pwm))]
@@ -777,8 +745,8 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, stackmotif = FALSE, effec
       for(pwm.i in seq_along(pwms)) {
         pwm.name <- names(pwms[pwm.i])
         pwm.id <- mcols(pwms[pwm.name, ])$providerId
-        pwm.name <- mcols(pwms[pwm.name, ])$providerName
-        doRev <- as.logical(strand(result[result$providerId == pwm.id & result$providerName == pwm.name, ]) == "-")
+        pwm.name.f <- mcols(pwms[pwm.name, ])$providerName
+        doRev <- as.logical(strand(result[result$providerId == pwm.id & result$providerName == pwm.name.f, ]) == "-")
         if(doRev) {
           pwm <- pwms[[pwm.i]]
           pwm <- pwm[, rev(1:ncol(pwm))]
@@ -803,25 +771,33 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, stackmotif = FALSE, effec
       pwm <- pwmList[pwm.i]
       if (reverseMotif) {
         pwm.id <- mcols(pwm)$providerId
-        doRev <- as.logical(strand(result[result$providerId == pwm.id, ]) == "-")
+        pwm.name.f <- mcols(pwm)$providerName
+        doRev <- as.logical(strand(result[result$providerId == pwm.id & result$providerName == pwm.name.f, ]) == "-")
         if(doRev) {
           pwm.mat <- pwm[[1]]
           pwm.mat <- pwm.mat[, rev(1:ncol(pwm.mat))]
           rownames(pwm.mat) <- c("T", "G", "C", "A")
           pwm.mat <- pwm.mat[c("A", "C", "G", "T"), ]
-          pwmList[[pwm.i]] <- pwm.mat
+          pwm[[pwm.i]] <- pwm.mat
           names(pwm)[1] <- paste0(names(pwm)[1], "-:rc")
-          names(pwmList)[pwm.i] <- names(pwm)[1]
+          pwm@elementMetadata@rownames <- names(pwm)[1]
+          pwmList@elementMetadata[pwm.i,] <- pwm@elementMetadata
+          pwmList@listData[pwm.i] <- pwm@listData
+          names(pwmList@listData)[pwm.i] <- names(pwm)[1]
         }
       } else {
         pwm.id <- mcols(pwm)$providerId
-        doRev <- as.logical(strand(result[result$providerId == pwm.id, ]) == "-")
+        pwm.name.f <- mcols(pwm)$providerName
+        doRev <- as.logical(strand(result[result$providerId == pwm.id & result$providerName == pwm.name.f, ]) == "-")
         if(doRev) {
           pwm.mat <- pwm[[1]]
           pwm.mat <- pwm.mat[, rev(1:ncol(pwm.mat))]
-          pwmList[[pwm.i]] <- pwm.mat
+          pwm[[pwm.i]] <- pwm.mat
           names(pwm)[1] <- paste0(names(pwm)[1], "-:r")
-          names(pwmList)[pwm.i] <- names(pwm)[1]
+          pwm@elementMetadata@rownames <- names(pwm)[1]
+          pwmList@elementMetadata[pwm.i,] <- pwm@elementMetadata
+          pwmList@listData[pwm.i] <- pwm@listData
+          names(pwmList@listData)[pwm.i] <- names(pwm)[1]
         }
       }
       p <- new("pfm", mat = pwm[[1]], name = names(pwm[1]))
@@ -858,6 +834,7 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, stackmotif = FALSE, effec
     selectingfun <- selall
   }
   getmotifs <- mcols(pwmList)$providerId %in% result$providerId & mcols(pwmList)$providerName %in% result$providerName
+  browser()
   motifT <- AnnotationTrack(result, id = names(pwmList)[getmotifs],
                             fun = detailfun, group = result$providerName,
                             feature = paste0("snp@",
