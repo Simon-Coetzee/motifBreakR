@@ -762,8 +762,8 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, stackmotif = FALSE, effec
       for(pwm.i in seq_along(pwms)) {
         pwm.name <- names(pwms[pwm.i])
         pwm.id <- mcols(pwms[pwm.name, ])$providerId
-        pwm.name <- mcols(pwms[pwm.name, ])$providerName
-        doRev <- as.logical(strand(result[result$providerId == pwm.id & result$providerName == pwm.name, ]) == "-")
+        pwm.name.f <- mcols(pwms[pwm.name, ])$providerName
+        doRev <- as.logical(strand(result[result$providerId == pwm.id & result$providerName == pwm.name.f, ]) == "-")
         if(doRev) {
           pwm <- pwms[[pwm.i]]
           pwm <- pwm[, rev(1:ncol(pwm))]
@@ -777,8 +777,8 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, stackmotif = FALSE, effec
       for(pwm.i in seq_along(pwms)) {
         pwm.name <- names(pwms[pwm.i])
         pwm.id <- mcols(pwms[pwm.name, ])$providerId
-        pwm.name <- mcols(pwms[pwm.name, ])$providerName
-        doRev <- as.logical(strand(result[result$providerId == pwm.id & result$providerName == pwm.name, ]) == "-")
+        pwm.name.f <- mcols(pwms[pwm.name, ])$providerName
+        doRev <- as.logical(strand(result[result$providerId == pwm.id & result$providerName == pwm.name.f, ]) == "-")
         if(doRev) {
           pwm <- pwms[[pwm.i]]
           pwm <- pwm[, rev(1:ncol(pwm))]
@@ -803,25 +803,33 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, stackmotif = FALSE, effec
       pwm <- pwmList[pwm.i]
       if (reverseMotif) {
         pwm.id <- mcols(pwm)$providerId
-        doRev <- as.logical(strand(result[result$providerId == pwm.id, ]) == "-")
+        pwm.name.f <- mcols(pwm)$providerName
+        doRev <- as.logical(strand(result[result$providerId == pwm.id & result$providerName == pwm.name.f, ]) == "-")
         if(doRev) {
           pwm.mat <- pwm[[1]]
           pwm.mat <- pwm.mat[, rev(1:ncol(pwm.mat))]
           rownames(pwm.mat) <- c("T", "G", "C", "A")
           pwm.mat <- pwm.mat[c("A", "C", "G", "T"), ]
-          pwmList[[pwm.i]] <- pwm.mat
+          pwm[[pwm.i]] <- pwm.mat
           names(pwm)[1] <- paste0(names(pwm)[1], "-:rc")
-          names(pwmList)[pwm.i] <- names(pwm)[1]
+          pwm@elementMetadata@rownames <- names(pwm)[1]
+          pwmList@elementMetadata[pwm.i,] <- pwm@elementMetadata
+          pwmList@listData[pwm.i] <- pwm@listData
+          names(pwmList@listData)[pwm.i] <- names(pwm)[1]
         }
       } else {
         pwm.id <- mcols(pwm)$providerId
-        doRev <- as.logical(strand(result[result$providerId == pwm.id, ]) == "-")
+        pwm.name.f <- mcols(pwm)$providerName
+        doRev <- as.logical(strand(result[result$providerId == pwm.id & result$providerName == pwm.name.f, ]) == "-")
         if(doRev) {
           pwm.mat <- pwm[[1]]
           pwm.mat <- pwm.mat[, rev(1:ncol(pwm.mat))]
-          pwmList[[pwm.i]] <- pwm.mat
+          pwm[[pwm.i]] <- pwm.mat
           names(pwm)[1] <- paste0(names(pwm)[1], "-:r")
-          names(pwmList)[pwm.i] <- names(pwm)[1]
+          pwm@elementMetadata@rownames <- names(pwm)[1]
+          pwmList@elementMetadata[pwm.i,] <- pwm@elementMetadata
+          pwmList@listData[pwm.i] <- pwm@listData
+          names(pwmList@listData)[pwm.i] <- names(pwm)[1]
         }
       }
       p <- new("pfm", mat = pwm[[1]], name = names(pwm[1]))
@@ -858,6 +866,7 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, stackmotif = FALSE, effec
     selectingfun <- selall
   }
   getmotifs <- mcols(pwmList)$providerId %in% result$providerId & mcols(pwmList)$providerName %in% result$providerName
+  browser()
   motifT <- AnnotationTrack(result, id = names(pwmList)[getmotifs],
                             fun = detailfun, group = result$providerName,
                             feature = paste0("snp@",
@@ -873,6 +882,4 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, stackmotif = FALSE, effec
              shape = "box", cex.group = 0.8, fonts = c("sans", "Helvetica"))
   return(invisible(NULL))
 }
-
-
 
