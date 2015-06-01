@@ -515,7 +515,7 @@ motifbreakR <- function(snpList, pwmList, threshold, method = "default",
                        return(x)
                      }, pwmList.pc, pwmOmegas)
     pwmList.pc2 <- lapply(pwmList.pc, round, digits = 2)
-    pwmThresh <- bplapply(pwmList.pc2, TFMpv2sc, pvalue = threshold, bg = bkg, type = "PWM", BPPARAM=BPPARAM)
+    pwmThresh <- lapply(pwmList.pc2, TFMpv2sc, pvalue = threshold, bg = bkg, type = "PWM")
     pwmThresh <- Map("+", pwmThresh, -0.02)
   } else {
     pwmRanges <- Map(function(pwm, omega) {
@@ -572,7 +572,7 @@ motifbreakR <- function(snpList, pwmList, threshold, method = "default",
 
 #' @export
 calculatePvalue <- function(results, BPPARAM=SerialParam()){
-  if("pctRef" %in% names(mcols(results))) {
+  if(!("scoreRef" %in% names(mcols(results)))) {
     stop('incorrect results format; please rerun analysis with filterp=TRUE')
   } else {
     pwmListmeta <- mcols(attributes(results)$motifs)
