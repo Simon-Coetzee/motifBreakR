@@ -97,7 +97,7 @@ snpEff <- function(allelR, allelA) {
 #' @importFrom IRanges reverse
 #' @importFrom TFMPvalue TFMpv2sc
 scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
-                         threshold = 0.05, show.neutral = FALSE, verbose = FALSE,
+                         threshold = 1e-3, show.neutral = FALSE, verbose = FALSE,
                          genome.bsgenome=NULL, pwmList.pc = NULL, pwmRanges = NULL, filterp=TRUE) {
   if (!(Reduce("&", width(fsnplist$REF) == 1)) || !(Reduce("&", width(fsnplist$ALT) == 1))) {
     drop.snp.i <- !(width(fsnplist$REF) == 1) & (width(fsnplist$ALT) == 1)
@@ -569,23 +569,22 @@ motifbreakR <- function(snpList, pwmList, threshold, method = "default",
   return(x)
 }
 
-
 #' @export
-calculatePvalue <- function(results, BPPARAM=SerialParam()){
+calculatePvalue <- function(results, background = c(A = 0.25, C = 0.25, G = 0.25, T = 0.25)) {
   if(!("scoreRef" %in% names(mcols(results)))) {
     stop('incorrect results format; please rerun analysis with filterp=TRUE')
   } else {
     pwmListmeta <- mcols(attributes(results)$motifs)
     pwmList <- attributes(results)$scoremotifs
-    pvalues <- bplapply(results, function(result, pwmList, pwmListmeta) {
+    pvalues <- lapply(results, function(result, pwmList, pwmListmeta) {
                         pwm.id <- result$providerId
                         pwm.name.f <- result$providerName
                         pwmmeta <- pwmListmeta[pwmListmeta$providerId == pwm.id & pwmListmeta$providerName == pwm.name.f, ]
                         pwm <- pwmList[[rownames(pwmmeta)]]
-                        ref <- TFMsc2pv(pwm, mcols(result)[["scoreRef"]], type="PWM")
+                        ref <- TFMsc2pv(pwm, mcols(result)[["scoreRef"]], bg = bg, type="PWM")
                         alt <- TFMsc2pv(pwm, mcols(result)[["scoreAlt"]], type="PWM")
                         return(data.frame(ref=ref, alt=alt))
-    }, pwmList=pwmList, pwmListmeta=pwmListmeta, BPPARAM=BPPARAM)
+    }, pwmList=pwmList, pwmListmeta=pwmListmeta, bg = background)
     pvalues.df <- base::do.call("rbind", c(pvalues, make.row.names = FALSE))
     results$Refpvalue <- pvalues.df[, "ref"]
     results$Altpvalue <- pvalues.df[, "alt"]
