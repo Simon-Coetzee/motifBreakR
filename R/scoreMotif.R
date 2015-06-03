@@ -581,8 +581,8 @@ calculatePvalue <- function(results, background = c(A = 0.25, C = 0.25, G = 0.25
                         pwm.name.f <- result$providerName
                         pwmmeta <- pwmListmeta[pwmListmeta$providerId == pwm.id & pwmListmeta$providerName == pwm.name.f, ]
                         pwm <- pwmList[[rownames(pwmmeta)]]
-                        ref <- TFMsc2pv(pwm, mcols(result)[["scoreRef"]], bg = bg, type="PWM")
-                        alt <- TFMsc2pv(pwm, mcols(result)[["scoreAlt"]], type="PWM")
+                        ref <- TFMsc2pv(pwm, mcols(result)[["scoreRef"]], bg = background, type="PWM")
+                        alt <- TFMsc2pv(pwm, mcols(result)[["scoreAlt"]], bg = background, type="PWM")
                         return(data.frame(ref=ref, alt=alt))
     }, pwmList=pwmList, pwmListmeta=pwmListmeta, bg = background)
     pvalues.df <- base::do.call("rbind", c(pvalues, make.row.names = FALSE))
