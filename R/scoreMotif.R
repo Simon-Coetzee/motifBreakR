@@ -451,7 +451,7 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #' @importFrom stringr str_length str_trim
 #' @export
 motifbreakR <- function(snpList, pwmList, threshold, method = "default",
-                        bkg = c(A=0.25, C=0.25, G=0.25, T=0.25), filterp = TRUE,
+                        bkg = c(A=0.25, C=0.25, G=0.25, T=0.25), filterp = FALSE,
                         show.neutral = FALSE, verbose = FALSE, BPPARAM=bpparam()) {
   if(.Platform$OS.type == "windows" && inherits(BPPARAM, "MulticoreParam")) {
     warning(paste0("Serial evaluation under effect, to achive parallel evaluation under\n",
@@ -576,15 +576,15 @@ calculatePvalue <- function(results, background = c(A = 0.25, C = 0.25, G = 0.25
   } else {
     pwmListmeta <- mcols(attributes(results)$motifs)
     pwmList <- attributes(results)$scoremotifs
-    pvalues <- lapply(results, function(result, pwmList, pwmListmeta) {
+    pvalues <- lapply(results, function(result, pwmList, pwmListmeta, bkg) {
                         pwm.id <- result$providerId
                         pwm.name.f <- result$providerName
                         pwmmeta <- pwmListmeta[pwmListmeta$providerId == pwm.id & pwmListmeta$providerName == pwm.name.f, ]
                         pwm <- pwmList[[rownames(pwmmeta)]]
-                        ref <- TFMsc2pv(pwm, mcols(result)[["scoreRef"]], bg = background, type="PWM")
-                        alt <- TFMsc2pv(pwm, mcols(result)[["scoreAlt"]], bg = background, type="PWM")
+                        ref <- TFMsc2pv(pwm, mcols(result)[["scoreRef"]], bg = bkg, type="PWM")
+                        alt <- TFMsc2pv(pwm, mcols(result)[["scoreAlt"]], bg = bkg, type="PWM")
                         return(data.frame(ref=ref, alt=alt))
-    }, pwmList=pwmList, pwmListmeta=pwmListmeta, bg = background)
+    }, pwmList=pwmList, pwmListmeta=pwmListmeta, bkg = background)
     pvalues.df <- base::do.call("rbind", c(pvalues, make.row.names = FALSE))
     results$Refpvalue <- pvalues.df[, "ref"]
     results$Altpvalue <- pvalues.df[, "alt"]
