@@ -699,7 +699,7 @@ DNAmotifAlignment.2snp <- function(pwms, result) {
 #'   AnnotationTrack plotTracks
 #' @importFrom BiocGenerics strand
 #' @export
-plotMB <- function(results, rsid, reverseMotif = TRUE, stackmotif = FALSE, effect = c("strg", "weak")) {
+plotMB <- function(results, rsid, reverseMotif = TRUE, stackmotif = TRUE, effect = c("strg", "weak")) {
   g <- genome(results)[[1]]
   result <- results[names(results) %in% rsid]
   if(length(result) <= 1) stackmotif <- FALSE
