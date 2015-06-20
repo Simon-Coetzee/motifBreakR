@@ -6,8 +6,8 @@
 Transcription Factor Binding Sites.}
 \usage{
 motifbreakR(snpList, pwmList, threshold, method = "default", bkg = c(A =
-  0.25, C = 0.25, G = 0.25, T = 0.25), filterp = TRUE, show.neutral = FALSE,
-  verbose = FALSE, BPPARAM = bpparam())
+  0.25, C = 0.25, G = 0.25, T = 0.25), filterp = FALSE,
+  show.neutral = FALSE, verbose = FALSE, BPPARAM = bpparam())
 }
 \arguments{
 \item{snpList}{The output of \code{snps.from.rsid} or \code{snps.from.file}}

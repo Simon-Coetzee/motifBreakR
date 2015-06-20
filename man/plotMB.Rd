@@ -5,7 +5,7 @@
 \title{Plot a genomic region surrounding a genomic variant, and potentially disrupted
 motifs}
 \usage{
-plotMB(results, rsid, reverseMotif = TRUE, stackmotif = FALSE,
+plotMB(results, rsid, reverseMotif = TRUE, stackmotif = TRUE,
   effect = c("strg", "weak"))
 }
 \arguments{

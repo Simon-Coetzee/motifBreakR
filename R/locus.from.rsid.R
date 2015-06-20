@@ -44,6 +44,7 @@ snps.from.rsid <- function(rsid = NULL, dbSNP = NULL,
     bad.names <- rsid[!grepl("rs", rsid)]
     stop(paste(paste(bad.names, collapse = " "), "are not rsids, perhaps you want to import your snps from a bed or vcf file with snps.from.file()?"))
   }
+  rsid <- unique(rsid)
   rsid.grange <- snpid2grange(dbSNP, rsid)
   rsid.grange <- change.to.search.genome(rsid.grange, search.genome)
   rsid.refseq <- getSeq(search.genome, rsid.grange)
