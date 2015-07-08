@@ -182,7 +182,6 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
     snps$alleles_as_ambig <- DNAStringSet(snps$alleles_as_ambig)
     snps <- snps[seqnames(snps) != "MT"]
     VariantAnnotation::seqlevels(snps) <- paste0("chr", VariantAnnotation::seqlevels(snps))
-    browser()
     snps <- change.to.search.genome(snps, search.genome)
     can.ref <- getSeq(search.genome, snps)
     names(can.ref) <- NULL
@@ -220,7 +219,7 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
       } else {
         warning(paste0("User selected reference allele differs from the sequence in ",
                        attributes(search.genome)$pkgname, " continuing with genome specified",
-                       " reference allels\n", "there are ", sum(snps.noid.ref != snps.noid.ref.user),
+                       " reference allels\n", " there are ", sum(snps.noid.ref != snps.noid.ref.user),
                        " differences"))
       }
       snps.noid.alt <- sapply(snps.noid.alt, "[", 4)
