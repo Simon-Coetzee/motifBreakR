@@ -52,7 +52,7 @@ biocLite(c("BiocParallel", "motifStack", "BSgenome", "BiocGenerics",
            "rtracklayer", "IRanges", "MotifDb", "BSgenome.Hsapiens.UCSC.hg19",
            "SNPlocs.Hsapiens.dbSNP.20120608", "SNPlocs.Hsapiens.dbSNP142.GRCh37",
            "VariantAnnotation", "matrixStats"))
-install.packages("TFMPvalue")
+install.packages(c("TFMPvalue", "knitr"))
 ```
 
 #### Install motifbreakR from github
