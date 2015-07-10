@@ -22,7 +22,6 @@ use mcols(hocomoco)
  \item{bindingDomain}{\code{NA} incomplete}
  \item{tfFamily}{\code{NA} incomplete}
  \item{experimentType}{from \url{http://autosome.ru/HOCOMOCO/Details.php#200}
-
    quoted here:
 
 "TFBS model identification modes
@@ -110,7 +109,6 @@ hocomoco
 From the abstract:
 "We present the Homo sapiens comprehensive model collection (HOCOMOCO,
 \url{http://autosome.ru/HOCOMOCO/}, \url{http://cbrc.kaust.edu.sa/hocomoco/})
-
 containing carefully hand-curated TFBS models constructed by integration of
 binding sequences obtained by both low- and high-throughput methods. To
 construct position weight matrices to represent these TFBS models, we used

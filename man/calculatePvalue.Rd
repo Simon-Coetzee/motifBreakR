@@ -4,12 +4,12 @@
 \alias{calculatePvalue}
 \title{Calculate the significance of the matches for the reference and alternate alleles for the for their PWM}
 \source{
-H\'el\`ene Touzet and Jean-St\'ephane Varr\'e (2007) Efficient and accurate P-value computation for Position Weight Matrices.
+H\'{e}l\`{e}ne Touzet and Jean-St\'{e}phane Varr\'{e} (2007) Efficient and accurate P-value computation for Position Weight Matrices.
  Algorithms for Molecular Biology, \bold{2: 15}.
 }
 \usage{
-calculatePvalue(results,
-                background = c(A=0.25, C=0.25, G=0.25, T=0.25))
+calculatePvalue(results, background = c(A = 0.25, C = 0.25, G = 0.25, T =
+  0.25))
 }
 \arguments{
 \item{results}{The output of \code{motifbreakR} that was run with \code{filterp=TRUE}}

@@ -185,23 +185,26 @@ We get to the task of actually running the function `motifbreakR()`.
 
 We have several options that we may pass to the function, the main ones that will dictate how long the function will run with a given set of variants and motifs are the `threshold` we pass and the `method` we use to [score](#methods).
 
-Here we specify the `snpList`, `pwmList`, `threshold` that we declare as the cutoff for reporting results, the `method`, and `bkg` the relative nucleotide frequency of A, C, G, and T.
+Here we specify the `snpList`, `pwmList`, `threshold` that we declare as the cutoff for reporting results, `filterp` set to true declares that we are filtering by p-value, the `method`, and `bkg` the relative nucleotide frequency of A, C, G, and T.
 
 ```{r runmotifbreakr, message=TRUE, cache=TRUE}
-system.time(results2 <- motifbreakR(snpList = snps.mb2, filterp = T,
+results <- motifbreakR(snpList = snps.mb, filterp = TRUE,
                        pwmList =  hocomoco,
                        threshold = 1e-4,
                        method = "ic",
                        bkg = c(A=0.25, C=0.25, G=0.25, T=0.25),
-                       BPPARAM = BiocParallel::bpparam()))
-results
+                       BPPARAM = BiocParallel::bpparam())
 ```
 The results reveal which variants disrupt which motifs, and to which degree.  If we want to examine a single variant, we can select one like this:
 ```{r getonesnp, cache=TRUE}
-rs11891426 <- results[names(results) %in% "rs11891426"]
-rs11891426
+rs2661839 <- results[names(results) %in% "rs2661839"]
+rs2661839
 ```
-Here we can see that SNP rs11891426 disrupts multiple motifs with at least one allele achieving the 0.9 threshold that we required. The `seqMatch` column shows what the reference genome sequence is at that location, with the variant position appearing in an uppercase letter. pctRef and pctAlt display the the score for the motif in the sequence as a percentage of the best score that motif could achieve on an ideal sequence. In other words $(scoreVariant-minscorePWM)/(maxscorePWM-minscorePWM)$ 
+Here we can see that SNP rs2661839 disrupts multiple motifs. We can then check what the pvalue for each allele is with regard to each motif, using `calculatePvalue`.
+```{r calcp, cache=TRUE}
+rs2661839 <- calculatePvalue(rs2661839)
+```
+And here we see that for each SNP we have at least one allele achieving a p-value below 1e-4 threshold that we required. The `seqMatch` column shows what the reference genome sequence is at that location, with the variant position appearing in an uppercase letter. pctRef and pctAlt display the the score for the motif in the sequence as a percentage of the best score that motif could achieve on an ideal sequence. In other words $(scoreVariant-minscorePWM)/(maxscorePWM-minscorePWM)$. We can also see the absolute scores for our method in scoreRef and scoreAlt and thier respective p-values.
 
 ### Parallel Evaluation (an aside)
 Important to note, is that `motifbreakR` uses the `r Biocpkg("BiocParallel")` parallel back-end, and one may modify what type of parallel evaluation it uses (or if it runs in parallel at all).  Here we can see the versions available on the machine this vignette was compiled on.
@@ -212,9 +215,9 @@ BiocParallel::bpparam()
 By default `motifbreakR` uses `bpparam()` as an argument to `BPPARAM` and will use all available cores on the machine on which it is running. However on Windows machines this reverts to using a serial evaluation model, so if you wish to run in parallel on a Windows machine consider using a different parameter shown in `BiocParallel::registered()` such as `SnowParam` passing `BPPARAM = SnowParam()`.
 
 ## *Step 3* | Visualize
-Now that we have our results, we can visualize them with the function `plotMB`.  Lets take a look at rs11891426.
+Now that we have our results, we can visualize them with the function `plotMB`.  Lets take a look at rs2661839.
 ```{r plotting, cache=TRUE, fig.retina=2, fig.align='center', fig.height=8, fig.width=6}
-plotMB(results = results, rsid = "rs11891426", stackmotif = TRUE, effect = "strg")
+plotMB(results = results, rsid = "rs2661839", effect = "strong")
 ```
 
 
@@ -309,9 +312,17 @@ the motif matrix, $M$. If either of
 $F( s_{\textrm{REF}},M )$ and
 $F( s_{\textrm{ALT}},M )$ is greater than a user-specified
 threshold (default value of 0.85) the SNP is reported. By default
-`r Githubpkg("Simon-Coetzee/motifBreakR")` displays only strong effects
-($\Delta p_{i} > 0.7$) but this behavior can be
+`r Githubpkg("Simon-Coetzee/motifBreakR")` does not display neutral effects,
+($\Delta p_{i} < 0.4$) but this behaviour can be
 overridden.
+
+## Calculate P-values for PWM match
+Additionally, now, with the use of `r CRANpkg("TFMPvalue")`, we may filter by p-value of the match.
+This is unfortunately a two step process. First, by invoking `filterp=TRUE` and setting a threshold at
+a desired p-value e.g 1e-4, we perform a rough filter on the results by rounding all values in the PWM to two
+decimal place, and calculating a scoring threshold based upon that. The second step is to use the function `calculatePvalue()`
+on a selection of results which will change the `Refpvalue` and `Altpvalue` columns in the output from `NA` to the p-value
+calculated by `TFMsc2pv`.  This can be (although not always) a very memory and time intensive process if the algorithm doesn't converge rapidly.
 
 # Session Info
 ```{r, cache=TRUE}

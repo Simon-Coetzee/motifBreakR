@@ -6,9 +6,8 @@
 Transcription Factor Binding Sites.}
 \usage{
 motifbreakR(snpList, pwmList, threshold = 0.85, filterp = FALSE,
-  method = "default", show.neutral = FALSE, verbose = FALSE,
-  bkg = c(A = 0.25, C = 0.25, G = 0.25, T = 0.25),
-  BPPARAM = bpparam())
+  method = "default", show.neutral = FALSE, verbose = FALSE, bkg = c(A =
+  0.25, C = 0.25, G = 0.25, T = 0.25), BPPARAM = bpparam())
 }
 \arguments{
 \item{snpList}{The output of \code{snps.from.rsid} or \code{snps.from.file}}
@@ -18,30 +17,22 @@ you wish to interrogate}
 
 \item{threshold}{Numeric; the maximum p-value for a match to be called or a minimum score threshold}
 
+\item{filterp}{Logical; filter by p-value instead of by pct score.}
+
 \item{method}{Character; one of \code{default}, \code{log}, \code{ic}, or \code{notrans}; see
 details.}
-
-\item{bkg}{Numeric Vector; the background probabilites of the nucleotides
-used with
-
-method=\code{log} method=\code{ic}}
-
-\item{filterp}{Logical; filter by p-value instead of by pct score.}
 
 \item{show.neutral}{Logical; include neutral changes in the output}
 
 \item{verbose}{Logical; if running serially, show verbose messages}
 
+\item{bkg}{Numeric Vector; the background probabilites of the nucleotides
+used with method=\code{log} method=\code{ic}}
+
 \item{BPPARAM}{a BiocParallel object see \code{\link[BiocParallel]{register}}
-and see
-
-\code{getClass("BiocParallelParam")} for additional parameter
-classes.
-
-Try \code{BiocParallel::registered()} to see what's availible and
-for example
-
-\code{BiocParallel::bpparam("SerialParam")} would allow serial
+and see \code{getClass("BiocParallelParam")} for additional parameter
+classes.  Try \code{BiocParallel::registered()} to see what's availible and
+for example \code{BiocParallel::bpparam("SerialParam")} would allow serial
 evaluation.}
 }
 \value{
@@ -61,12 +52,8 @@ a GRanges object containing:
  this is the value that is thresholded.}
  \item{scoreRef}{The score as determined by the scoring method, when the sequence contains the reference SNP allele}
  \item{scoreAlt}{The score as determined by the scoring method, when the sequence contains the alternate SNP allele}
- \item{Refpvalue}{p-value for the match for the pctRef score, initially set to \code{NA}.
-
- See \code{\link{calculatePvalue}} for more information}
- \item{Altpvalue}{p-value for the match for the pctAlt score, initially set to \code{NA}.
-
- See \code{\link{calculatePvalue}} for more information}
+ \item{Refpvalue}{p-value for the match for the pctRef score, initially set to \code{NA}. see \code{\link{calculatePvalue}} for more information}
+ \item{Altpvalue}{p-value for the match for the pctAlt score, initially set to \code{NA}. see \code{\link{calculatePvalue}} for more information}
  \item{alleleRef}{The proportional frequency of the reference allele at position \code{motifPos} in the motif}
  \item{alleleAlt}{The proportional frequency of the alternate allele at position \code{motifPos} in the motif}
  \item{effect}{one of weak, strong, or neutral indicating the strength of the effect.}

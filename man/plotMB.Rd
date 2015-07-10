@@ -5,8 +5,7 @@
 \title{Plot a genomic region surrounding a genomic variant, and potentially disrupted
 motifs}
 \usage{
-plotMB(results, rsid, reverseMotif = TRUE,
-       effect = c("strong", "weak"))
+plotMB(results, rsid, reverseMotif = TRUE, effect = c("strong", "weak"))
 }
 \arguments{
 \item{results}{The output of \code{motifbreakR}}
@@ -41,9 +40,7 @@ plotMB(example.results, "rs7837328", stackmotif = TRUE)
 }
 \seealso{
 See \code{\link{motifbreakR}} for the function that produces output to be
-  visualized here, also
-
-  \code{\link{snps.from.rsid}} and \code{\link{snps.from.file}}
+  visualized here, also \code{\link{snps.from.rsid}} and \code{\link{snps.from.file}}
   for information about how to generate the input to \code{\link{motifbreakR}}
   function.
 }

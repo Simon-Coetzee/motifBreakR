@@ -773,7 +773,7 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, effect = c("strong", "wea
   if(stackmotif && length(result) > 1) {
     getmotifs <- mcols(pwmList)$providerId %in% result$providerId & mcols(pwmList)$providerName %in% result$providerName
     pwms <- pwmList[getmotifs, ]
-    pwms <- pwms[order(match(mcols(pwms)$providerId, result$providerId))]
+    pwms <- pwms[order(match(paste0(mcols(pwms)$providerId, mcols(pwms)$providerName), paste0(result$providerId, result$providerName)))]
     if(reverseMotif) {
       for(pwm.i in seq_along(pwms)) {
         pwm.name <- names(pwms[pwm.i])

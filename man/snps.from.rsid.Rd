@@ -9,13 +9,10 @@ snps.from.rsid(rsid = NULL, dbSNP = NULL, search.genome = NULL)
 \arguments{
 \item{rsid}{Character; a character vector of rsid values from dbSNP}
 
-\item{dbSNP}{an object of class SNPlocs to lookup rsids;
-
-see \code{availible.SNPs} in
+\item{dbSNP}{an object of class SNPlocs to lookup rsids; see \code{availible.SNPs} in
 \code{\link[BSgenome]{injectSNPs}} to check for availible SNPlocs}
 
 \item{search.genome}{an object of class BSgenome for the species you are interrogating;
-
 see \code{\link[BSgenome]{available.genomes}} for a list of species}
 }
 \value{
@@ -36,8 +33,7 @@ Import SNPs from rsid for use in motifbreakR
 \examples{
 library(BSgenome.Hsapiens.UCSC.hg19)
  library(SNPlocs.Hsapiens.dbSNP.20120608)
- snps.file <- system.file("extdata", "pca.enhancer.snps",
-                          package = "motifbreakR")
+ snps.file <- system.file("extdata", "pca.enhancer.snps", package = "motifbreakR")
  snps <- as.character(read.table(snps.file)[,1])
  snps.mb <- snps.from.rsid(snps,
                            dbSNP = SNPlocs.Hsapiens.dbSNP.20120608,

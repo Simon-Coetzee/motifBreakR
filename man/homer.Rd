@@ -51,11 +51,8 @@ data(homer)
 homer
 }
 \seealso{
-\url{http://homer.salk.edu/homer/index.html}
-
-\url{http://homer.salk.edu/homer/motif/motifDatabase.html}
-
-\url{http://homer.salk.edu/homer/motif/HomerMotifDB/homerResults.html}
+\url{http://homer.salk.edu/homer/index.html} \url{http://homer.salk.edu/homer/motif/motifDatabase.html}
+  \url{http://homer.salk.edu/homer/motif/HomerMotifDB/homerResults.html}
 }
 \keyword{datasets}
 
