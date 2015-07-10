@@ -278,7 +278,7 @@
 #' @source Heinz S, Benner C, Spann N, Bertolino E et al. (2010 May 28) Simple Combinations
 #'   of Lineage-Determining Transcription Factors Prime cis-Regulatory
 #'   Elements Required for Macrophage and B Cell Identities. Mol Cell, \bold{38(4):576-589}.
-#'   PMID: \href{20513432}{http://www.ncbi.nlm.nih.gov/sites/entrez?Db=Pubmed&term=20513432[UID]}
+#'   PMID: \href{http://www.ncbi.nlm.nih.gov/sites/entrez?Db=Pubmed&term=20513432[UID]}{20513432}
 #'
 #' @seealso \url{http://homer.salk.edu/homer/index.html} \url{http://homer.salk.edu/homer/motif/motifDatabase.html}
 #'   \url{http://homer.salk.edu/homer/motif/HomerMotifDB/homerResults.html}
@@ -313,7 +313,7 @@
 #' @source Heinz S, Benner C, Spann N, Bertolino E et al. (2010 May 28) Simple Combinations
 #'   of Lineage-Determining Transcription Factors Prime cis-Regulatory
 #'   Elements Required for Macrophage and B Cell Identities. Mol Cell, \bold{38(4):576-589}.
-#'   PMID: \href{20513432}{http://www.ncbi.nlm.nih.gov/sites/entrez?Db=Pubmed&term=20513432[UID]}
+#'   PMID: \href{http://www.ncbi.nlm.nih.gov/sites/entrez?Db=Pubmed&term=20513432[UID]}{20513432}
 #'
 #' @source J Wang, J Zhuang, S Iyer, XY Lin, et al. (2012) Sequence features and
 #'   chromatin structure around the genomic regions bound by 119 human transcription

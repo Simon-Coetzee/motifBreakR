@@ -28,7 +28,7 @@ use mcols(homer)
 Heinz S, Benner C, Spann N, Bertolino E et al. (2010 May 28) Simple Combinations
   of Lineage-Determining Transcription Factors Prime cis-Regulatory
   Elements Required for Macrophage and B Cell Identities. Mol Cell, \bold{38(4):576-589}.
-  PMID: \href{20513432}{http://www.ncbi.nlm.nih.gov/sites/entrez?Db=Pubmed&term=20513432[UID]}
+  PMID: \href{http://www.ncbi.nlm.nih.gov/sites/entrez?Db=Pubmed&term=20513432[UID]}{20513432}
 }
 \usage{
 homer
@@ -51,8 +51,11 @@ data(homer)
 homer
 }
 \seealso{
-\url{http://homer.salk.edu/homer/index.html} \url{http://homer.salk.edu/homer/motif/motifDatabase.html}
-  \url{http://homer.salk.edu/homer/motif/HomerMotifDB/homerResults.html}
+\url{http://homer.salk.edu/homer/index.html}
+
+\url{http://homer.salk.edu/homer/motif/motifDatabase.html}
+
+\url{http://homer.salk.edu/homer/motif/HomerMotifDB/homerResults.html}
 }
 \keyword{datasets}
 

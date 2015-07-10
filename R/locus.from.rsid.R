@@ -44,6 +44,7 @@ snps.from.rsid <- function(rsid = NULL, dbSNP = NULL,
     bad.names <- rsid[!grepl("rs", rsid)]
     stop(paste(paste(bad.names, collapse = " "), "are not rsids, perhaps you want to import your snps from a bed or vcf file with snps.from.file()?"))
   }
+  rsid <- unique(rsid)
   rsid.grange <- snpid2grange(dbSNP, rsid)
   rsid.grange <- change.to.search.genome(rsid.grange, search.genome)
   rsid.refseq <- getSeq(search.genome, rsid.grange)
@@ -218,7 +219,7 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
       } else {
         warning(paste0("User selected reference allele differs from the sequence in ",
                        attributes(search.genome)$pkgname, " continuing with genome specified",
-                       " reference allels\n", "there are ", sum(snps.noid.ref != snps.noid.ref.user),
+                       " reference allels\n", " there are ", sum(snps.noid.ref != snps.noid.ref.user),
                        " differences"))
       }
       snps.noid.alt <- sapply(snps.noid.alt, "[", 4)
