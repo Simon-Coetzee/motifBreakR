@@ -883,7 +883,6 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, effect = c("strong", "wea
     selectingfun <- selall
   }
   getmotifs <- mcols(pwmList)$providerId %in% result$providerId & mcols(pwmList)$providerName %in% result$providerName
-  browser()
   motifT <- AnnotationTrack(result, id = names(pwmList)[getmotifs],
                             fun = detailfun, group = result$providerName,
                             feature = paste0("snp@",
