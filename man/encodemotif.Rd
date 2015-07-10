@@ -23,7 +23,11 @@ use mcols(encodemotif)
  \item{tfFamily}{\code{NA} incomplete}
  \item{experimentType}{occurs in two forms:
 
- For motifs that were discovered in this study, the format is \code{cellType_source-LabMetadata:MotifFinder#Location} for example \code{H1-hESC_encode-Myers_seq_hsa_v041610.2_r1:MEME#2#Intergenic}.
+ For motifs that were discovered in this study, the format is
+
+ \code{cellType_source-LabMetadata:MotifFinder#Location} for example
+
+ \code{H1-hESC_encode-Myers_seq_hsa_v041610.2_r1:MEME#2#Intergenic}.
 
  For motifs that were "known" the format tends to be \code{TF_source_sourceId} for example \code{AP1_jaspar_MA0099.2}.
 }

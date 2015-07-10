@@ -5,9 +5,10 @@
 \title{Predict The Disruptiveness Of Single Nucleotide Polymorphisms On
 Transcription Factor Binding Sites.}
 \usage{
-motifbreakR(snpList, pwmList, threshold, method = "default", bkg = c(A =
-  0.25, C = 0.25, G = 0.25, T = 0.25), filterp = FALSE,
-  show.neutral = FALSE, verbose = FALSE, BPPARAM = bpparam())
+motifbreakR(snpList, pwmList, threshold = 0.85, filterp = FALSE,
+  method = "default", show.neutral = FALSE, verbose = FALSE,
+  bkg = c(A = 0.25, C = 0.25, G = 0.25, T = 0.25),
+  BPPARAM = bpparam())
 }
 \arguments{
 \item{snpList}{The output of \code{snps.from.rsid} or \code{snps.from.file}}
@@ -17,20 +18,30 @@ you wish to interrogate}
 
 \item{threshold}{Numeric; the maximum p-value for a match to be called or a minimum score threshold}
 
-\item{method}{Character; one of \code{default}, \code{log}, or \code{ic}; see
+\item{method}{Character; one of \code{default}, \code{log}, \code{ic}, or \code{notrans}; see
 details.}
 
 \item{bkg}{Numeric Vector; the background probabilites of the nucleotides
-used with method=\code{log} method=\code{ic}}
+used with
+
+method=\code{log} method=\code{ic}}
+
+\item{filterp}{Logical; filter by p-value instead of by pct score.}
 
 \item{show.neutral}{Logical; include neutral changes in the output}
 
 \item{verbose}{Logical; if running serially, show verbose messages}
 
 \item{BPPARAM}{a BiocParallel object see \code{\link[BiocParallel]{register}}
-and see \code{getClass("BiocParallelParam")} for additional parameter
-classes.  Try \code{BiocParallel::registered()} to see what's availible and
-for example \code{BiocParallel::bpparam("SerialParam")} would allow serial
+and see
+
+\code{getClass("BiocParallelParam")} for additional parameter
+classes.
+
+Try \code{BiocParallel::registered()} to see what's availible and
+for example
+
+\code{BiocParallel::bpparam("SerialParam")} would allow serial
 evaluation.}
 }
 \value{
@@ -44,10 +55,18 @@ a GRanges object containing:
  \item{providerName, providerId}{the name and id provided by the source}
  \item{seqMatch}{the sequence on the 5' -> 3' direction of the "+" strand
  that corresponds to DNA at the position that the TF binding motif was found.}
- \item{pctRef}{The score as determined by the scoring method, when the sequence contains the reference SNP allele}
- \item{pctAlt}{The score as determined by the scoring method, when the sequence contains the alternate SNP allele}
- \item{Refpvalue}{p-value for the match for the pctRef score}
- \item{Altpvalue}{p-value for the match for the pctAlt score}
+ \item{pctRef}{The score as determined by the scoring method, when the sequence contains the reference SNP allele, normalized to a scale from 0 - 1. If \code{filterp = FALSE},
+ this is the value that is thresholded.}
+ \item{pctAlt}{The score as determined by the scoring method, when the sequence contains the alternate SNP allele, normalized to a scale from 0 - 1. If \code{filterp = FALSE},
+ this is the value that is thresholded.}
+ \item{scoreRef}{The score as determined by the scoring method, when the sequence contains the reference SNP allele}
+ \item{scoreAlt}{The score as determined by the scoring method, when the sequence contains the alternate SNP allele}
+ \item{Refpvalue}{p-value for the match for the pctRef score, initially set to \code{NA}.
+
+ See \code{\link{calculatePvalue}} for more information}
+ \item{Altpvalue}{p-value for the match for the pctAlt score, initially set to \code{NA}.
+
+ See \code{\link{calculatePvalue}} for more information}
  \item{alleleRef}{The proportional frequency of the reference allele at position \code{motifPos} in the motif}
  \item{alleleAlt}{The proportional frequency of the alternate allele at position \code{motifPos} in the motif}
  \item{effect}{one of weak, strong, or neutral indicating the strength of the effect.}
@@ -132,7 +151,7 @@ where \eqn{b_{i}} is again the background frequency of the letter \eqn{i}.
 Thus, there are 3 possible algorithms to apply via the \code{method}
 argument. The first is the standard summation of log probabilities
 (\code{method='log'}). The second and third are the weighted sum and
-information content methods (\code{method=default} and \code{method='ic'}) specified by
+information content methods (\code{method='default'} and \code{method='ic'}) specified by
 equations 4.1 and 4.2, respectively. \pkg{motifbreakR} assumes a
 uniform background nucleotide distribution (\eqn{b}) in equations 1 and
 4.2 unless otherwise specified by the user. Since we are primarily
@@ -152,22 +171,31 @@ the motif matrix, \eqn{M}. If either of
 \eqn{F( s_{\textsc{ref}},M )} and
 \eqn{F( s_{\textsc{alt}},M )} is greater than a user-specified
 threshold (default value of 0.85) the SNP is reported. By default
-\pkg{motifbreakR} displays only strong effects
-(\eqn{\Delta p_{i} > 0.7}) but this behaviour can be
+\pkg{motifbreakR} does not display neutral effects,
+(\eqn{\Delta p_{i} < 0.4}) but this behaviour can be
 overridden.
+
+Additionally, now, with the use of \code{\link{TFMPvalue-package}}, we may filter by p-value of the match.
+This is unfortunately a two step process. First, by invoking \code{filterp=TRUE} and setting a threshold at
+a desired p-value e.g 1e-4, we perform a rough filter on the results by rounding all values in the PWM to two
+decimal place, and calculating a scoring threshold based upon that. The second step is to use the function \code{\link{calculatePvalue}()}
+on a selection of results which will change the \code{Refpvalue} and \code{Altpvalue} columns in the output from \code{NA} to the p-value
+calculated by \code{\link{TFMsc2pv}}.  This can be (although not always) a very memory and time intensive process if the algorithm doesn't converge rapidly.
 }
 \examples{
 library(BSgenome.Hsapiens.UCSC.hg19)
  library(SNPlocs.Hsapiens.dbSNP.20120608)
  # prepare variants
- load(system.file("extdata", "pca.enhancer.snps.rda", package = "motifbreakR")) # loads snps.mb
+ load(system.file("extdata",
+                  "pca.enhancer.snps.rda",
+                  package = "motifbreakR")) # loads snps.mb
  pca.enhancer.snps <- sample(snps.mb, 20)
  # Get motifs to interrogate
  data(hocomoco)
  motifs <- sample(hocomoco, 50)
  # run motifbreakR
  results <- motifbreakR(pca.enhancer.snps,
-                        motifs, threshold = 0.001,
+                        motifs, threshold = 0.85,
                         method = "ic",
                         BPPARAM=BiocParallel::SerialParam())
 }

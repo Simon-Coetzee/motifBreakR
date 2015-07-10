@@ -11,10 +11,13 @@ snps.from.file(file = NULL, dbSNP = NULL, search.genome = NULL,
 \item{file}{Character; a character containing the path to a bed file or a vcf file
 see Details for a description of the required format}
 
-\item{dbSNP}{OPTIONAL; an object of class SNPlocs to lookup rsids; see \code{availible.SNPs} in
+\item{dbSNP}{OPTIONAL; an object of class SNPlocs to lookup rsids;
+
+see \code{availible.SNPs} in
 \code{\link[BSgenome]{injectSNPs}} to check for availible SNPlocs}
 
 \item{search.genome}{an object of class BSgenome for the species you are interrogating;
+
 see \code{\link[BSgenome]{available.genomes}} for a list of species}
 
 \item{format}{Character; one of \code{bed} or \code{vcf}}
@@ -43,7 +46,8 @@ Import SNPs from a BED file or VCF file for use in motifbreakR
 \examples{
 library(BSgenome.Drerio.UCSC.danRer7)
  library(SNPlocs.Hsapiens.dbSNP.20120608)
- snps.bed.file <- system.file("extdata", "danRer.bed", package = "motifbreakR")
+ snps.bed.file <- system.file("extdata", "danRer.bed",
+                              package = "motifbreakR")
  # see the contents
  read.table(snps.bed.file, header = FALSE)
  #import the BED file

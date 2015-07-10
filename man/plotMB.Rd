@@ -5,8 +5,8 @@
 \title{Plot a genomic region surrounding a genomic variant, and potentially disrupted
 motifs}
 \usage{
-plotMB(results, rsid, reverseMotif = TRUE, stackmotif = TRUE,
-  effect = c("strg", "weak"))
+plotMB(results, rsid, reverseMotif = TRUE,
+       effect = c("strong", "weak"))
 }
 \arguments{
 \item{results}{The output of \code{motifbreakR}}
@@ -16,11 +16,8 @@ plotMB(results, rsid, reverseMotif = TRUE, stackmotif = TRUE,
 \item{reverseMotif}{Logical; if the motif is on the "-" strand show the
 the motifs as reversed \code{FALSE} or reverse complement \code{TRUE}}
 
-\item{stackmotif}{Logical; show motifs vertically, aligned on the variant \code{TRUE}
-or horizontally.}
-
-\item{effect}{Character; show motifs that are strongly effected \code{c("strg")},
-weakly effected \code{c("weak")}, or both \code{c("strg", "weak")}}
+\item{effect}{Character; show motifs that are strongly effected \code{c("strong")},
+weakly effected \code{c("weak")}, or both \code{c("strong", "weak")}}
 }
 \value{
 plots a figure representing the results of \code{motifbreakR} at the
@@ -44,7 +41,9 @@ plotMB(example.results, "rs7837328", stackmotif = TRUE)
 }
 \seealso{
 See \code{\link{motifbreakR}} for the function that produces output to be
-  visualized here, also \code{\link{snps.from.rsid}} and \code{\link{snps.from.file}}
+  visualized here, also
+
+  \code{\link{snps.from.rsid}} and \code{\link{snps.from.file}}
   for information about how to generate the input to \code{\link{motifbreakR}}
   function.
 }

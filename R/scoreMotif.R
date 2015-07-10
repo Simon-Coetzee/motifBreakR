@@ -82,7 +82,7 @@ snpEff <- function(allelR, allelA) {
     description <- "neut"
   } else {
     if (abs(effect) >= 0.7) {
-      description <- "strg"
+      description <- "strong"
     } else {
       description <- "weak"
     }
@@ -301,10 +301,11 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #' @param pwmList An object of class \code{MotifList} containing the motifs that
 #'   you wish to interrogate
 #' @param threshold Numeric; the maximum p-value for a match to be called or a minimum score threshold
-#' @param method Character; one of \code{default}, \code{log}, or \code{ic}; see
+#' @param method Character; one of \code{default}, \code{log}, \code{ic}, or \code{notrans}; see
 #'   details.
 #' @param bkg Numeric Vector; the background probabilites of the nucleotides
 #'   used with method=\code{log} method=\code{ic}
+#' @param filterp Logical; filter by p-value instead of by pct score.
 #' @param show.neutral Logical; include neutral changes in the output
 #' @param verbose Logical; if running serially, show verbose messages
 #' @param BPPARAM a BiocParallel object see \code{\link[BiocParallel]{register}}
@@ -389,7 +390,7 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #' Thus, there are 3 possible algorithms to apply via the \code{method}
 #' argument. The first is the standard summation of log probabilities
 #' (\code{method='log'}). The second and third are the weighted sum and
-#' information content methods (\code{method=default} and \code{method='ic'}) specified by
+#' information content methods (\code{method='default'} and \code{method='ic'}) specified by
 #' equations 4.1 and 4.2, respectively. \pkg{motifbreakR} assumes a
 #' uniform background nucleotide distribution (\eqn{b}) in equations 1 and
 #' 4.2 unless otherwise specified by the user. Since we are primarily
@@ -409,9 +410,16 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #' \eqn{F( s_{\textsc{ref}},M )} and
 #' \eqn{F( s_{\textsc{alt}},M )} is greater than a user-specified
 #' threshold (default value of 0.85) the SNP is reported. By default
-#' \pkg{motifbreakR} displays only strong effects
-#' (\eqn{\Delta p_{i} > 0.7}) but this behaviour can be
+#' \pkg{motifbreakR} does not display neutral effects,
+#' (\eqn{\Delta p_{i} < 0.4}) but this behaviour can be
 #' overridden.
+#'
+#' Additionally, now, with the use of \code{\link{TFMPvalue-package}}, we may filter by p-value of the match.
+#' This is unfortunately a two step process. First, by invoking \code{filterp=TRUE} and setting a threshold at
+#' a desired p-value e.g 1e-4, we perform a rough filter on the results by rounding all values in the PWM to two
+#' decimal place, and calculating a scoring threshold based upon that. The second step is to use the function \code{\link{calculatePvalue}()}
+#' on a selection of results which will change the \code{Refpvalue} and \code{Altpvalue} columns in the output from \code{NA} to the p-value
+#' calculated by \code{\link{TFMsc2pv}}.  This can be (although not always) a very memory and time intensive process if the algorithm doesn't converge rapidly.
 #'
 #' @return a GRanges object containing:
 #'  \item{REF}{the reference allele for the SNP}
@@ -423,10 +431,14 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #'  \item{providerName, providerId}{the name and id provided by the source}
 #'  \item{seqMatch}{the sequence on the 5' -> 3' direction of the "+" strand
 #'  that corresponds to DNA at the position that the TF binding motif was found.}
-#'  \item{pctRef}{The score as determined by the scoring method, when the sequence contains the reference SNP allele}
-#'  \item{pctAlt}{The score as determined by the scoring method, when the sequence contains the alternate SNP allele}
-#'  \item{Refpvalue}{p-value for the match for the pctRef score}
-#'  \item{Altpvalue}{p-value for the match for the pctAlt score}
+#'  \item{pctRef}{The score as determined by the scoring method, when the sequence contains the reference SNP allele, normalized to a scale from 0 - 1. If \code{filterp = FALSE},
+#'  this is the value that is thresholded.}
+#'  \item{pctAlt}{The score as determined by the scoring method, when the sequence contains the alternate SNP allele, normalized to a scale from 0 - 1. If \code{filterp = FALSE},
+#'  this is the value that is thresholded.}
+#'  \item{scoreRef}{The score as determined by the scoring method, when the sequence contains the reference SNP allele}
+#'  \item{scoreAlt}{The score as determined by the scoring method, when the sequence contains the alternate SNP allele}
+#'  \item{Refpvalue}{p-value for the match for the pctRef score, initially set to \code{NA}. see \code{\link{calculatePvalue}} for more information}
+#'  \item{Altpvalue}{p-value for the match for the pctAlt score, initially set to \code{NA}. see \code{\link{calculatePvalue}} for more information}
 #'  \item{alleleRef}{The proportional frequency of the reference allele at position \code{motifPos} in the motif}
 #'  \item{alleleAlt}{The proportional frequency of the alternate allele at position \code{motifPos} in the motif}
 #'  \item{effect}{one of weak, strong, or neutral indicating the strength of the effect.}
@@ -435,14 +447,16 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #'  library(BSgenome.Hsapiens.UCSC.hg19)
 #'  library(SNPlocs.Hsapiens.dbSNP.20120608)
 #'  # prepare variants
-#'  load(system.file("extdata", "pca.enhancer.snps.rda", package = "motifbreakR")) # loads snps.mb
+#'  load(system.file("extdata",
+#'                   "pca.enhancer.snps.rda",
+#'                   package = "motifbreakR")) # loads snps.mb
 #'  pca.enhancer.snps <- sample(snps.mb, 20)
 #'  # Get motifs to interrogate
 #'  data(hocomoco)
 #'  motifs <- sample(hocomoco, 50)
 #'  # run motifbreakR
 #'  results <- motifbreakR(pca.enhancer.snps,
-#'                         motifs, threshold = 0.001,
+#'                         motifs, threshold = 0.85,
 #'                         method = "ic",
 #'                         BPPARAM=BiocParallel::SerialParam())
 #' @import BiocParallel
@@ -450,9 +464,10 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #' @importFrom BiocGenerics unlist sapply clusterEvalQ
 #' @importFrom stringr str_length str_trim
 #' @export
-motifbreakR <- function(snpList, pwmList, threshold, method = "default",
-                        bkg = c(A=0.25, C=0.25, G=0.25, T=0.25), filterp = FALSE,
-                        show.neutral = FALSE, verbose = FALSE, BPPARAM=bpparam()) {
+motifbreakR <- function(snpList, pwmList, threshold=0.85, filterp = FALSE,
+                        method = "default", show.neutral = FALSE, verbose = FALSE,
+                        bkg = c(A=0.25, C=0.25, G=0.25, T=0.25),
+                        BPPARAM=bpparam()) {
   if(.Platform$OS.type == "windows" && inherits(BPPARAM, "MulticoreParam")) {
     warning(paste0("Serial evaluation under effect, to achive parallel evaluation under\n",
             "Windows, please supply an alternative BPPARAM"))
@@ -569,8 +584,24 @@ motifbreakR <- function(snpList, pwmList, threshold, method = "default",
   return(x)
 }
 
+
+#' Calculate the significance of the matches for the reference and alternate alleles for the for their PWM
+#'
+#' @param results The output of \code{motifbreakR} that was run with \code{filterp=TRUE}
+#' @param background Numeric Vector; the background probabilites of the nucleotides
+#' @return a GRanges object. The same Granges object that was input as \code{results}, but with
+#'  \code{Refpvalue} and \code{Altpvalue} columns in the output modified from \code{NA} to the p-value
+#'  calculated by \code{\link{TFMsc2pv}}.
+#' @seealso See \code{\link{TFMsc2pv}} from the \pkg{TFMPvalue} package for
+#'   information about how the p-values are calculated.
+#' @details This function is intended to be used on a selection of results produced by \code{\link{motifbreakR}}, and
+#' this can be (although not always) a very memory and time intensive process if the algorithm doesn't converge rapidly.
+#' @source H\'{e}l\`{e}ne Touzet and Jean-St\'{e}phane Varr\'{e} (2007) Efficient and accurate P-value computation for Position Weight Matrices.
+#'  Algorithms for Molecular Biology, \bold{2: 15}.
+#'
 #' @export
-calculatePvalue <- function(results, background = c(A = 0.25, C = 0.25, G = 0.25, T = 0.25)) {
+calculatePvalue <- function(results,
+                            background = c(A = 0.25, C = 0.25, G = 0.25, T = 0.25)) {
   if(!("scoreRef" %in% names(mcols(results)))) {
     stop('incorrect results format; please rerun analysis with filterp=TRUE')
   } else {
@@ -592,21 +623,47 @@ calculatePvalue <- function(results, background = c(A = 0.25, C = 0.25, G = 0.25
   }
 }
 
-#' @importFrom grImport PostScriptTrace readPicture grid.picture
-addPWM <- function(identifier, ...) {
-  motif.name <- identifier
-  ps.file <- paste(tempdir(), motif.name, sep = "/")
-  PostScriptTrace(ps.file, paste0(ps.file, ".xml"))
-  motif.figure <- readPicture(paste0(ps.file, ".xml"))
-  grid.picture(motif.figure[-1], distort = FALSE)
-}
+#addPWM <- function(identifier, ...) {
+#  motif.name <- identifier
+#  ps.file <- paste(tempdir(), motif.name, sep = "/")
+#  PostScriptTrace(ps.file, paste0(ps.file, ".xml"))
+#  motif.figure <- readPicture(paste0(ps.file, ".xml"))
+#  grid.picture(motif.figure[-1], distort = FALSE)
+#}
 
-addPWM.stack <- function(identifier, ...) {
+
+#' @importFrom grImport PostScriptTrace readPicture grid.picture
+addPWM.stack <- function(identifier, index, GdObject, ...) {
   psloc <- tempdir()
   ps.file <- paste(psloc, "stack.ps", sep = "/")
   PostScriptTrace(ps.file, paste0(ps.file, ".xml"))
   motif.figure <- readPicture(paste0(ps.file, ".xml"))
-  grid.picture(motif.figure[-1], distort = FALSE)
+  motif.figure <- motif.figure[-1]
+  snppos <- sapply(sapply(mcols(GdObject@range)[, "feature"], strsplit, "@"), "[[", 2)
+  motif.i <- 1
+  highlight <- snppos[[motif.i]]
+  paths <- motif.figure@paths
+  for(path.i in seq_along(paths)) {
+    if (inherits(paths[[path.i]], "PictureText")) {
+      if (paths[[path.i]]@string == highlight) {
+        path <- paths[[path.i]]
+        path@rgb <- "#FF0000"
+        path@letters <- lapply(path@letters, function(letters) {
+          letters@rgb <- "#FF0000"
+          return(letters)
+        })
+        paths[[path.i]] <- path
+        motif.i <- motif.i + 1
+        if(motif.i <= length(snppos)) {
+          highlight <- snppos[[motif.i]]
+        } else {
+          motif.i <- length(snppos)
+        }
+      }
+    }
+  }
+  motif.figure@paths <- paths
+  grid.picture(motif.figure, distort = FALSE)
 }
 
 selcor <- function(identifier, GdObject, ... ) {
@@ -674,10 +731,8 @@ DNAmotifAlignment.2snp <- function(pwms, result) {
 #' @param rsid Character; the identifier of the variant to be visualized
 #' @param reverseMotif Logical; if the motif is on the "-" strand show the
 #'   the motifs as reversed \code{FALSE} or reverse complement \code{TRUE}
-#' @param stackmotif Logical; show motifs vertically, aligned on the variant \code{TRUE}
-#'   or horizontally.
-#' @param effect Character; show motifs that are strongly effected \code{c("strg")},
-#'   weakly effected \code{c("weak")}, or both \code{c("strg", "weak")}
+#' @param effect Character; show motifs that are strongly effected \code{c("strong")},
+#'   weakly effected \code{c("weak")}, or both \code{c("strong", "weak")}
 #' @seealso See \code{\link{motifbreakR}} for the function that produces output to be
 #'   visualized here, also \code{\link{snps.from.rsid}} and \code{\link{snps.from.file}}
 #'   for information about how to generate the input to \code{\link{motifbreakR}}
@@ -699,9 +754,10 @@ DNAmotifAlignment.2snp <- function(pwms, result) {
 #'   AnnotationTrack plotTracks
 #' @importFrom BiocGenerics strand
 #' @export
-plotMB <- function(results, rsid, reverseMotif = TRUE, stackmotif = TRUE, effect = c("strg", "weak")) {
+plotMB <- function(results, rsid, reverseMotif = TRUE, effect = c("strong", "weak")) {
   g <- genome(results)[[1]]
   result <- results[names(results) %in% rsid]
+  stackmotif <- TRUE
   if(length(result) <= 1) stackmotif <- FALSE
   result <- result[order(start(result), end(result)), ]
   result <- result[result$effect %in% effect]
@@ -793,9 +849,10 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, stackmotif = TRUE, effect
         }
       }
       p <- new("pfm", mat = pwm[[1]], name = names(pwm[1]))
-      message(paste(temp.dir, names(pwm[1]), sep="/"))
-      postscript(paste(temp.dir, names(pwm[1]), sep = "/"), width = 10, height = 3, horizontal = FALSE,
-                 fonts = c("sans", "Helvetica"))
+      #message(paste(temp.dir, names(pwm[1]), sep="/"))
+      psloc <- tempdir()
+      pwmwide <- ncol(p@mat)
+      postscript(paste(psloc, "stack.ps", sep = "/"), width = pwmwide * (7/11), height =  4, paper="special", horizontal = FALSE)
       motifStack::plotMotifLogo(p, motifName = p@name)
       dev.off()
     }
@@ -822,7 +879,7 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, stackmotif = TRUE, effect
     selectingfun <- selcor
     detailfun <- addPWM.stack
   } else {
-    detailfun <- addPWM
+    detailfun <- addPWM.stack
     selectingfun <- selall
   }
   getmotifs <- mcols(pwmList)$providerId %in% result$providerId & mcols(pwmList)$providerName %in% result$providerName

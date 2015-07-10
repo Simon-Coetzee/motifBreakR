@@ -41,6 +41,9 @@ In Linux try your package manager to search for ghostscript.
 In Mac [Homebrew](http://brew.sh/) serves as a great package manager.
 Windows can find it [here](http://ghostscript.com/download/gsdnld.html)
 
+Additionally, one of the packages that we depend on depends upon [MotIV](http://www.bioconductor.org/packages/release/bioc/html/MotIV.html) in Bioconductor which in turn depends upon the GNU Scientific Library.
+Please see the MotIV Vignette, appendix: [GSL Installation](http://www.bioconductor.org/packages/release/bioc/vignettes/MotIV/inst/doc/MotIV.pdf#section.11) If you are having issues with installation.
+
 #### Getting prerequisite packages from Bioconductor
 ```{r}
 source("http://bioconductor.org/biocLite.R")
