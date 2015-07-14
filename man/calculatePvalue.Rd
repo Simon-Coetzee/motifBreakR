@@ -4,7 +4,7 @@
 \alias{calculatePvalue}
 \title{Calculate the significance of the matches for the reference and alternate alleles for the for their PWM}
 \source{
-H\'{e}l\`{e}ne Touzet and Jean-St\'{e}phane Varr\'{e} (2007) Efficient and accurate P-value computation for Position Weight Matrices.
+H{\'e}l{\`e}ne Touzet and Jean-St{\'e}phane Varr{\'e} (2007) Efficient and accurate P-value computation for Position Weight Matrices.
  Algorithms for Molecular Biology, \bold{2: 15}.
 }
 \usage{
@@ -27,6 +27,11 @@ Calculate the significance of the matches for the reference and alternate allele
 \details{
 This function is intended to be used on a selection of results produced by \code{\link{motifbreakR}}, and
 this can be (although not always) a very memory and time intensive process if the algorithm doesn't converge rapidly.
+}
+\examples{
+data(example.results)
+rs2661839 <- example.results[names(example.results) \%in\% "rs2661839"]
+rs2661839 <- calculatePvalue(rs2661839)
 }
 \seealso{
 See \code{\link{TFMsc2pv}} from the \pkg{TFMPvalue} package for
