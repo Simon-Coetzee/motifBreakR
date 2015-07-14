@@ -666,6 +666,7 @@ addPWM.stack <- function(identifier, index, GdObject, ...) {
   grid.picture(motif.figure, distort = FALSE)
 }
 
+#  grid.rect(gp = gpar(fill = rgb(1,0,0,1)), draw = T, width = 70, height = 1000, default.units = "native", x = 2000, y=0)
 selcor <- function(identifier, GdObject, ... ) {
   if(identifier == mcols(GdObject@range)$id[[1]]) {
     return(TRUE)
@@ -700,6 +701,9 @@ plotMotifLogoStack.2 <- function(pfms, ...) {
 DNAmotifAlignment.2snp <- function(pwms, result) {
   from <- min(start(result))
   to <- max(end(result))
+#  pos <- mcols(result)$motifPos
+#  pos <- pos[as.logical(strand(result) == "+")][1]
+#  browser()
   for(pwm.i in seq_along(pwms)) {
     pwm <- pwms[[pwm.i]]@mat
     ## get pwm info from result data
@@ -808,7 +812,7 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, effect = c("strong", "wea
     pwms <- DNAmotifAlignment.2snp(pwms, result)
     pwmwide <- max(sapply(pwms, function(x) { ncol(x@mat)}))
     psloc <- tempdir()
-    postscript(paste(psloc, "stack.ps", sep = "/"), width = pwmwide * (7/11), height =  2*length(pwm.names), paper="special", horizontal = FALSE)
+    postscript(paste(psloc, "stack.ps", sep = "/"), width = pwmwide * (1/3), height = 2 * length(pwm.names), paper="special", horizontal = FALSE)
     plotMotifLogoStack.2(pwms, ncex=1.0)
     dev.off()
   } else {
