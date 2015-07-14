@@ -596,8 +596,12 @@ motifbreakR <- function(snpList, pwmList, threshold=0.85, filterp = FALSE,
 #'   information about how the p-values are calculated.
 #' @details This function is intended to be used on a selection of results produced by \code{\link{motifbreakR}}, and
 #' this can be (although not always) a very memory and time intensive process if the algorithm doesn't converge rapidly.
-#' @source H\'{e}l\`{e}ne Touzet and Jean-St\'{e}phane Varr\'{e} (2007) Efficient and accurate P-value computation for Position Weight Matrices.
+#' @source H{\'e}l{\`e}ne Touzet and Jean-St{\'e}phane Varr{\'e} (2007) Efficient and accurate P-value computation for Position Weight Matrices.
 #'  Algorithms for Molecular Biology, \bold{2: 15}.
+#' @examples
+#' data(example.results)
+#' rs2661839 <- example.results[names(example.results) %in% "rs2661839"]
+#' rs2661839 <- calculatePvalue(rs2661839)
 #'
 #' @export
 calculatePvalue <- function(results,
@@ -750,7 +754,7 @@ DNAmotifAlignment.2snp <- function(pwms, result) {
 #' data(example.results)
 #' example.results
 #' \dontrun{
-#' plotMB(example.results, "rs7837328", stackmotif = TRUE)
+#' plotMB(example.results, "rs2661839", effect = "strong")
 #' }
 #' @importFrom grDevices postscript
 #' @import motifStack

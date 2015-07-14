@@ -35,7 +35,7 @@ motifs
 data(example.results)
 example.results
 \dontrun{
-plotMB(example.results, "rs7837328", stackmotif = TRUE)
+plotMB(example.results, "rs2661839", effect = "strong")
 }
 }
 \seealso{
