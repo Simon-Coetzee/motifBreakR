@@ -1,0 +1,14 @@
+bibentry(bibtype = "Article",
+		 title = "motifbreakR: an R/Bioconductor package for predicting variant effects at transcription factor binding sites",
+		 author = c(person(given="Simon Gert",
+				 		   family="Coetzee",
+						   email="simon.coetzee@cshs.org",
+						   role=c("aut", "cre")),
+			 		person(given="Dennis J.",
+						   family="Hazelett",
+						   email="dennis.hazelett@cshs.org",
+						   role=c("aut")))
+		 year = 2015,
+		 journal = "Bioinformatics",
+		 url = "https://github.com/Simon-Coetzee/motifBreakR")
+
