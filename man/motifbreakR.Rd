@@ -80,7 +80,8 @@ argument.
 Suppose we have a frequency matrix \eqn{M} of width \eqn{n} (\emph{i.e.} a
 PPM as described above). Furthermore, we have a sequence \eqn{s} also of
 length \eqn{n}, such that
-\eqn{s_{i} \in \{ A,T,C,G \}, i = 1,\ldots n}. Each column of
+\eqn{s_{i} \in \{ A,T,C,G \}, i = 1,\ldots n}{s_i in {A,T,G,C}, i = 1 \ldots n}.
+Each column of
 \eqn{M} contains the frequencies of each letter in each position.
 
 Commonly in the literature sequences are scored as the sum of log
@@ -88,9 +89,10 @@ probabilities:
 
 \strong{Equation 1}
 
-\deqn{F( s,M ) = \sum_{i = 1}^{n}{\log( \frac{M_{s_{i},i}}{b_{s_{i}}} )}}
+\deqn{F( s,M ) = \sum_{i = 1}^{n}{\log( \frac{M_{s_{i},i}}{b_{s_{i}}} )}}{
+F( s,M ) = \sum_(i = 1)^n log ((M_s_i,_i)/b_s_i)}
 
-where \eqn{b_{s_{i}}} is the background frequency of letter \eqn{s_{i}} in
+where \eqn{b_{s_{i}}}{b_s_i} is the background frequency of letter \eqn{s_{i}}{s_i} in
 the genome of interest. This method can be specified by the user as
 \code{method='log'}.
 
@@ -102,28 +104,30 @@ of this scoring method is given by:
 
 \strong{Equation 2}
 
-\deqn{F( s,M ) = p( s ) \cdot \omega_{M}}
+\deqn{F( s,M ) = p_{s} \cdot \omega_{M}}{F( s,M ) = p_s ⋅ \omega_M}
 
-where \eqn{p_{s}} is the scoring vector derived from sequence \eqn{s} and matrix
-\eqn{M}, and \eqn{w_{M}} is a weight vector derived from \eqn{M}. First, we
-compute the scoring vector of position scores \eqn{p}:
+where \eqn{p_{s}}{p_s} is the scoring vector derived from sequence \eqn{s} and matrix
+\eqn{M}, and \eqn{w_{M}}{w_M} is a weight vector derived from \eqn{M}. First, we
+compute the scoring vector of position scores \eqn{p}
 
 \strong{Equation 3}
 
-\deqn{p( s ) = ( M_{s_{i},i} ) \textrm{\ \ \ where\ \ \ } \frac{i = 1,\ldots n}{s_{i} \in \{ A,C,G,T \}}}
+\deqn{p_{s} = ( M_{s_{i},i} ) \textrm{\ \ \ where\ \ \ } \frac{i = 1,\ldots n}{s_{i} \in \{ A,C,G,T \}}}{
+p_s = ( M_s_i,_i ) where (i = 1 \ldots n)/(s_i in {A,C,G,T})}
 
 and second, for each \eqn{M} a constant vector of weights
-\eqn{\omega_{M} = ( \omega_{1},\omega_{2},\ldots,\omega_{n} )}.
+\eqn{\omega_{M} = ( \omega_{1},\omega_{2},\ldots,\omega_{n} )}{\omega_M = ( \omega_1, \omega_2, \ldots, \omega_n)}.
 
-There are two methods for producing \eqn{\omega_{M}}. The first, which we
+There are two methods for producing \eqn{\omega_{M}}{\omega_M}. The first, which we
 call weighted sum, is the difference in the probabilities for the two
 letters of the polymorphism (or variant), \emph{i.e.}
-\eqn{\Delta p_{s_{i}}}, or the difference of the maximum and minimum
+\eqn{\Delta p_{s_{i}}}{\Delta p_s_i}, or the difference of the maximum and minimum
 values for each column of \eqn{M}:
 
 \strong{Equation 4.1}
 
-\deqn{\omega_{i} = \max \{ M_{i} \} - \min \{ M_{i} \}\textrm{\ \ \ \ where\ \ \ \ \ \ }i = 1,\ldots n}
+\deqn{\omega_{i} = \max \{ M_{i} \} - \min \{ M_{i} \}\textrm{\ \ \ \ where\ \ \ \ \ \ }i = 1,\ldots n}{
+\omega_i = max{M_i} - min{M_i} where i = 1 \ldots n}
 
 The second variation of this theme is to weight by relative entropy.
 Thus the relative entropy weight for each column \eqn{i} of the matrix is
@@ -131,9 +135,10 @@ given by:
 
 \strong{Equation 4.2}
 
-\deqn{\omega_{i} = \sum_{j \in \{ A,C,G,T \}}^{}{M_{j,i}\log_2( \frac{M_{j,i}}{b_{i}} )}\textrm{\ \ \ \ \ where\ \ \ \ \ }i = 1,\ldots n}
+\deqn{\omega_{i} = \sum_{j \in \{ A,C,G,T \}}^{}{M_{j,i}\log_2( \frac{M_{j,i}}{b_{i}} )}\textrm{\ \ \ \ \ where\ \ \ \ \ }i = 1,\ldots n}{
+\omega_i = \sum_{j in {A,C,G,T}} {M_(j,i)} log2(M_(j,i)/b_i) where i = 1 \ldots n}
 
-where \eqn{b_{i}} is again the background frequency of the letter \eqn{i}.
+where \eqn{b_{i}}{b_i} is again the background frequency of the letter \eqn{i}.
 
 Thus, there are 3 possible algorithms to apply via the \code{method}
 argument. The first is the standard summation of log probabilities
@@ -150,16 +155,16 @@ unbalanced with respect to nucleotide composition. With these cautions
 in mind, users may override the uniform distribution if so desired. For
 all three methods, \pkg{motifbreakR} scores and reports the reference
 and alternate alleles of the sequence
-(\eqn{F( s_{\textsc{ref}},M )} and
-\eqn{F( s_{\textsc{alt}},M )}), and provides the matrix scores
-\eqn{p_{s_{\textsc{ref}}}} and \eqn{p_{s_{\textsc{alt}}}} of the SNP (or
+(\eqn{F( s_{\textsc{ref}},M )}{F( s_ref,M )} and
+\eqn{F( s_{\textsc{alt}},M )}{F( s_alt,M )}), and provides the matrix scores
+\eqn{p_{s_{\textsc{ref}}}}{p_s_ref} and \eqn{p_{s_{\textsc{alt}}}}{p_s_alt} of the SNP (or
 variant). The scores are scaled as a fraction of scoring range 0-1 of
 the motif matrix, \eqn{M}. If either of
-\eqn{F( s_{\textsc{ref}},M )} and
-\eqn{F( s_{\textsc{alt}},M )} is greater than a user-specified
+\eqn{F( s_{\textsc{ref}},M )}{F( s_ref,M )} and
+\eqn{F( s_{\textsc{alt}},M )}{F( s_alt,M )} is greater than a user-specified
 threshold (default value of 0.85) the SNP is reported. By default
 \pkg{motifbreakR} does not display neutral effects,
-(\eqn{\Delta p_{i} < 0.4}) but this behaviour can be
+(\eqn{\Delta p_{i} < 0.4}{\Delta p_i < 0.4}) but this behaviour can be
 overridden.
 
 Additionally, now, with the use of \code{\link{TFMPvalue-package}}, we may filter by p-value of the match.
@@ -171,7 +176,6 @@ calculated by \code{\link{TFMsc2pv}}.  This can be (although not always) a very 
 }
 \examples{
 library(BSgenome.Hsapiens.UCSC.hg19)
- library(SNPlocs.Hsapiens.dbSNP.20120608)
  # prepare variants
  load(system.file("extdata",
                   "pca.enhancer.snps.rda",

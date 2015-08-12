@@ -13,8 +13,10 @@ output:
     toc_depth: 2
     fig_width: 4.5
     fig_height: 4
-vignette: |
-  %\VignetteIndexEntry{motifbreakR: an Introduction} %\VignetteEngine{knitr::rmarkdown}
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{motifbreakR: an Introduction}
+  %\usepackage[utf8]{inputenc}
 ---
 
 <!-- see http://rmarkdown.rstudio.com/ for details in formatting -->

@@ -19,15 +19,15 @@ Description: We introduce motifbreakR, which allows the biologist to judge in
     predict effects for novel or previously described variants in public
     databases, making it suitable for tasks beyond the scope of its original
     design. Lastly, it can be used to interrogate any genome curated within
-    bioconductor (currently there are 22).
+    Bioconductor (currently there are 22).
 Depends: R (>= 3.2), grid, MotifDb
 Imports: BiocParallel, compiler, methods, motifStack, BSgenome, BiocGenerics,
   Biostrings, GenomeInfoDb, GenomicRanges, Gviz, S4Vectors, grDevices, grImport,
   rtracklayer, stringr, IRanges, VariantAnnotation, matrixStats, TFMPvalue
 Suggests: BSgenome.Hsapiens.UCSC.hg19, SNPlocs.Hsapiens.dbSNP.20120608,
-  knitr, BiocStyle, rmarkdown, BSgenome.Drerio.UCSC.danRer7
+  knitr, rmarkdown, BSgenome.Drerio.UCSC.danRer7, BiocStyle
+VignetteBuilder: knitr
 License: GPL-2
 LazyData: true
-VignetteBuilder: knitr
 BugReports: https://github.com/Simon-Coetzee/motifbreakR/issues
 biocViews: ChIPSeq, Visualization, MotifAnnotation

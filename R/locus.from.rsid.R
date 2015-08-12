@@ -82,9 +82,8 @@ determine.allele.from.ambiguous <- function(ambiguous.allele, known.allele) {
   return(unknown.allele)
 }
 
+#' @import GenomeInfoDb
 #' @importFrom stringr str_extract
-#' @importFrom GenomeInfoDb seqinfo genome seqlevelsStyle seqlevelsStyle<-
-#' @importFrom GenomeInfoDb seqnames seqlevels seqinfo<-
 change.to.search.genome <- function(granges.object, search.genome) {
   if (Reduce("&", !is.na(genome(granges.object)))) {
     if (identical(genome(granges.object), genome(search.genome))) {
@@ -149,11 +148,7 @@ strSort <- function(x) {
 #'
 #' @importFrom rtracklayer import
 #' @importFrom Biostrings IUPAC_CODE_MAP
-#' @importFrom GenomicRanges findOverlaps queryHits subjectHits rowRanges
-#' @importFrom GenomeInfoDb commonName sortSeqlevels
-#' @importFrom BiocGenerics sapply
 #' @importFrom VariantAnnotation readVcf
-#' @importFrom IRanges elementLengths
 #' @export
 snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, format = "bed") {
   if(format == "vcf"){

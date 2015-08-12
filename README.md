@@ -25,7 +25,7 @@ users can choose from; these are 1) a weighted-sum, 2) log-probabilities, and
 3) relative entropy. MotifbreakR can predict effects for novel or previously
 described variants in public databases, making it suitable for tasks beyond
 the scope of its original design. Lastly, it can be used to interrogate any
-genome curated within bioconductor.
+genome curated within Bioconductor.
 
 ### Install
 #### Prepairing to install
