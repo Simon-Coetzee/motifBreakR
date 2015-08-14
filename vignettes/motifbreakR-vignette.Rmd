@@ -71,7 +71,7 @@ pca.snps <- as.character(read.table(pca.snps.file)[,1])
 The simplest form of a `r Githubpkg("Simon-Coetzee/motifBreakR")` analysis is summarized as follows:
 ```{r outline, eval=FALSE}
 variants <- snps.from.rsid(rsid = pca.snps,
-                           dbSNP = SNPlocs.Hsapiens.dbSNP.20120608,
+                           dbSNP = SNPlocs.Hsapiens.dbSNP142.GRCh37,
                            search.genome = BSgenome.Hsapiens.UCSC.hg19)
 motifbreakr.results <- motifbreakR(snpList = variants, pwmList = MotifDb, threshold = 0.9)
 plotMB(results = motifbreakr.results, rsid = "rs7837328", stackmotif = TRUE, effect = "strg")
@@ -129,9 +129,10 @@ read.table(snps.bed.file, header = FALSE)
 ```
 Seeing as we have some SNPs listed by their rsIDs we can query those by including a SNPlocs object as an argument to `snps.from.file`
 ```{r getbedrs, message=TRUE, cache=TRUE}
+library(SNPlocs.Hsapiens.dbSNP142.GRCh37)
 #import the BED file
 snps.mb.frombed <- snps.from.file(file = snps.bed.file,
-                                  dbSNP = SNPlocs.Hsapiens.dbSNP.20120608,
+                                  dbSNP = SNPlocs.Hsapiens.dbSNP142.GRCh37,
                                   search.genome = BSgenome.Hsapiens.UCSC.hg19,
                                   format = "bed")
 snps.mb.frombed

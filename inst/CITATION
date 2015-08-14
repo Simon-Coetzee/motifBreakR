@@ -12,9 +12,9 @@ citEntry(entry = "article",
          year = 2015,
          journal = "Bioinformatics",
          doi = "10.1093/bioinformatics/btv470",
-         url = "https://github.com/Simon-Coetzee/motifBreakR",
+         url = "http://bioinformatics.oxfordjournals.org/content/early/2015/08/12/bioinformatics.btv470.abstract",
          textVersion  =
            paste("Simon G. Coetzee, Gerhard A. Coetzee and Dennis J. Hazelett (2015).",
                  "motifbreakR: an R/Bioconductor package for predicting variant effects at transcription factor binding sites.",
-                 "Bioinformatics.", "in press")
+                 "Bioinformatics.", "doi:10.1093/bioinformatics/btv470")
 )
