@@ -758,7 +758,6 @@ DNAmotifAlignment.2snp <- function(pwms, result) {
 #' \dontrun{
 #' plotMB(example.results, "rs2661839", effect = "strong")
 #' }
-#' @importFrom grDevices postscript
 #' @import motifStack
 #' @import grDevices
 #' @importFrom Gviz IdeogramTrack SequenceTrack GenomeAxisTrack HighlightTrack
