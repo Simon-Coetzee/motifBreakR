@@ -760,6 +760,7 @@ DNAmotifAlignment.2snp <- function(pwms, result) {
 #' }
 #' @importFrom grDevices postscript
 #' @import motifStack
+#' @import grDevices
 #' @importFrom Gviz IdeogramTrack SequenceTrack GenomeAxisTrack HighlightTrack
 #'   AnnotationTrack plotTracks
 #' @export

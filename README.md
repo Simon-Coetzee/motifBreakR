@@ -44,6 +44,8 @@ Windows can find it [here](http://ghostscript.com/download/gsdnld.html)
 Additionally, one of the packages that we depend on depends upon [MotIV](http://www.bioconductor.org/packages/release/bioc/html/MotIV.html) in Bioconductor which in turn depends upon the GNU Scientific Library.
 Please see the MotIV Vignette, appendix: [GSL Installation](http://www.bioconductor.org/packages/release/bioc/vignettes/MotIV/inst/doc/MotIV.pdf#section.11) If you are having issues with installation.
 
+If you'd like to make the vignette yourself (and have it appear identically to the one listed above), you also need [pandoc](http://pandoc.org/installing.html) which converts R markdown into any of numerous formats including `.html`, `.pdf`, and microsoft word style `.doc` files.
+
 #### Getting prerequisite packages from Bioconductor
 ```{r}
 source("http://bioconductor.org/biocLite.R")
@@ -51,8 +53,8 @@ biocLite(c("BiocParallel", "motifStack", "BSgenome", "BiocGenerics",
            "Biostrings", "GenomeInfoDb", "GenomicRanges", "Gviz", "S4Vectors",
            "rtracklayer", "IRanges", "MotifDb", "BSgenome.Hsapiens.UCSC.hg19",
            "SNPlocs.Hsapiens.dbSNP.20120608", "SNPlocs.Hsapiens.dbSNP142.GRCh37",
-           "VariantAnnotation", "matrixStats"))
-install.packages(c("TFMPvalue", "knitr"))
+           "VariantAnnotation", "matrixStats", "BiocStyle"))
+install.packages(c("TFMPvalue", "knitr", "rmarkdown"))
 ```
 
 #### Install motifbreakR from github

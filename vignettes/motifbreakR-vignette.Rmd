@@ -71,7 +71,7 @@ pca.snps <- as.character(read.table(pca.snps.file)[,1])
 The simplest form of a `r Githubpkg("Simon-Coetzee/motifBreakR")` analysis is summarized as follows:
 ```{r outline, eval=FALSE}
 variants <- snps.from.rsid(rsid = pca.snps,
-                           dbSNP = SNPlocs.Hsapiens.dbSNP.20120608,
+                           dbSNP = SNPlocs.Hsapiens.dbSNP142.GRCh37,
                            search.genome = BSgenome.Hsapiens.UCSC.hg19)
 motifbreakr.results <- motifbreakR(snpList = variants, pwmList = MotifDb, threshold = 0.9)
 plotMB(results = motifbreakr.results, rsid = "rs7837328", stackmotif = TRUE, effect = "strg")
@@ -129,9 +129,10 @@ read.table(snps.bed.file, header = FALSE)
 ```
 Seeing as we have some SNPs listed by their rsIDs we can query those by including a SNPlocs object as an argument to `snps.from.file`
 ```{r getbedrs, message=TRUE, cache=TRUE}
+library(SNPlocs.Hsapiens.dbSNP142.GRCh37)
 #import the BED file
 snps.mb.frombed <- snps.from.file(file = snps.bed.file,
-                                  dbSNP = SNPlocs.Hsapiens.dbSNP.20120608,
+                                  dbSNP = SNPlocs.Hsapiens.dbSNP142.GRCh37,
                                   search.genome = BSgenome.Hsapiens.UCSC.hg19,
                                   format = "bed")
 snps.mb.frombed
@@ -299,7 +300,7 @@ where $b_{i}$ is again the background frequency of the letter $i$.
 Thus, there are 3 possible algorithms to apply via the `method`
 argument. The first is the standard summation of log probabilities
 (`method='log'`). The second and third are the weighted sum and
-information content methods (`method=default` and `method='ic'`) specified by
+information content methods (`method='default'` and `method='ic'`) specified by
 equations for [Weighted Sum](#eqn4.1) and [Relative Entropy](#eqn4.2), respectively. `r Githubpkg("Simon-Coetzee/motifBreakR")` assumes a
 uniform background nucleotide distribution ($b$) in equations [4.1](#eqn1) and
 [4.5](#eqn4.1) unless otherwise specified by the user. Since we are primarily
