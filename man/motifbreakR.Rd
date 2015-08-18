@@ -104,7 +104,7 @@ of this scoring method is given by:
 
 \strong{Equation 2}
 
-\deqn{F( s,M ) = p_{s} \cdot \omega_{M}}{F( s,M ) = p_s ⋅ \omega_M}
+\deqn{F( s,M ) = p_{s} \cdot \omega_{M}}{F( s,M ) = p_s . \omega_M}
 
 where \eqn{p_{s}}{p_s} is the scoring vector derived from sequence \eqn{s} and matrix
 \eqn{M}, and \eqn{w_{M}}{w_M} is a weight vector derived from \eqn{M}. First, we
