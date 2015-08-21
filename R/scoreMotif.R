@@ -551,6 +551,9 @@ motifbreakR <- function(snpList, pwmList, threshold=0.85, filterp = FALSE,
     }
     stop(attributes(x)$condition)
   }
+  if(class(BPPARAM) == "SnowParam") {
+	  bpstop(BPPARAM)
+  }
   drops <- sapply(x, is.null)
   x <- x[!drops]
   if (length(x) > 1) {
