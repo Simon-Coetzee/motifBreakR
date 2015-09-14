@@ -1,0 +1,38 @@
+Package: motifbreakR
+Title: A Package For Predicting The Disruptiveness Of Single Nucleotide
+        Polymorphisms On Transcription Factor Binding Sites
+Version: 0.99.8
+Authors@R: c(person(given="Simon Gert", family="Coetzee",
+        email="simon.coetzee@cshs.org", role = c("aut", "cre")),
+        person(given="Dennis J.", family="Hazelett",
+        email="dennis.hazelett@cshs.org", role = c("aut")))
+Author: Simon Gert Coetzee [aut, cre] Dennis J. Hazelett [aut]
+Maintainer: Simon Gert Coetzee <Simon.Coetzee@cshs.org>
+Description: We introduce motifbreakR, which allows the biologist to
+        judge in the first place whether the sequence surrounding the
+        polymorphism is a good match, and in the second place how much
+        information is gained or lost in one allele of the polymorphism
+        relative to another. MotifbreakR is both flexible and
+        extensible over previous offerings; giving a choice of
+        algorithms for interrogation of genomes with motifs from public
+        sources that users can choose from; these are 1) a weighted-sum
+        probability matrix, 2) log-probabilities, and 3) weighted by
+        relative entropy. MotifbreakR can predict effects for novel or
+        previously described variants in public databases, making it
+        suitable for tasks beyond the scope of its original design.
+        Lastly, it can be used to interrogate any genome curated within
+        Bioconductor (currently there are 22).
+Depends: R (>= 3.2), grid, MotifDb
+Imports: BiocParallel, compiler, methods, motifStack, BSgenome,
+        BiocGenerics, Biostrings, GenomeInfoDb, GenomicRanges, Gviz,
+        S4Vectors, grDevices, grImport, rtracklayer, stringr, IRanges,
+        VariantAnnotation, matrixStats, TFMPvalue
+Suggests: BSgenome.Hsapiens.UCSC.hg19, SNPlocs.Hsapiens.dbSNP.20120608,
+        SNPlocs.Hsapiens.dbSNP142.GRCh37, knitr, rmarkdown,
+        BSgenome.Drerio.UCSC.danRer7, BiocStyle
+VignetteBuilder: knitr
+License: GPL-2
+LazyData: true
+BugReports: https://github.com/Simon-Coetzee/motifbreakR/issues
+biocViews: ChIPSeq, Visualization, MotifAnnotation
+NeedsCompilation: no
