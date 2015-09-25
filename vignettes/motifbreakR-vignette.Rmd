@@ -74,7 +74,7 @@ variants <- snps.from.rsid(rsid = pca.snps,
                            dbSNP = SNPlocs.Hsapiens.dbSNP142.GRCh37,
                            search.genome = BSgenome.Hsapiens.UCSC.hg19)
 motifbreakr.results <- motifbreakR(snpList = variants, pwmList = MotifDb, threshold = 0.9)
-plotMB(results = motifbreakr.results, rsid = "rs7837328", stackmotif = TRUE, effect = "strg")
+plotMB(results = motifbreakr.results, rsid = "rs7837328", effect = "strong")
 ```
 Lets look at these steps more closely and see how we can customize our analysis.
 
