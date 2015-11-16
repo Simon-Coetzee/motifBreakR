@@ -24,7 +24,7 @@
 #'                            dbSNP = SNPlocs.Hsapiens.dbSNP.20120608,
 #'                            search.genome = BSgenome.Hsapiens.UCSC.hg19)
 #'
-#' @importFrom BSgenome snpid2grange snplocs
+#' @importFrom BSgenome snpsById snplocs
 #' @importFrom Biostrings DNAStringSet
 #' @export
 snps.from.rsid <- function(rsid = NULL, dbSNP = NULL,
@@ -45,7 +45,7 @@ snps.from.rsid <- function(rsid = NULL, dbSNP = NULL,
     stop(paste(paste(bad.names, collapse = " "), "are not rsids, perhaps you want to import your snps from a bed or vcf file with snps.from.file()?"))
   }
   rsid <- unique(rsid)
-  rsid.grange <- snpid2grange(dbSNP, rsid)
+  rsid.grange <- snpsById(dbSNP, rsid, drop.rs.prefix = TRUE, ifnotfound="warning")
   rsid.grange <- change.to.search.genome(rsid.grange, search.genome)
   rsid.refseq <- getSeq(search.genome, rsid.grange)
   rsid.grange$UCSC.reference <- as.character(rsid.refseq)
