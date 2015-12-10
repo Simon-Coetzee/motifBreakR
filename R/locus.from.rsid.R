@@ -156,7 +156,9 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
       stop(paste0(search.genome, " is not a BSgenome object.\n", "Run availible.genomes() and choose the appropriate BSgenome object"))
     }
     genome.name <- genome(search.genome)[[1]]
-    snps <- rowRanges(readVcf(file, genome.name))
+    snps <- readVcf(file, genome.name)
+    snps <- snps[elementLengths(info(snps)[, "VT"]) == 1, ]
+    snps <- rowRanges(snps)[unlist(info(snps)[, "VT"]) == "SNP"), ]
     ALTS <- unlist(snps$ALT)
     numsplits <- elementLengths(snps$ALT)
     snps <- rep(snps, times = numsplits)
