@@ -557,7 +557,6 @@ motifbreakR <- function(snpList, pwmList, threshold=0.85, filterp = FALSE,
 	  bpstop(BPPARAM)
   }
   drops <- sapply(x, is.null)
-  browser()
   x <- x[!drops]
   if (length(x) > 1) {
     x <- unlist(GRangesList(unname(x)))
