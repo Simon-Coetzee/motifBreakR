@@ -103,7 +103,7 @@ We use the `r Biocannopkg("SNPlocs.Hsapiens.dbSNP142.GRCh37")` which is the SNP 
 ```{r fromrsid, message=FALSE, cache=TRUE}
 library(SNPlocs.Hsapiens.dbSNP142.GRCh37) # dbSNP137 in hg19
 library(BSgenome.Hsapiens.UCSC.hg19)     # hg19 genome
-pca.snps <- head(pca.snps)
+head(pca.snps)
 snps.mb <- snps.from.rsid(rsid = pca.snps,
                           dbSNP = SNPlocs.Hsapiens.dbSNP142.GRCh37,
                           search.genome = BSgenome.Hsapiens.UCSC.hg19)
