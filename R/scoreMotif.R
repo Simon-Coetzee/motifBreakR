@@ -559,6 +559,7 @@ motifbreakR <- function(snpList, pwmList, threshold=0.85, filterp = FALSE,
   drops <- sapply(x, is.null)
   x <- x[!drops]
   pwmList@listData <- lapply(pwmList, function(pwm) { pwm <- pwm[c("A", "C", "G", "T"), ]; return(pwm) })
+  pwmList.pc <- lapply(pwmList.pc, function(pwm) { pwm <- pwm[c("A", "C", "G", "T"), ]; return(pwm) })
   if (length(x) > 1) {
     x <- unlist(GRangesList(unname(x)))
     x <- x[order(match(names(x), names(snpList)), x$geneSymbol), ]
