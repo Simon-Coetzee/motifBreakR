@@ -163,7 +163,7 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
       res.el$scoreAlt <- as.numeric(NA)
       res.el$Refpvalue <- as.numeric(NA)
       res.el$Altpvalue <- as.numeric(NA)
-    }
+    } 
     res.el$alleleRef <- as.numeric(NA)
     res.el$alleleAlt <- as.numeric(NA)
     res.el$effect <- as.character(NA)
@@ -541,6 +541,8 @@ motifbreakR <- function(snpList, pwmList, threshold=0.85, filterp = FALSE,
                      }, pwmList.pc, pwmOmegas)
     pwmThresh <- rep.int(threshold, times = length(pwmRanges))
   }
+  pwmList@listData <- lapply(pwmList, function(pwm) { pwm <- rbind(pwm, N=0); return(pwm) })
+  pwmList.pc <- lapply(pwmList.pc, function(pwm) { pwm <- rbind(pwm, N=0); return(pwm) })
   x <- try(bplapply(snpList, scoreSnpList, pwmList = pwmList, threshold = pwmThresh,
                     method = method, bkg = bkg, show.neutral = show.neutral, pwmList.pc = pwmList.pc,
                     verbose = ifelse(cores == 1, verbose, FALSE), genome.bsgenome = genome.bsgenome,
@@ -556,6 +558,8 @@ motifbreakR <- function(snpList, pwmList, threshold=0.85, filterp = FALSE,
   }
   drops <- sapply(x, is.null)
   x <- x[!drops]
+  pwmList@listData <- lapply(pwmList, function(pwm) { pwm <- pwm[c("A", "C", "G", "T"), ]; return(pwm) })
+  pwmList.pc <- lapply(pwmList.pc, function(pwm) { pwm <- pwm[c("A", "C", "G", "T"), ]; return(pwm) })
   if (length(x) > 1) {
     x <- unlist(GRangesList(unname(x)))
     x <- x[order(match(names(x), names(snpList)), x$geneSymbol), ]
