@@ -17,11 +17,11 @@
 #'  \item{ALT}{The alternate allele for the SNP}
 #'  @examples
 #'  library(BSgenome.Hsapiens.UCSC.hg19)
-#'  library(SNPlocs.Hsapiens.dbSNP.20120608)
+#'  library(SNPlocs.Hsapiens.dbSNP142.GRCh37)
 #'  snps.file <- system.file("extdata", "pca.enhancer.snps", package = "motifbreakR")
 #'  snps <- as.character(read.table(snps.file)[,1])
 #'  snps.mb <- snps.from.rsid(snps,
-#'                            dbSNP = SNPlocs.Hsapiens.dbSNP.20120608,
+#'                            dbSNP = SNPlocs.Hsapiens.dbSNP142.GRCh37,
 #'                            search.genome = BSgenome.Hsapiens.UCSC.hg19)
 #'
 #' @importFrom BSgenome snpsById snplocs
@@ -47,6 +47,7 @@ snps.from.rsid <- function(rsid = NULL, dbSNP = NULL,
   rsid <- unique(rsid)
   rsid.grange <- snpsById(dbSNP, rsid, ifnotfound="warning")
   rsid.grange <- change.to.search.genome(rsid.grange, search.genome)
+  rsid.grange <- GRanges(rsid.grange)
   rsid.refseq <- getSeq(search.genome, rsid.grange)
   rsid.grange$UCSC.reference <- as.character(rsid.refseq)
   rsid.grange <- sapply(split(rsid.grange, rsid.grange$RefSNP_id), function(snp) {
@@ -137,7 +138,7 @@ strSort <- function(x) {
 #'  \item{ALT}{The alternate allele for the SNP}
 #'  @examples
 #'  library(BSgenome.Drerio.UCSC.danRer7)
-#'  library(SNPlocs.Hsapiens.dbSNP.20120608)
+#'  library(SNPlocs.Hsapiens.dbSNP142.GRCh37)
 #'  snps.bed.file <- system.file("extdata", "danRer.bed", package = "motifbreakR")
 #'  # see the contents
 #'  read.table(snps.bed.file, header = FALSE)
@@ -157,10 +158,10 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
     }
     genome.name <- genome(search.genome)[[1]]
     snps <- readVcf(file, genome.name)
-    snps <- snps[elementNROWS(info(snps)[, "VT"]) == 1, ]
-    snps <- rowRanges(snps)[unlist(info(snps)[, "VT"]) == "SNP", ]
+    snps <- snps[elementLengths(info(snps)[, "VT"]) == 1, ]
+    snps <- rowRanges(snps)[unlist(info(snps)[, "VT"] == "SNP"), ]
     ALTS <- unlist(snps$ALT)
-    numsplits <- elementNROWS(snps$ALT)
+    numsplits <- elementLengths(snps$ALT)
     snps <- rep(snps, times = numsplits)
     snps$ALT <- ALTS
     snps$ALT <- as.character(snps$ALT)
