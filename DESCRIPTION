@@ -27,9 +27,8 @@ Imports: BiocParallel, compiler, methods, motifStack, BSgenome,
         BiocGenerics, Biostrings, GenomeInfoDb, GenomicRanges, Gviz,
         S4Vectors, grDevices, grImport, rtracklayer, stringr, IRanges,
         VariantAnnotation, matrixStats, TFMPvalue
-Suggests: BSgenome.Hsapiens.UCSC.hg19, SNPlocs.Hsapiens.dbSNP.20120608,
-        SNPlocs.Hsapiens.dbSNP142.GRCh37, knitr, rmarkdown,
-        BSgenome.Drerio.UCSC.danRer7, BiocStyle
+Suggests: BSgenome.Hsapiens.UCSC.hg19, SNPlocs.Hsapiens.dbSNP142.GRCh37, 
+		knitr, rmarkdown, BSgenome.Drerio.UCSC.danRer7, BiocStyle
 VignetteBuilder: knitr
 License: GPL-2
 LazyData: true

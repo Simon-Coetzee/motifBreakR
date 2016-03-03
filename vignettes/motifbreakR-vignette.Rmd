@@ -96,12 +96,12 @@ More to the point here are the two methods for reading in the variants.
 
 ### SNPs from rsID:
 
-This first way of importing variants uses the PCa SNPs we found above [`pca.snps`](#practical).
+
 
 We use the `r Biocannopkg("SNPlocs.Hsapiens.dbSNP142.GRCh37")` which is the SNP locations and alleles defined in [dbSNP142](http://www.ncbi.nlm.nih.gov/projects/SNP/snp_summary.cgi?view+summary=view+summary&build_id=142) as a source for looking up our rsIDs and `r Biocannopkg("BSgenome.Hsapiens.UCSC.hg19")` which holds the reference sequence for [UCSC genome build hg19](http://www.ncbi.nlm.nih.gov/assembly/2758/). Additional SNPlocs packages are availble from Bioconductor.
 
 ```{r fromrsid, message=FALSE, cache=TRUE}
-library(SNPlocs.Hsapiens.dbSNP142.GRCh37) # dbSNP137 in hg19
+library(SNPlocs.Hsapiens.dbSNP142.GRCh37) # dbSNP142 in hg19
 library(BSgenome.Hsapiens.UCSC.hg19)     # hg19 genome
 head(pca.snps)
 snps.mb <- snps.from.rsid(rsid = pca.snps,
