@@ -96,12 +96,12 @@ More to the point here are the two methods for reading in the variants.
 
 ### SNPs from rsID:
 
-This first way of importing variants uses the PCa SNPs we found above [`pca.snps`](#practical).
+
 
 We use the `r Biocannopkg("SNPlocs.Hsapiens.dbSNP142.GRCh37")` which is the SNP locations and alleles defined in [dbSNP142](http://www.ncbi.nlm.nih.gov/projects/SNP/snp_summary.cgi?view+summary=view+summary&build_id=142) as a source for looking up our rsIDs and `r Biocannopkg("BSgenome.Hsapiens.UCSC.hg19")` which holds the reference sequence for [UCSC genome build hg19](http://www.ncbi.nlm.nih.gov/assembly/2758/). Additional SNPlocs packages are availble from Bioconductor.
 
 ```{r fromrsid, message=FALSE, cache=TRUE}
-library(SNPlocs.Hsapiens.dbSNP142.GRCh37) # dbSNP137 in hg19
+library(SNPlocs.Hsapiens.dbSNP142.GRCh37) # dbSNP142 in hg19
 library(BSgenome.Hsapiens.UCSC.hg19)     # hg19 genome
 head(pca.snps)
 snps.mb <- snps.from.rsid(rsid = pca.snps,
@@ -207,9 +207,13 @@ The results reveal which variants disrupt which motifs, and to which degree.  If
 rs1006140 <- results[names(results) %in% "rs1006140"]
 rs1006140
 ```
-Here we can see that SNP rs2661839 disrupts multiple motifs. We can then check what the pvalue for each allele is with regard to each motif, using `calculatePvalue`.
-```{r calcp, cache=TRUE}
+Here we can see that SNP rs1006140 disrupts multiple motifs. We can then check what the pvalue for each allele is with regard to each motif, using `calculatePvalue`.
+```{r calcp.show, cache=TRUE, eval=FALSE}
 rs1006140 <- calculatePvalue(rs1006140)
+rs1006140
+```
+```{r calcp, cache=TRUE, echo=FALSE}
+data(example.pvalue.rda)
 rs1006140
 ```
 And here we see that for each SNP we have at least one allele achieving a p-value below 1e-4 threshold that we required. The `seqMatch` column shows what the reference genome sequence is at that location, with the variant position appearing in an uppercase letter. pctRef and pctAlt display the the score for the motif in the sequence as a percentage of the best score that motif could achieve on an ideal sequence. In other words $(scoreVariant-minscorePWM)/(maxscorePWM-minscorePWM)$. We can also see the absolute scores for our method in scoreRef and scoreAlt and thier respective p-values.
