@@ -618,13 +618,13 @@ calculatePvalue <- function(results,
   if(!("scoreRef" %in% names(mcols(results)))) {
     stop('incorrect results format; please rerun analysis with filterp=TRUE')
   } else {
-    pwmListmeta <- mcols(attributes(results)$motifs)
+    pwmListmeta <- mcols(attributes(results)$motifs, use.names=TRUE)
     pwmList <- attributes(results)$scoremotifs
     pvalues <- lapply(results, function(result, pwmList, pwmListmeta, bkg) {
                         pwm.id <- result$providerId
                         pwm.name.f <- result$providerName
                         pwmmeta <- pwmListmeta[pwmListmeta$providerId == pwm.id & pwmListmeta$providerName == pwm.name.f, ]
-                        pwm <- pwmList[[rownames(pwmmeta)]]
+                        pwm <- pwmList[[rownames(pwmmeta)[1]]]
                         ref <- TFMsc2pv(pwm, mcols(result)[["scoreRef"]], bg = bkg, type="PWM")
                         alt <- TFMsc2pv(pwm, mcols(result)[["scoreAlt"]], bg = bkg, type="PWM")
                         return(data.frame(ref=ref, alt=alt))
