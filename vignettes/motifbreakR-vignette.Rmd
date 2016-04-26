@@ -32,7 +32,6 @@ This document offers an introduction and overview of `r Githubpkg("Simon-Coetzee
 
 This guide includes a brief overview of the [processing flow](#flow), an example focusing more in depth on the [practical](#practical) aspect of using `r Githubpkg("Simon-Coetzee/motifBreakR")`, and finally a detailed section on the [scoring methods](#methods) employed by the package.
 
-
 # Processing overview {#flow}
 `r Githubpkg("Simon-Coetzee/motifBreakR")` may be used to interrogate SNPs or SNVs for their potential effect on transcription factor binding by examining how the two alleles of the variant effect the binding score of a motif.  The basic process is outlined in the figure below.
 
@@ -128,13 +127,22 @@ snps.bed.file <- system.file("extdata", "snps.bed", package = "motifbreakR")
 read.table(snps.bed.file, header = FALSE)
 ```
 Seeing as we have some SNPs listed by their rsIDs we can query those by including a SNPlocs object as an argument to `snps.from.file`
-```{r getbedrs, message=TRUE, cache=TRUE}
+```{r getbedrs, message=FALSE, echo = TRUE, eval = FALSE}
 library(SNPlocs.Hsapiens.dbSNP142.GRCh37)
 #import the BED file
 snps.mb.frombed <- snps.from.file(file = snps.bed.file,
                                   dbSNP = SNPlocs.Hsapiens.dbSNP142.GRCh37,
                                   search.genome = BSgenome.Hsapiens.UCSC.hg19,
                                   format = "bed")
+snps.mb.frombed
+```
+```{r getbedrs.t, message=TRUE, echo = FALSE, eval = TRUE, cache=TRUE}
+library(SNPlocs.Hsapiens.dbSNP142.GRCh37)
+example.snpfrombed <- system.file("extdata", "example.snpfrombed.rda", package = "motifbreakR")
+load(example.snpfrombed)
+message("Warning message:
+In snps.from.file(file = snps.bed.file, dbSNP = SNPlocs.Hsapiens.dbSNP142.GRCh37:
+  7601289 was found as a match for chr2:12594018:G:A; using entry from dbSNP")
 snps.mb.frombed
 ```
 We see also that one of our custom variants `chr2:12594018:G:A` was actually already included in dbSNP, and was therefor annotated in the output as `rs7601289`
@@ -208,7 +216,7 @@ rs1006140 <- results[names(results) %in% "rs1006140"]
 rs1006140
 ```
 Here we can see that SNP rs1006140 disrupts multiple motifs. We can then check what the pvalue for each allele is with regard to each motif, using `calculatePvalue`.
-```{r calcp.show, cache=TRUE, eval=FALSE}
+```{r calcp.show, eval=FALSE}
 rs1006140 <- calculatePvalue(rs1006140)
 rs1006140
 ```
