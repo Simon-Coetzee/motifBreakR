@@ -43,7 +43,7 @@ snps.from.rsid <- function(rsid = NULL, dbSNP = NULL,
   if (Reduce("&", !grepl("rs", rsid))) {
     bad.names <- rsid[!grepl("rs", rsid)]
     stop(paste(paste(bad.names, collapse = " "), "are not rsids, perhaps you want to import your snps from a bed or vcf file with snps.from.file()?"))
-  
+  }
   rsid <- unique(rsid)
   rsid.grange <- as(snpsById(dbSNP, rsid, ifnotfound="warning"), "GRanges")
   rsid.grange <- change.to.search.genome(rsid.grange, search.genome)
