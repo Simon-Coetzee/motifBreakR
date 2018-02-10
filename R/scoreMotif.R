@@ -133,8 +133,8 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
     strsplit(as.character(x), "")[[1]]
   })
   resultSet <- NULL
-  resultSet <- lapply(fsnplist, function(x, l = length(pwmList)) {
-    return(rep(x, l))
+  resultSet <- lapply(seq_along(fsnplist), function(i, l = length(pwmList)) {
+    return(rep(fsnplist[i], l))
   })
   strand.opt <- c("+", "-")
   #set.sig <- rep(NA, length(resultSet))
