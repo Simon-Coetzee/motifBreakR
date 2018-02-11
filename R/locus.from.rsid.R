@@ -158,10 +158,10 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
     }
     genome.name <- genome(search.genome)[[1]]
     snps <- readVcf(file, genome.name)
-    snps <- snps[elementLengths(info(snps)[, "VT"]) == 1, ]
+    snps <- snps[lengths(info(snps)[, "VT"]) == 1, ]
     snps <- rowRanges(snps)[unlist(info(snps)[, "VT"] == "SNP"), ]
     ALTS <- unlist(snps$ALT)
-    numsplits <- elementLengths(snps$ALT)
+    numsplits <- lengths(snps$ALT)
     snps <- rep(snps, times = numsplits)
     snps$ALT <- ALTS
     snps$ALT <- as.character(snps$ALT)
