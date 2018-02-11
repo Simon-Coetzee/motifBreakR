@@ -620,7 +620,8 @@ calculatePvalue <- function(results,
   } else {
     pwmListmeta <- mcols(attributes(results)$motifs)
     pwmList <- attributes(results)$scoremotifs
-    pvalues <- lapply(results, function(result, pwmList, pwmListmeta, bkg) {
+    pvalues <- lapply(seq_along(results), function(i, pwmList, pwmListmeta, bkg) {
+                        result <- results[i]
                         pwm.id <- result$providerId
                         pwm.name.f <- result$providerName
                         pwmmeta <- pwmListmeta[pwmListmeta$providerId == pwm.id & pwmListmeta$providerName == pwm.name.f, ]
