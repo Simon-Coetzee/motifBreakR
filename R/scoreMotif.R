@@ -562,6 +562,7 @@ motifbreakR <- function(snpList, pwmList, threshold=0.85, filterp = FALSE,
   pwmList.pc <- lapply(pwmList.pc, function(pwm) { pwm <- pwm[c("A", "C", "G", "T"), ]; return(pwm) })
   if (length(x) > 1) {
     x <- unlist(GRangesList(unname(x)))
+    snpList <- unlist(GRangesList(snpList), use.names = F)
     x <- x[order(match(names(x), names(snpList)), x$geneSymbol), ]
     attributes(x)$genome.package <- genome.package
     attributes(x)$motifs <- pwmList[mcols(pwmList)$providerId %in% unique(x$providerId) &
