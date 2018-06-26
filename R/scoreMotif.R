@@ -133,8 +133,8 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
     strsplit(as.character(x), "")[[1]]
   })
   resultSet <- NULL
-  resultSet <- lapply(fsnplist, function(x, l = length(pwmList)) {
-    return(rep(x, l))
+  resultSet <- lapply(seq_along(fsnplist), function(i, l = length(pwmList)) {
+    return(rep(fsnplist[i], l))
   })
   strand.opt <- c("+", "-")
   #set.sig <- rep(NA, length(resultSet))
@@ -163,7 +163,7 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
       res.el$scoreAlt <- as.numeric(NA)
       res.el$Refpvalue <- as.numeric(NA)
       res.el$Altpvalue <- as.numeric(NA)
-    } 
+    }
     res.el$alleleRef <- as.numeric(NA)
     res.el$alleleAlt <- as.numeric(NA)
     res.el$effect <- as.character(NA)
@@ -198,7 +198,7 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
           if(hit.alt[["strand"]] != 0L && hit.ref[["strand"]] == 0L) {
             hit <- hit.alt
           } else {
-            hit <-NULL
+            hit <- NULL
           }
         }
       }
@@ -620,7 +620,8 @@ calculatePvalue <- function(results,
   } else {
     pwmListmeta <- mcols(attributes(results)$motifs, use.names=TRUE)
     pwmList <- attributes(results)$scoremotifs
-    pvalues <- lapply(results, function(result, pwmList, pwmListmeta, bkg) {
+    pvalues <- lapply(seq_along(results), function(i, pwmList, pwmListmeta, bkg) {
+                        result <- results[i]
                         pwm.id <- result$providerId
                         pwm.name.f <- result$providerName
                         pwmmeta <- pwmListmeta[pwmListmeta$providerId == pwm.id & pwmListmeta$providerName == pwm.name.f, ]
