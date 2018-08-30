@@ -48,8 +48,9 @@ If you'd like to make the vignette yourself (and have it appear identically to t
 
 #### Getting prerequisite packages from Bioconductor
 ```{r}
-source("http://bioconductor.org/biocLite.R")
-biocLite(c("BiocParallel", "motifStack", "BSgenome", "BiocGenerics",
+if (!requireNamespace("BiocManager", quietly=TRUE))
+    install.packages("BiocManager")
+BiocManager::install(c("BiocParallel", "motifStack", "BSgenome", "BiocGenerics",
            "Biostrings", "GenomeInfoDb", "GenomicRanges", "Gviz", "S4Vectors",
            "rtracklayer", "IRanges", "MotifDb", "BSgenome.Hsapiens.UCSC.hg19",
            "SNPlocs.Hsapiens.dbSNP.20120608", "SNPlocs.Hsapiens.dbSNP142.GRCh37",
