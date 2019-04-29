@@ -8,12 +8,6 @@ See `help("motifbreakR")` for detailed help with running `motifbreakR`.
 
 See `help("plotMB")` for detailed help with visualization.
 
-<<<<<<< HEAD
-##### Docker
-If you don't want to read the documentation, and just want to run a VCF file through `motifbreakR`, try our docker image at [dennishazelett/motifbreakr](https://hub.docker.com/r/dennishazelett/motifbreakr/) on docker hub.
-
-=======
->>>>>>> upstream/master
 ##### Abstract
 Functional annotation represents a key step toward the understanding and
 interpretation of germline and somatic variation as revealed by genome wide
@@ -54,14 +48,9 @@ If you'd like to make the vignette yourself (and have it appear identically to t
 
 #### Getting prerequisite packages from Bioconductor
 ```{r}
-<<<<<<< HEAD
-source("http://bioconductor.org/biocLite.R")
-biocLite(c("BiocParallel", "motifStack", "BSgenome", "BiocGenerics",
-=======
 if (!requireNamespace("BiocManager", quietly=TRUE))
     install.packages("BiocManager")
 BiocManager::install(c("BiocParallel", "motifStack", "BSgenome", "BiocGenerics",
->>>>>>> upstream/master
            "Biostrings", "GenomeInfoDb", "GenomicRanges", "Gviz", "S4Vectors",
            "rtracklayer", "IRanges", "MotifDb", "BSgenome.Hsapiens.UCSC.hg19",
            "SNPlocs.Hsapiens.dbSNP.20120608", "SNPlocs.Hsapiens.dbSNP142.GRCh37",

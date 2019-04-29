@@ -163,11 +163,7 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
       res.el$scoreAlt <- as.numeric(NA)
       res.el$Refpvalue <- as.numeric(NA)
       res.el$Altpvalue <- as.numeric(NA)
-<<<<<<< HEAD
-    }
-=======
     } 
->>>>>>> upstream/master
     res.el$alleleRef <- as.numeric(NA)
     res.el$alleleAlt <- as.numeric(NA)
     res.el$effect <- as.character(NA)
@@ -202,11 +198,7 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
           if(hit.alt[["strand"]] != 0L && hit.ref[["strand"]] == 0L) {
             hit <- hit.alt
           } else {
-<<<<<<< HEAD
             hit <- NULL
-=======
-            hit <-NULL
->>>>>>> upstream/master
           }
         }
       }
@@ -570,10 +562,7 @@ motifbreakR <- function(snpList, pwmList, threshold=0.85, filterp = FALSE,
   pwmList.pc <- lapply(pwmList.pc, function(pwm) { pwm <- pwm[c("A", "C", "G", "T"), ]; return(pwm) })
   if (length(x) > 1) {
     x <- unlist(GRangesList(unname(x)))
-<<<<<<< HEAD
     snpList <- unlist(GRangesList(snpList), use.names = F)
-=======
->>>>>>> upstream/master
     x <- x[order(match(names(x), names(snpList)), x$geneSymbol), ]
     attributes(x)$genome.package <- genome.package
     attributes(x)$motifs <- pwmList[mcols(pwmList)$providerId %in% unique(x$providerId) &
@@ -630,22 +619,14 @@ calculatePvalue <- function(results,
   if(!("scoreRef" %in% names(mcols(results)))) {
     stop('incorrect results format; please rerun analysis with filterp=TRUE')
   } else {
-<<<<<<< HEAD
     pwmListmeta <- mcols(attributes(results)$motifs, use.names=TRUE)
-=======
-    pwmListmeta <- mcols(attributes(results)$motifs)
->>>>>>> upstream/master
     pwmList <- attributes(results)$scoremotifs
     pvalues <- lapply(seq_along(results), function(i, pwmList, pwmListmeta, bkg) {
                         result <- results[i]
                         pwm.id <- result$providerId
                         pwm.name.f <- result$providerName
                         pwmmeta <- pwmListmeta[pwmListmeta$providerId == pwm.id & pwmListmeta$providerName == pwm.name.f, ]
-<<<<<<< HEAD
                         pwm <- pwmList[[rownames(pwmmeta)[1]]]
-=======
-                        pwm <- pwmList[[rownames(pwmmeta)]]
->>>>>>> upstream/master
                         ref <- TFMsc2pv(pwm, mcols(result)[["scoreRef"]], bg = bkg, type="PWM")
                         alt <- TFMsc2pv(pwm, mcols(result)[["scoreAlt"]], bg = bkg, type="PWM")
                         return(data.frame(ref=ref, alt=alt))
