@@ -15,7 +15,7 @@
 #'  alternate allele for this SNP}
 #'  \item{REF}{The reference allele for the SNP}
 #'  \item{ALT}{The alternate allele for the SNP}
-#'  @examples
+#' @examples
 #'  library(BSgenome.Hsapiens.UCSC.hg19)
 #'  library(SNPlocs.Hsapiens.dbSNP142.GRCh37)
 #'  snps.file <- system.file("extdata", "pca.enhancer.snps", package = "motifbreakR")
@@ -136,7 +136,7 @@ strSort <- function(x) {
 #'  alternate allele for this SNP}
 #'  \item{REF}{The reference allele for the SNP}
 #'  \item{ALT}{The alternate allele for the SNP}
-#'  @examples
+#' @examples
 #'  library(BSgenome.Drerio.UCSC.danRer7)
 #'  library(SNPlocs.Hsapiens.dbSNP142.GRCh37)
 #'  snps.bed.file <- system.file("extdata", "danRer.bed", package = "motifbreakR")
@@ -254,7 +254,7 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
       #snps.noid.ambi <- names(IUPAC_CODE_MAP[sapply(as.list(sapply(snps.noid.ambi,
       #                                                             grep, IUPAC_CODE_MAP)), "[", 1)])
       ## are unnamed snps found in dbsnp ?
-      if (commonName(search.genome) == "Human" && class(dbSNP) == "SNPlocs") {
+      if (commonName(search.genome) == "Human" && is(dbSNP, "SNPlocs")) {
         snps.noid.chrom <- as.character(seqnames(snps.noid))
         snps.noid.chrom <- unique(snps.noid.chrom)
         snps.noid.chrom <- gsub("chr", "ch", snps.noid.chrom)

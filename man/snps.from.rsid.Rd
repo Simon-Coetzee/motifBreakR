@@ -22,14 +22,6 @@ a GRanges object containing:
  alternate allele for this SNP}
  \item{REF}{The reference allele for the SNP}
  \item{ALT}{The alternate allele for the SNP}
- @examples
- library(BSgenome.Hsapiens.UCSC.hg19)
- library(SNPlocs.Hsapiens.dbSNP142.GRCh37)
- snps.file <- system.file("extdata", "pca.enhancer.snps", package = "motifbreakR")
- snps <- as.character(read.table(snps.file)[,1])
- snps.mb <- snps.from.rsid(snps,
-                           dbSNP = SNPlocs.Hsapiens.dbSNP142.GRCh37,
-                           search.genome = BSgenome.Hsapiens.UCSC.hg19)
 }
 \description{
 Import SNPs from rsid for use in motifbreakR
@@ -37,6 +29,16 @@ Import SNPs from rsid for use in motifbreakR
 \details{
 \code{snps.from.rsid} take an rsid, or character vector of rsids and
  generates the required object to input into \code{motifbreakR}
+}
+\examples{
+ library(BSgenome.Hsapiens.UCSC.hg19)
+ library(SNPlocs.Hsapiens.dbSNP142.GRCh37)
+ snps.file <- system.file("extdata", "pca.enhancer.snps", package = "motifbreakR")
+ snps <- as.character(read.table(snps.file)[,1])
+ snps.mb <- snps.from.rsid(snps,
+                           dbSNP = SNPlocs.Hsapiens.dbSNP142.GRCh37,
+                           search.genome = BSgenome.Hsapiens.UCSC.hg19)
+
 }
 \seealso{
 See \code{\link{motifbreakR}} for analysis; See \code{\link{snps.from.file}}

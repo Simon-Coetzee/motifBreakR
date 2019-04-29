@@ -58,21 +58,6 @@ a GRanges object containing:
  \item{alleleAlt}{The proportional frequency of the alternate allele at position \code{motifPos} in the motif}
  \item{effect}{one of weak, strong, or neutral indicating the strength of the effect.}
  each SNP in this object may be plotted with \code{\link{plotMB}}
- @examples
- library(BSgenome.Hsapiens.UCSC.hg19)
- # prepare variants
- load(system.file("extdata",
-                  "pca.enhancer.snps.rda",
-                  package = "motifbreakR")) # loads snps.mb
- pca.enhancer.snps <- sample(snps.mb, 20)
- # Get motifs to interrogate
- data(hocomoco)
- motifs <- sample(hocomoco, 50)
- # run motifbreakR
- results <- motifbreakR(pca.enhancer.snps,
-                        motifs, threshold = 0.85,
-                        method = "ic",
-                        BPPARAM=BiocParallel::SerialParam())
 }
 \description{
 Predict The Disruptiveness Of Single Nucleotide Polymorphisms On
@@ -188,6 +173,22 @@ a desired p-value e.g 1e-4, we perform a rough filter on the results by rounding
 decimal place, and calculating a scoring threshold based upon that. The second step is to use the function \code{\link{calculatePvalue}()}
 on a selection of results which will change the \code{Refpvalue} and \code{Altpvalue} columns in the output from \code{NA} to the p-value
 calculated by \code{\link{TFMsc2pv}}.  This can be (although not always) a very memory and time intensive process if the algorithm doesn't converge rapidly.
+}
+\examples{
+ library(BSgenome.Hsapiens.UCSC.hg19)
+ # prepare variants
+ load(system.file("extdata",
+                  "pca.enhancer.snps.rda",
+                  package = "motifbreakR")) # loads snps.mb
+ pca.enhancer.snps <- sample(snps.mb, 20)
+ # Get motifs to interrogate
+ data(hocomoco)
+ motifs <- sample(hocomoco, 50)
+ # run motifbreakR
+ results <- motifbreakR(pca.enhancer.snps,
+                        motifs, threshold = 0.85,
+                        method = "ic",
+                        BPPARAM=BiocParallel::SerialParam())
 }
 \seealso{
 See \code{\link{snps.from.rsid}} and \code{\link{snps.from.file}} for

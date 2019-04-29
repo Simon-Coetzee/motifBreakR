@@ -163,7 +163,7 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
       res.el$scoreAlt <- as.numeric(NA)
       res.el$Refpvalue <- as.numeric(NA)
       res.el$Altpvalue <- as.numeric(NA)
-    } 
+    }
     res.el$alleleRef <- as.numeric(NA)
     res.el$alleleAlt <- as.numeric(NA)
     res.el$effect <- as.character(NA)
@@ -447,7 +447,7 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
 #'  \item{alleleAlt}{The proportional frequency of the alternate allele at position \code{motifPos} in the motif}
 #'  \item{effect}{one of weak, strong, or neutral indicating the strength of the effect.}
 #'  each SNP in this object may be plotted with \code{\link{plotMB}}
-#'  @examples
+#' @examples
 #'  library(BSgenome.Hsapiens.UCSC.hg19)
 #'  # prepare variants
 #'  load(system.file("extdata",
@@ -474,12 +474,12 @@ motifbreakR <- function(snpList, pwmList, threshold=0.85, filterp = FALSE,
     warning(paste0("Serial evaluation under effect, to achive parallel evaluation under\n",
             "Windows, please supply an alternative BPPARAM"))
   }
-  cores <- bpworkers(BPPARAM)
+  cores <- bpnworkers(BPPARAM)
   num.snps <- length(snpList)
   if(num.snps < cores) {
     cores <- num.snps
   }
-  if(class(BPPARAM) == "SnowParam") {
+  if(is(BPPARAM, "SnowParam")) {
     bpstart(BPPARAM)
     cl <- bpbackend(BPPARAM)
     clusterEvalQ(cl, library("MotifDb"))
@@ -548,12 +548,12 @@ motifbreakR <- function(snpList, pwmList, threshold=0.85, filterp = FALSE,
                     verbose = ifelse(cores == 1, verbose, FALSE), genome.bsgenome = genome.bsgenome,
                     pwmRanges = pwmRanges, filterp = filterp, BPPARAM=BPPARAM))
   if(inherits(x, "try-error")) {
-    if(class(BPPARAM) == "SnowParam") {
+    if(is(BPPARAM, "SnowParam")) {
       bpstop(BPPARAM)
     }
     stop(attributes(x)$condition)
   }
-  if(class(BPPARAM) == "SnowParam") {
+  if(is(BPPARAM, "SnowParam")) {
 	  bpstop(BPPARAM)
   }
   drops <- sapply(x, is.null)
@@ -681,7 +681,6 @@ addPWM.stack <- function(identifier, index, GdObject, ...) {
   grid.picture(motif.figure, distort = FALSE)
 }
 
-#  grid.rect(gp = gpar(fill = rgb(1,0,0,1)), draw = T, width = 70, height = 1000, default.units = "native", x = 2000, y=0)
 selcor <- function(identifier, GdObject, ... ) {
   if(identifier == mcols(GdObject@range)$id[[1]]) {
     return(TRUE)
@@ -698,7 +697,7 @@ plotMotifLogoStack.2 <- function(pfms, ...) {
   pfms <- rev(pfms)
   n <- length(pfms)
   lapply(pfms, function(.ele) {
-    if (class(.ele) != "pfm")
+    if (!is(.ele, "pfm"))
       stop("pfms must be a list of class pfm")
   })
   opar <- par(mfrow = c(n, 1), mar = c(3.5, 3.5, 1.5, 0.5))
@@ -773,6 +772,7 @@ DNAmotifAlignment.2snp <- function(pwms, result) {
 #'   AnnotationTrack plotTracks
 #' @export
 plotMB <- function(results, rsid, reverseMotif = TRUE, effect = c("strong", "weak")) {
+  return("plotting function is under maintainence for release")
   g <- genome(results)[[1]]
   result <- results[names(results) %in% rsid]
   stackmotif <- TRUE

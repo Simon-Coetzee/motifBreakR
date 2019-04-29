@@ -26,16 +26,6 @@ a GRanges object containing:
  alternate allele for this SNP}
  \item{REF}{The reference allele for the SNP}
  \item{ALT}{The alternate allele for the SNP}
- @examples
- library(BSgenome.Drerio.UCSC.danRer7)
- library(SNPlocs.Hsapiens.dbSNP142.GRCh37)
- snps.bed.file <- system.file("extdata", "danRer.bed", package = "motifbreakR")
- # see the contents
- read.table(snps.bed.file, header = FALSE)
- #import the BED file
- snps.mb <- snps.from.file(snps.bed.file,
-                           search.genome = BSgenome.Drerio.UCSC.danRer7,
-                           format = "bed")
 }
 \description{
 Import SNPs from a BED file or VCF file for use in motifbreakR
@@ -49,6 +39,18 @@ Import SNPs from a BED file or VCF file for use in motifbreakR
  or the rsid from dbSNP (if you've included the optional SNPlocs argument).
  For example if you were to include rs123 in it's alternate
  format it would be entered as chr7:24966446:C:A
+}
+\examples{
+ library(BSgenome.Drerio.UCSC.danRer7)
+ library(SNPlocs.Hsapiens.dbSNP142.GRCh37)
+ snps.bed.file <- system.file("extdata", "danRer.bed", package = "motifbreakR")
+ # see the contents
+ read.table(snps.bed.file, header = FALSE)
+ #import the BED file
+ snps.mb <- snps.from.file(snps.bed.file,
+                           search.genome = BSgenome.Drerio.UCSC.danRer7,
+                           format = "bed")
+
 }
 \seealso{
 See \code{\link{motifbreakR}} for analysis; See \code{\link{snps.from.rsid}}

@@ -6,8 +6,6 @@ Authors@R: c(person(given="Simon Gert", family="Coetzee",
         email="simon.coetzee@cshs.org", role = c("aut", "cre")),
         person(given="Dennis J.", family="Hazelett",
         email="dennis.hazelett@cshs.org", role = c("aut")))
-Author: Simon Gert Coetzee [aut, cre] Dennis J. Hazelett [aut]
-Maintainer: Simon Gert Coetzee <Simon.Coetzee@cshs.org>
 Description: We introduce motifbreakR, which allows the biologist to
         judge in the first place whether the sequence surrounding the
         polymorphism is a good match, and in the second place how much
@@ -26,7 +24,7 @@ Depends: R (>= 3.2), grid, MotifDb
 Imports: methods, compiler, grDevices, grImport, stringr,
         BiocGenerics, S4Vectors (>= 0.9.25), IRanges, GenomeInfoDb,
         GenomicRanges, Biostrings, BSgenome, rtracklayer, VariantAnnotation,
-        BiocParallel, motifStack, Gviz, matrixStats, TFMPvalue
+        BiocParallel, motifStack, Gviz, matrixStats, TFMPvalue, SummarizedExperiment
 Suggests: BSgenome.Hsapiens.UCSC.hg19, SNPlocs.Hsapiens.dbSNP.20120608,
         SNPlocs.Hsapiens.dbSNP142.GRCh37, knitr, rmarkdown,
         BSgenome.Drerio.UCSC.danRer7, BiocStyle
