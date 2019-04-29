@@ -45,7 +45,11 @@ snps.from.rsid <- function(rsid = NULL, dbSNP = NULL,
     stop(paste(paste(bad.names, collapse = " "), "are not rsids, perhaps you want to import your snps from a bed or vcf file with snps.from.file()?"))
   }
   rsid <- unique(rsid)
+<<<<<<< HEAD
   rsid.grange <- as(snpsById(dbSNP, rsid, ifnotfound = "warning"), "GRanges")
+=======
+  rsid.grange <- snpsById(dbSNP, rsid, ifnotfound="warning")
+>>>>>>> upstream/master
   rsid.grange <- change.to.search.genome(rsid.grange, search.genome)
   rsid.grange <- GRanges(rsid.grange)
   rsid.refseq <- getSeq(search.genome, rsid.grange)
@@ -149,7 +153,11 @@ strSort <- function(x) {
 #'
 #' @importFrom rtracklayer import
 #' @importFrom Biostrings IUPAC_CODE_MAP
+<<<<<<< HEAD
 #' @importFrom VariantAnnotation readVcf ref alt isSNV
+=======
+#' @importFrom VariantAnnotation readVcf
+>>>>>>> upstream/master
 #' @export
 snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, format = "bed") {
   if(format == "vcf"){
@@ -158,11 +166,19 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
     }
     genome.name <- genome(search.genome)[[1]]
     snps <- readVcf(file, genome.name)
+<<<<<<< HEAD
     snps <- snps[isSNV(snps, singleAltOnly = F)]
     ALTS <- unlist(alt(snps))
     numsplits <- lengths(alt(snps))
     snps <- rep(snps, times = numsplits)
     snps <- rowRanges(snps)
+=======
+    snps <- snps[lengths(info(snps)[, "VT"]) == 1, ]
+    snps <- rowRanges(snps)[unlist(info(snps)[, "VT"] == "SNP"), ]
+    ALTS <- unlist(snps$ALT)
+    numsplits <- lengths(snps$ALT)
+    snps <- rep(snps, times = numsplits)
+>>>>>>> upstream/master
     snps$ALT <- ALTS
     snps$ALT <- as.character(snps$ALT)
     snps$REF <- as.character(snps$REF)

@@ -1,7 +1,7 @@
 Package: motifbreakR
 Title: A Package For Predicting The Disruptiveness Of Single Nucleotide
         Polymorphisms On Transcription Factor Binding Sites
-Version: 1.11
+Version: 1.13.0
 Authors@R: c(person(given="Simon Gert", family="Coetzee",
         email="simon.coetzee@cshs.org", role = c("aut", "cre")),
         person(given="Dennis J.", family="Hazelett",
@@ -23,16 +23,17 @@ Description: We introduce motifbreakR, which allows the biologist to
         Lastly, it can be used to interrogate any genome curated within
         Bioconductor (currently there are 22).
 Depends: R (>= 3.2), grid, MotifDb
-Imports: BiocParallel, compiler, methods, motifStack, BSgenome,
-        BiocGenerics, Biostrings, GenomeInfoDb, GenomicRanges, Gviz,
-        S4Vectors, grDevices, grImport, rtracklayer, stringr, IRanges,
-        VariantAnnotation, matrixStats, TFMPvalue
-Suggests: BSgenome.Hsapiens.UCSC.hg19, SNPlocs.Hsapiens.dbSNP142.GRCh37, 
-		knitr, rmarkdown, BSgenome.Drerio.UCSC.danRer7, BiocStyle
+Imports: methods, compiler, grDevices, grImport, stringr,
+        BiocGenerics, S4Vectors (>= 0.9.25), IRanges, GenomeInfoDb,
+        GenomicRanges, Biostrings, BSgenome, rtracklayer, VariantAnnotation,
+        BiocParallel, motifStack, Gviz, matrixStats, TFMPvalue
+Suggests: BSgenome.Hsapiens.UCSC.hg19, SNPlocs.Hsapiens.dbSNP.20120608,
+        SNPlocs.Hsapiens.dbSNP142.GRCh37, knitr, rmarkdown,
+        BSgenome.Drerio.UCSC.danRer7, BiocStyle
 VignetteBuilder: knitr
 License: GPL-2
 LazyData: true
 BugReports: https://github.com/Simon-Coetzee/motifbreakR/issues
 biocViews: ChIPSeq, Visualization, MotifAnnotation
 NeedsCompilation: no
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.1
