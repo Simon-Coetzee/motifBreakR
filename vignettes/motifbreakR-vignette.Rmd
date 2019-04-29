@@ -32,10 +32,6 @@ This document offers an introduction and overview of `r Githubpkg("Simon-Coetzee
 
 This guide includes a brief overview of the [processing flow](#flow), an example focusing more in depth on the [practical](#practical) aspect of using `r Githubpkg("Simon-Coetzee/motifBreakR")`, and finally a detailed section on the [scoring methods](#methods) employed by the package.
 
-<<<<<<< HEAD
-
-=======
->>>>>>> upstream/master
 # Processing overview {#flow}
 `r Githubpkg("Simon-Coetzee/motifBreakR")` may be used to interrogate SNPs or SNVs for their potential effect on transcription factor binding by examining how the two alleles of the variant effect the binding score of a motif.  The basic process is outlined in the figure below.
 
