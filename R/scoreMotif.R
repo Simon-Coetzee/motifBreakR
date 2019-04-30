@@ -653,7 +653,7 @@ addPWM.stack <- function(identifier, index, GdObject, ...) {
   ps.file <- paste(psloc, "stack.ps", sep = "/")
   PostScriptTrace(ps.file, paste0(ps.file, ".xml"))
   motif.figure <- readPicture(paste0(ps.file, ".xml"))
-  motif.figure <- motif.figure[-1]
+  # motif.figure <- motif.figure[-1]
   snppos <- sapply(sapply(mcols(GdObject@range)[, "feature"], strsplit, "@"), "[[", 2)
   motif.i <- 1
   highlight <- snppos[[motif.i]]
@@ -772,7 +772,6 @@ DNAmotifAlignment.2snp <- function(pwms, result) {
 #'   AnnotationTrack plotTracks
 #' @export
 plotMB <- function(results, rsid, reverseMotif = TRUE, effect = c("strong", "weak")) {
-  return("plotting function is under maintainence for release")
   g <- genome(results)[[1]]
   result <- results[names(results) %in% rsid]
   stackmotif <- TRUE
@@ -826,8 +825,12 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, effect = c("strong", "wea
     pwms <- DNAmotifAlignment.2snp(pwms, result)
     pwmwide <- max(sapply(pwms, function(x) { ncol(x@mat)}))
     psloc <- tempdir()
-    postscript(paste(psloc, "stack.ps", sep = "/"), width = pwmwide * (1/3), height = 2 * length(pwm.names), paper="special", horizontal = FALSE)
-    plotMotifLogoStack.2(pwms, ncex=1.0)
+    postscript(paste(psloc, "stack.ps", sep = "/"),
+               width = pwmwide * (1/3),
+               height = 2 * length(pwm.names),
+               paper="special", horizontal = FALSE,
+               fonts = c("sans"))
+    plotMotifLogoStack(pwms, ncex=1.0)
     dev.off()
   } else {
     getmotifs <- mcols(pwmList)$providerId %in% result$providerId & mcols(pwmList)$providerName %in% result$providerName
