@@ -237,11 +237,12 @@ By default `motifbreakR` uses `bpparam()` as an argument to `BPPARAM` and will u
 
 ## *Step 3* | Visualize
 Now that we have our results, we can visualize them with the function `plotMB`.  Lets take a look at rs1006140.
-```{r plotting, cache=TRUE, fig.retina=2, fig.align='center', fig.height=8, fig.width=6}
+```{r plotting, cache=TRUE, eval=FALSE, fig.retina=2, fig.align='center', fig.height=8, fig.width=6}
 plotMB(results = results, rsid = "rs1006140", effect = "strong")
 ```
-
-
+<div class="figure" style="text-align: center">
+  <img width="75%" src="motifbreakr_plot.png" />
+</div>
 
 # Methods {#methods}
 `r Githubpkg("Simon-Coetzee/motifBreakR")` works with position probability matrices (PPM). PPM
