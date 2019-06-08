@@ -111,6 +111,48 @@ change.to.search.genome <- function(granges.object, search.genome) {
 strSort <- function(x) {
   sapply(lapply(strsplit(x, NULL), sort), paste, collapse = "")
 }
+
+unlistColumn <- function(x, column = NULL) {
+  if (is.null(column)) {
+    stop("select column to unlist from x")
+  }
+  if (is(mcols(x)[[column]], "DNAStringSet")) {
+    mcols(x)[[column]] <- as.character(mcols(x)[[column]])
+  }
+  if (any(lengths(mcols(x)[[column]]) > 1)) {
+    columnvals <- unlist(mcols(x)[[column]])
+    numsplits <- lengths(mcols(x)[[column]])
+    x <- rep(x, times = numsplits)
+    mcols(x)[[column]] <- columnvals
+    return(x)
+  } else {
+    return(x)
+  }
+}
+
+formatVcfOut <- function(x, gseq = search.genome) {
+  x$SNP_id <- names(x)
+  mcols(x) <- mcols(x)[, c("SNP_id", "REF", "ALT")]
+  x$REF <- unlist(DNAStringSetList(x$REF))
+  x$ALT <- unlist(DNAStringSetList(x$ALT))
+  x <- x[!grepl("MT", seqnames(x))]
+  if (!any(grepl("chr", seqlevels(x)))) {
+    seqlevels(x) <- paste0("chr", seqlevels(x))
+  }
+  x <- change.to.search.genome(x, gseq)
+  can.ref <- getSeq(gseq, x)
+  names(can.ref) <- NULL
+  if (all(can.ref == x$REF)) {
+    rm(can.ref)
+  } else {
+    warning(paste0("User selected reference allele differs from the sequence in ",
+                   attributes(gseq)$pkgname, " continuing with genome specified",
+                   " reference allels\n", "there are ", sum(x$REF != can.ref),
+                   " differences"))
+  }
+  attributes(x)$genome.package <- attributes(gseq)$pkgname
+  return(x)
+}
 #' Import SNPs from a BED file or VCF file for use in motifbreakR
 #'
 #' @param file Character; a character containing the path to a bed file or a vcf file
@@ -148,52 +190,63 @@ strSort <- function(x) {
 #'                            format = "bed")
 #'
 #' @importFrom rtracklayer import
-#' @importFrom Biostrings IUPAC_CODE_MAP
-#' @importFrom VariantAnnotation readVcf ref alt isSNV
+#' @importFrom Biostrings IUPAC_CODE_MAP uniqueLetters BStringSetList
+#' @importFrom VariantAnnotation readVcf ref alt isSNV VcfFile ScanVcfParam
 #' @importFrom SummarizedExperiment rowRanges
+#' @importFrom Rsamtools countTabix
+#' @importFrom stringr str_sort
 #' @export
 snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, format = "bed") {
-  if(format == "vcf"){
+  if (format == "vcf"){
     if (!inherits(search.genome, "BSgenome")) {
       stop(paste0(search.genome, " is not a BSgenome object.\n", "Run availible.genomes() and choose the appropriate BSgenome object"))
     }
     genome.name <- genome(search.genome)[[1]]
-    snps <- readVcf(file, genome.name)
-    snps <- snps[isSNV(snps, singleAltOnly = F)]
-    ALTS <- unlist(alt(snps))
-    numsplits <- lengths(alt(snps))
-    snps <- rep(snps, times = numsplits)
-    snps <- rowRanges(snps)
-    snps$ALT <- ALTS
-    snps$ALT <- as.character(snps$ALT)
-    snps$REF <- as.character(snps$REF)
-    snps.ambi <- strSort(paste0(snps$ALT, snps$REF))
-    IUPAC_code_revmap <- names(IUPAC_CODE_MAP)
-    names(IUPAC_code_revmap) <- IUPAC_CODE_MAP
-    snps.ambi <- IUPAC_code_revmap[snps.ambi]
-    names(snps.ambi) <- NULL
-    snps$alleles_as_ambig <- snps.ambi
-    snps$SNP_id <- names(snps)
-    mcols(snps) <- mcols(snps)[, c("SNP_id", "alleles_as_ambig", "REF", "ALT")]
-    snps$REF <- DNAStringSet(snps$REF)
-    snps$ALT <- DNAStringSet(snps$ALT)
-    snps$alleles_as_ambig[is.na(snps$alleles_as_ambig)] <- ""
-    snps$alleles_as_ambig <- DNAStringSet(snps$alleles_as_ambig)
-    snps <- snps[seqnames(snps) != "MT"]
-    seqlevels(snps) <- paste0("chr", seqlevels(snps))
-    snps <- change.to.search.genome(snps, search.genome)
-    can.ref <- getSeq(search.genome, snps)
-    names(can.ref) <- NULL
-    if(isTRUE(all.equal(can.ref, snps$REF))) {
-      rm(can.ref)
-    } else {
-      warning(paste0("User selected reference allele differs from the sequence in ",
-                     attributes(search.genome)$pkgname, " continuing with genome specified",
-                     " reference allels\n", "there are ", sum(snps$REF != can.ref),
-                     " differences"))
+    vcfparam <- ScanVcfParam(info = NA, geno = NA)
+    vcffile = open(VcfFile(file))
+    vcf = readVcf(vcffile, genome = genome.name, param = vcfparam)
+    close(vcffile)
+    vcf_ranges <- rowRanges(vcf)
+    vcf_ranges <- unlistColumn(vcf_ranges, "ALT")
+    vcf_ranges <- unlistColumn(vcf_ranges, "REF")
+    complex.variants <- vcf_ranges[nchar(vcf_ranges$REF) > 1 | nchar(vcf_ranges$ALT) > 1]
+    snps <- vcf_ranges[!(nchar(vcf_ranges$REF) > 1 | nchar(vcf_ranges$ALT) > 1)]
+    # complex.variants <- rowRanges(vcf[!isSNV(vcf, singleAltOnly = F)])
+    # snps <- rowRanges(vcf[isSNV(vcf, singleAltOnly = F)])
+    # snps <- unlistColumn(snps, "ALT")
+    # snps <- unlistColumn(snps, "REF")
+    if (length(complex.variants) > 0) {
+      alt_letters <- uniqueLetters(unlist(BStringSetList(complex.variants$ALT)))
+      ref_letters <- uniqueLetters(unlist(BStringSetList(complex.variants$REF)))
+      alt_letters_remove <- alt_letters[!alt_letters %in% DNA_ALPHABET]
+      ref_letters_remove <- ref_letters[!ref_letters %in% DNA_ALPHABET]
+      if (length(alt_letters_remove) > 0) {
+        search.pattern <- paste0(alt_letters_remove, collapse = "|")
+        drop.variants.alt <- vapply(complex.variants$ALT,
+                                    function(x,
+                                             remove_letters = search.pattern) {
+                                      any(grepl(remove_letters, x))
+                                    }, logical(1))
+      } else {
+        drop.variants.alt <- as.logical(rep.int(0, length(complex.variants)))
+      }
+      if (length(ref_letters_remove) > 0) {
+        search.pattern <- paste0(ref_letters_remove, collapse = "|")
+        drop.variants.ref <- vapply(complex.variants$REF,
+                                    function(x,
+                                             remove_letters = search.pattern) {
+                                      any(grepl(remove_letters, x))
+                                    }, logical(1))
+      } else {
+        drop.variants.ref <- as.logical(rep.int(0, length(complex.variants)))
+      }
+      complex.variants <- complex.variants[!(drop.variants.alt | drop.variants.ref)]
+      complex.variants <- unlistColumn(complex.variants, "ALT")
+      complex.variants <- unlistColumn(complex.variants, "REF")
     }
-    attributes(snps)$genome.package <- attributes(search.genome)$pkgname
-    return(snps)
+    snps <- formatVcfOut(snps, search.genome)
+    complex.variants <- formatVcfOut(complex.variants, search.genome)
+    return(GRangesList(snps = snps, complex.variants = complex.variants))
   } else {
     if(format == "bed") {
       snps <- import(file, format = "bed")
