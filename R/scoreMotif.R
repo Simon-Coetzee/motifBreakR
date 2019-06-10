@@ -165,10 +165,10 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
   at[, k] <- TRUE
   snp.sequence.alt <- replaceLetterAt(snp.sequence.ref, at, fsnplist$ALT)
   rm(at); gc()
-  snp.sequence.ref.rc <- reverseComplement(snp.sequence.ref)
+  #snp.sequence.ref.rc <- reverseComplement(snp.sequence.ref)
   snp.sequence.alt <- strsplit(as.character(snp.sequence.alt), "")
   snp.sequence.ref <- strsplit(as.character(snp.sequence.ref), "")
-  snp.sequence.ref.rc <- strsplit(as.character(snp.sequence.ref.rc), "")
+  #snp.sequence.ref.rc <- strsplit(as.character(snp.sequence.ref.rc), "")
   # snp.sequence.alt.rc <- lapply(snp.sequence.alt, reverseComplement)
   # snp.sequence.ref <- lapply(snp.sequence.ref, function(x) {
   #   strsplit(as.character(x), "")[[1]]
@@ -183,18 +183,19 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
   #   strsplit(as.character(x), "")[[1]]
   # })
   # resultSet <- NULL
-  resultSet <- lapply(seq_along(fsnplist), function(i, l = length(pwmList)) {
-    return(rep(fsnplist[i], l))
-  })
-  #strand.opt <- c("+", "-")
-  #set.sig <- rep(NA, length(resultSet))
+  # resultSet <- lapply(seq_along(fsnplist), function(i, l = length(pwmList)) {
+  #   return(rep(fsnplist[i], l))
+  # })
+  # strand.opt <- c("+", "-")
+  # set.sig <- rep(NA, length(resultSet))
   res.el.e <- new.env()
   for (snp.map.i in seq_along(snp.sequence.alt)) {
     snp.ref <- snp.sequence.ref[[snp.map.i]]
     snp.alt <- snp.sequence.alt[[snp.map.i]]
-    snp.ref.rc <- snp.sequence.ref.rc[[snp.map.i]]
-    #snp.alt.rc <- snp.sequence.alt.rc[[snp.map.i]]
-    res.el <- resultSet[[snp.map.i]]
+    # snp.ref.rc <- snp.sequence.ref.rc[[snp.map.i]]
+    # snp.alt.rc <- snp.sequence.alt.rc[[snp.map.i]]
+    res.el <- rep(fsnplist[i], length(pwmList))
+    # res.el <- resultSet[[snp.map.i]]
     res.el$snpPos <- as.integer(NA)
     res.el$motifPos <- as.integer(NA)
     res.el$motifID <- mcols(pwmList)$providerID
@@ -203,12 +204,9 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
     res.el$providerName <- mcols(pwmList)$providerName
     res.el$providerId <- mcols(pwmList)$providerId
     res.el$seqMatch <- as.character(NA)
-    if(!filterp) {
-      res.el$pctRef <- as.numeric(NA)
-      res.el$pctAlt <- as.numeric(NA)
-    } else {
-      res.el$pctRef <- as.numeric(NA)
-      res.el$pctAlt <- as.numeric(NA)
+    res.el$pctRef <- as.numeric(NA)
+    res.el$pctAlt <- as.numeric(NA)
+    if(filterp) {
       res.el$scoreRef <- as.numeric(NA)
       res.el$scoreAlt <- as.numeric(NA)
       res.el$Refpvalue <- as.numeric(NA)
