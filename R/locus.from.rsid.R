@@ -40,7 +40,7 @@ snps.from.rsid <- function(rsid = NULL, dbSNP = NULL,
     stop(paste0("search.genome argument was not provided with a valid BSgenome object.\n",
                 "Run availible.genomes() and choose the appropriate BSgenome object"))
   }
-  if (Reduce("&", !grepl("rs", rsid))) {
+  if (all(!grepl("rs", rsid))) {
     bad.names <- rsid[!grepl("rs", rsid)]
     stop(paste(paste(bad.names, collapse = " "), "are not rsids, perhaps you want to import your snps from a bed or vcf file with snps.from.file()?"))
   }
@@ -86,7 +86,7 @@ determine.allele.from.ambiguous <- function(ambiguous.allele, known.allele) {
 #' @import GenomeInfoDb
 #' @importFrom stringr str_extract
 change.to.search.genome <- function(granges.object, search.genome) {
-  if (Reduce("&", !is.na(genome(granges.object)))) {
+  if (all(!is.na(genome(granges.object)))) {
     if (identical(genome(granges.object), genome(search.genome))) {
       return(granges.object)
     }
@@ -250,7 +250,7 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
   } else {
     if(format == "bed") {
       snps <- import(file, format = "bed")
-      if (Reduce("|", grepl("rs", snps$name)) & (!inherits(dbSNP, "SNPlocs"))) {
+      if (any(grepl("rs", snps$name)) & (!inherits(dbSNP, "SNPlocs"))) {
         stop(paste0(file, " contains at least one variant with an rsID and no SNPlocs has been indicated\n",
                     "Please run availible.SNPs() to check for availble SNPlocs"))
       }
@@ -278,7 +278,7 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
       ## check if alt was given for unnamed snps
       alt.allele.is.valid <- (toupper(snps.noid.alt) %in% c("A", "T", "G", "C")) &
         (snps.noid.alt != snps.noid.ref)
-      if (!Reduce("&", alt.allele.is.valid)) {
+      if (!all(alt.allele.is.valid)) {
         snpnames <- snps.noid$name[!(toupper(snps.noid.alt) %in% c("A", "T", "G",
                                                                    "C"))]
         if (length(snpnames) < 50 && length(snpnames) > 0) {
@@ -333,7 +333,7 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
       no.dbsnp$REF <- snps.noid.ref[-copy.dbsnp]
       no.dbsnp$ALT <- snps.noid.alt[-copy.dbsnp]
       names(no.dbsnp) <- no.dbsnp$SNP_id
-      if (Reduce("|", matches.dbsnp)) {
+      if (any(matches.dbsnp)) {
         dbsnp.for.noid <- dbsnp.for.noid[copy.dbsnp, ]
         dbsnp.for.noid$REF <- snps.noid.ref[copy.dbsnp]
         dbsnp.for.noid$ALT <- snps.noid.alt[copy.dbsnp]
