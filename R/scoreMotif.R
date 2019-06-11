@@ -101,7 +101,7 @@ reverseComplementMotif <- function(pwm) {
 }
 
 
-scoreSeqWindows <- function(ppm, seq, index) {
+scoreSeqWindows <- function(ppm, seq) {
   ppm.width <- ncol(ppm)
   seq.len <- length(seq)
   diag.ind <- rep.int(ppm.width, seq.len - ppm.width)
@@ -122,12 +122,12 @@ scoreSeqWindows <- function(ppm, seq, index) {
                                               byrow = TRUE, dimnames = list(c("top", "bot")))},
                        scores, scores_rc),
                    rowSums))
-  return(res[, (index - ppm.width + 1):index])
+  return(res)
 }
 
 maxThresholdWindows <- function(window.frame, threshold = 0.8) {
   max.win <- arrayInd(which.max(window.frame), dim(window.frame))
-  if(window.frame[max.win] > threshold) {
+  if (window.frame[max.win] > threshold) {
     return(c(window = max.win[, 2],
              strand = c(1, -1)[max.win[, 1]]))
   } else {
@@ -140,30 +140,40 @@ maxThresholdWindows <- function(window.frame, threshold = 0.8) {
 #' @import S4Vectors
 #' @import BiocGenerics
 #' @import IRanges
-#' @importFrom Biostrings getSeq replaceLetterAt reverseComplement complement
+#' @importFrom Biostrings getSeq replaceLetterAt reverseComplement complement replaceAt
 #' @importFrom TFMPvalue TFMpv2sc
 scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
                          threshold = 1e-3, show.neutral = FALSE, verbose = FALSE,
                          genome.bsgenome=NULL, pwmList.pc = NULL, pwmRanges = NULL, filterp=TRUE) {
-  if (!(Reduce("&", width(fsnplist$REF) == 1)) || !(Reduce("&", width(fsnplist$ALT) == 1))) {
-    drop.snp.i <- !(width(fsnplist$REF) == 1) & (width(fsnplist$ALT) == 1)
-    drop.snp <- names(fsnplist[!drop.snp.i])
-    fsnplist <- fsnplist[drop.snp.i]
-    warning(paste(drop.snp, "not valid for motif analysis...skipping", sep = " "))
-  }
+  # if (!(Reduce("&", width(fsnplist$REF) == 1)) || !(Reduce("&", width(fsnplist$ALT) == 1))) {
+  #   drop.snp.i <- !(width(fsnplist$REF) == 1) & (width(fsnplist$ALT) == 1)
+  #   drop.snp <- names(fsnplist[!drop.snp.i])
+  #   fsnplist <- fsnplist[drop.snp.i]
+  #   warning(paste(drop.snp, "not valid for motif analysis...skipping", sep = " "))
+  # }
   k <- max(sapply(pwmList, ncol))
-  ## Get Reference Sequence with k bp flanking
-  snp.sequence.ref <- getSeq(genome.bsgenome, promoters(fsnplist, upstream = k - 1,
-                                                        downstream = k))
+  kw <- max(nchar(fsnplist$REF))
   ## check that reference matches ref genome
   equals.ref <- getSeq(genome.bsgenome, fsnplist) == fsnplist$REF
-  if (!Reduce("&", equals.ref)) {
+  if (!all(equals.ref)) {
     stop(paste(names(fsnplist[!equals.ref]), "reference allele does not match value in reference genome",
                sep = " "))
   }
-  at <- matrix(FALSE, nrow = length(snp.sequence.ref), ncol = (k * 2) - 1)
-  at[, k] <- TRUE
-  snp.sequence.alt <- replaceLetterAt(snp.sequence.ref, at, fsnplist$ALT)
+  if (kw > 1L | max(nchar(fsnplist$ALT)) > 1L) {
+    snp.sequence.ref <- getSeq(genome.bsgenome, promoters(fsnplist, upstream = k - 1,
+                                                          downstream = k + kw))
+    at <- as(IRanges(start = k, width = width(fsnplist)), "IRangesList")
+    snp.sequence.alt <- DNAStringSet(Map(replaceAt,
+                                         x = snp.sequence.ref,
+                                         at = at,
+                                         fsnplist$ALT))
+  } else {
+    snp.sequence.ref <- getSeq(genome.bsgenome, promoters(fsnplist, upstream = k - 1,
+                                                          downstream = k))
+    at <- matrix(FALSE, nrow = length(snp.sequence.ref), ncol = (k * 2) - 1)
+    at[, k] <- TRUE
+    snp.sequence.alt <- replaceLetterAt(snp.sequence.ref, at, fsnplist$ALT)
+  }
   rm(at); gc()
   #snp.sequence.ref.rc <- reverseComplement(snp.sequence.ref)
   snp.sequence.alt <- strsplit(as.character(snp.sequence.alt), "")
@@ -190,11 +200,14 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
   # set.sig <- rep(NA, length(resultSet))
   res.el.e <- new.env()
   for (snp.map.i in seq_along(snp.sequence.alt)) {
+    snp.map.i <- 564L
     snp.ref <- snp.sequence.ref[[snp.map.i]]
     snp.alt <- snp.sequence.alt[[snp.map.i]]
     # snp.ref.rc <- snp.sequence.ref.rc[[snp.map.i]]
     # snp.alt.rc <- snp.sequence.alt.rc[[snp.map.i]]
-    res.el <- rep(fsnplist[i], length(pwmList))
+    res.el <- rep(fsnplist[snp.map.i], length(pwmList))
+    ref.len <- nchar(fsnplist[snp.map.i]$REF)
+    alt.len <- nchar(fsnplist[snp.map.i]$ALT)
     # res.el <- resultSet[[snp.map.i]]
     res.el$snpPos <- as.integer(NA)
     res.el$motifPos <- as.integer(NA)
@@ -206,7 +219,7 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
     res.el$seqMatch <- as.character(NA)
     res.el$pctRef <- as.numeric(NA)
     res.el$pctAlt <- as.numeric(NA)
-    if(filterp) {
+    if (filterp) {
       res.el$scoreRef <- as.numeric(NA)
       res.el$scoreAlt <- as.numeric(NA)
       res.el$Refpvalue <- as.numeric(NA)
@@ -222,20 +235,23 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
       len <- ncol(pwm)
       thresh <- threshold[[pwm.i]]
       browser()
-      ref.windows <- scoreSeqWindows(ppm = pwm, seq = snp.ref, index = k)
+      ref.windows <- scoreSeqWindows(ppm = pwm, seq = snp.ref)
+      ref.windows <- ref.windows[,(k - (ncol(pwm) + 1)):(k + (ref.len - 1))]
       hit.ref <- maxThresholdWindows(ref.windows, threshold = thresh)
       ## ALT
-      alt.windows <- scoreSeqWindows(ppm = pwm, seq = snp.alt, index = k)
+      alt.windows <- scoreSeqWindows(ppm = pwm, seq = snp.alt)
+      alt.windows <- alt.windows[,(k - (ncol(pwm) + 1)):(k + (alt.len - 1))]
       hit.alt <- maxThresholdWindows(alt.windows, threshold = thresh)
       if (!filterp) {
         ref.windows <- (ref.windows - pwmRanges[[pwm.i]][1]) / (pwmRanges[[pwm.i]][2] - pwmRanges[[pwm.i]][1])
         alt.windows <- (alt.windows - pwmRanges[[pwm.i]][1]) / (pwmRanges[[pwm.i]][2] - pwmRanges[[pwm.i]][1])
       }
+      browser()
       if (hit.ref[["strand"]] != 0L && hit.alt[["strand"]] != 0L) {
         ref.strand <- (-hit.ref[["strand"]] + 3) / 2
         alt.strand <- (-hit.alt[["strand"]] + 3) / 2
-        bigger <- ref.windows[ref.strand, hit.ref[["window"]]] > alt.windows[alt.strand, hit.alt[["window"]]]
-        if(bigger) {
+        bigger <- ref.windows[ref.strand, hit.ref[["window"]]] >= alt.windows[alt.strand, hit.alt[["window"]]]
+        if (bigger) {
           hit <- hit.ref
         } else {
           hit <- hit.alt
@@ -251,13 +267,15 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
           }
         }
       }
-      if(!is.null(hit)) {
+      if (!is.null(hit)) {
         result <- res.el[pwm.i]
         snp.pos <- len - hit[["window"]] + 1
         uniquename <- paste(names(result), result$dataSource, result$providerName, result$providerId, sep = "%%")
         if (hit[["strand"]] == 1L) {
-          allelR <- pwm.basic[as.character(result$REF), snp.pos]
-          allelA <- pwm.basic[as.character(result$ALT), snp.pos]
+          # allelR <- pwm.basic[as.character(result$REF), snp.pos]
+          # allelA <- pwm.basic[as.character(result$ALT), snp.pos]
+          allelR <- pwm.basic[snp.ref[k:(k + (ref.len - 1))], ]
+          allelA <- pwm.basic[snp.alt[k:(k + (alt.len - 1))], ]
         } else {
           allelR <- pwm.basic[as.character(complement(result$REF)), snp.pos]
           allelA <- pwm.basic[as.character(complement(result$ALT)), snp.pos]
@@ -266,13 +284,15 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
         if (effect == "neut") {
           if (show.neutral) {
             res.el.e[[uniquename]] <- updateResults(result, snp.ref, snp.pos,
-                                                    hit, ref.windows, alt.windows, allelR, allelA, effect, len,
-                                                    k, pwm, calcp=filterp)
+                                                    hit, ref.windows, alt.windows,
+                                                    allelR, allelA, effect, len,
+                                                    k, pwm, calcp = filterp)
           }
         } else {
           res.el.e[[uniquename]] <- updateResults(result, snp.ref, snp.pos,
-                                                hit, ref.windows, alt.windows, allelR, allelA, effect, len,
-                                                k, pwm, calcp=filterp)
+                                                  hit, ref.windows, alt.windows,
+                                                  allelR, allelA, effect, len,
+                                                  k, pwm, calcp = filterp)
         }
       }
     }
@@ -322,7 +342,7 @@ updateResults <- function(result, snp.seq, snp.pos, hit, ref.windows, alt.window
     start(result) <- start(result) - snp.pos + 1
     end(result) <- end(result) - snp.pos + len
   }
-  if(calcp) {
+  if (calcp) {
     mresult[["scoreRef"]] <- ref.windows[strand, hit[["window"]]]
     mresult[["scoreAlt"]] <- alt.windows[strand, hit[["window"]]]
     mresult[["Refpvalue"]] <- NA
