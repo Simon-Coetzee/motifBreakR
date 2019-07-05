@@ -196,7 +196,7 @@ formatVcfOut <- function(x, gseq = search.genome) {
 #' @importFrom Rsamtools countTabix
 #' @importFrom stringr str_sort
 #' @export
-snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, format = "bed") {
+snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, format = "bed", indels = FALSE) {
   if (format == "vcf"){
     if (!inherits(search.genome, "BSgenome")) {
       stop(paste0(search.genome, " is not a BSgenome object.\n", "Run availible.genomes() and choose the appropriate BSgenome object"))
@@ -215,38 +215,43 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
     # snps <- rowRanges(vcf[isSNV(vcf, singleAltOnly = F)])
     # snps <- unlistColumn(snps, "ALT")
     # snps <- unlistColumn(snps, "REF")
-    if (length(complex.variants) > 0) {
-      alt_letters <- uniqueLetters(unlist(BStringSetList(complex.variants$ALT)))
-      ref_letters <- uniqueLetters(unlist(BStringSetList(complex.variants$REF)))
-      alt_letters_remove <- alt_letters[!alt_letters %in% DNA_ALPHABET]
-      ref_letters_remove <- ref_letters[!ref_letters %in% DNA_ALPHABET]
-      if (length(alt_letters_remove) > 0) {
-        search.pattern <- paste0(alt_letters_remove, collapse = "|")
-        drop.variants.alt <- vapply(complex.variants$ALT,
-                                    function(x,
-                                             remove_letters = search.pattern) {
-                                      any(grepl(remove_letters, x))
-                                    }, logical(1))
-      } else {
-        drop.variants.alt <- as.logical(rep.int(0, length(complex.variants)))
+    if (indels) {
+      if (length(complex.variants) > 0) {
+        alt_letters <- uniqueLetters(unlist(BStringSetList(complex.variants$ALT)))
+        ref_letters <- uniqueLetters(unlist(BStringSetList(complex.variants$REF)))
+        alt_letters_remove <- alt_letters[!alt_letters %in% DNA_ALPHABET]
+        ref_letters_remove <- ref_letters[!ref_letters %in% DNA_ALPHABET]
+        if (length(alt_letters_remove) > 0) {
+          search.pattern <- paste0(alt_letters_remove, collapse = "|")
+          drop.variants.alt <- vapply(complex.variants$ALT,
+                                      function(x,
+                                               remove_letters = search.pattern) {
+                                        any(grepl(remove_letters, x))
+                                      }, logical(1))
+        } else {
+          drop.variants.alt <- as.logical(rep.int(0, length(complex.variants)))
+        }
+        if (length(ref_letters_remove) > 0) {
+          search.pattern <- paste0(ref_letters_remove, collapse = "|")
+          drop.variants.ref <- vapply(complex.variants$REF,
+                                      function(x,
+                                               remove_letters = search.pattern) {
+                                        any(grepl(remove_letters, x))
+                                      }, logical(1))
+        } else {
+          drop.variants.ref <- as.logical(rep.int(0, length(complex.variants)))
+        }
+        complex.variants <- complex.variants[!(drop.variants.alt | drop.variants.ref)]
+        complex.variants <- unlistColumn(complex.variants, "ALT")
+        complex.variants <- unlistColumn(complex.variants, "REF")
       }
-      if (length(ref_letters_remove) > 0) {
-        search.pattern <- paste0(ref_letters_remove, collapse = "|")
-        drop.variants.ref <- vapply(complex.variants$REF,
-                                    function(x,
-                                             remove_letters = search.pattern) {
-                                      any(grepl(remove_letters, x))
-                                    }, logical(1))
-      } else {
-        drop.variants.ref <- as.logical(rep.int(0, length(complex.variants)))
-      }
-      complex.variants <- complex.variants[!(drop.variants.alt | drop.variants.ref)]
-      complex.variants <- unlistColumn(complex.variants, "ALT")
-      complex.variants <- unlistColumn(complex.variants, "REF")
+      complex.variants <- formatVcfOut(complex.variants, search.genome)
+      snps <- formatVcfOut(snps, search.genome)
+      return(GRangesList(snps = snps, complex.variants = complex.variants))
+    } else {
+      snps <- formatVcfOut(snps, search.genome)
+      return(snps)
     }
-    snps <- formatVcfOut(snps, search.genome)
-    complex.variants <- formatVcfOut(complex.variants, search.genome)
-    return(GRangesList(snps = snps, complex.variants = complex.variants))
   } else {
     if(format == "bed") {
       snps <- import(file, format = "bed")
