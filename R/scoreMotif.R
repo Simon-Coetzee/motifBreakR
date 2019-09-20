@@ -9,6 +9,7 @@
 ## minPwm
 
 ## reverse complement any string letter DNA
+
 revcom <- function(ltr) {
   rclist <- list(A = "T", C = "G", G = "C", T = "A")
   rclist[[ltr]]
@@ -128,7 +129,8 @@ scoreSeqWindows <- function(ppm, seq) { #, collapse = TRUE) {
                    },
                    integer(ppm.width))
   scores <- t(ppm[seq, ])[ranges]
-  scores_rc <- t(reverseComplementMotif(ppm)[seq, ])[ranges[, ncol(ranges):1]]
+  # scores_rc <- t(reverseComplementMotif(ppm)[seq, ])[ranges[, ncol(ranges):1]]
+  scores_rc <- t(reverseComplementMotif(ppm)[seq, ])[ranges]
   scores <- split(scores, ceiling(seq_along(scores)/ppm.width))
   scores_rc <- split(scores_rc, ceiling(seq_along(scores_rc)/ppm.width))
   # if (collapse) {
@@ -148,7 +150,7 @@ scoreSeqWindows <- function(ppm, seq) { #, collapse = TRUE) {
 maxThresholdWindows <- function(window.frame) {
   start.ind <- as.integer(colnames(window.frame)[1]) - 1L
   max.win <- arrayInd(which.max(window.frame), dim(window.frame))
-  return(list(window = colnames(window.frame)[max.win[, 2] + start.ind],
+  return(list(window = as.integer(colnames(window.frame)[max.win[, 2] + start.ind]),
               strand = c(1, 2)[max.win[, 1]]))
 }
 
@@ -158,92 +160,172 @@ maxThresholdWindows <- function(window.frame) {
 #' @import S4Vectors
 #' @import BiocGenerics
 #' @import IRanges
-#' @importFrom Biostrings getSeq replaceLetterAt reverseComplement complement replaceAt pairwiseAlignment insertion deletion
+#' @importFrom Biostrings getSeq replaceLetterAt reverseComplement complement replaceAt pairwiseAlignment insertion deletion matchPattern
 #' @importFrom TFMPvalue TFMpv2sc
 #' @importFrom stringr str_locate_all str_sub
 scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
                          threshold = 1e-3, show.neutral = FALSE, verbose = FALSE,
                          genome.bsgenome=NULL, pwmList.pc = NULL, pwmRanges = NULL, filterp=TRUE) {
   k <- max(sapply(pwmList, ncol))
-  kw <- max(nchar(fsnplist$REF))
+  ref_len <- nchar(fsnplist$REF)
+  alt_len <- nchar(fsnplist$ALT)
+  is.indel <- ref_len > 1L | alt_len > 1L
   ## check that reference matches ref genome
   equals.ref <- getSeq(genome.bsgenome, fsnplist) == fsnplist$REF
   if (!all(equals.ref)) {
     stop(paste(names(fsnplist[!equals.ref]), "reference allele does not match value in reference genome",
                sep = " "))
   }
-  if (kw > 1L | max(nchar(fsnplist$ALT)) > 1L) {
-    snp.sequence.ref <- getSeq(genome.bsgenome, promoters(fsnplist, upstream = k - 1,
-                                                          downstream = k + kw))
-    at <- as(IRanges(start = k, width = width(fsnplist)), "IRangesList")
-    snp.sequence.alt <- DNAStringSet(Map(replaceAt,
-                                         x = snp.sequence.ref,
-                                         at = at,
-                                         fsnplist$ALT))
+  if (sum(is.indel) < length(is.indel) & sum(is.indel) > 0L) {
+    fsnplist.indel <- fsnplist[is.indel]
+    fsnplist.snv <- fsnplist[!is.indel]
+  } else if (sum(is.indel) == length(is.indel)) {
+    fsnplist.indel <- fsnplist
+    fsnplist.snv <- NULL
+  } else if (sum(is.indel) == 0L) {
+    fsnplist.indel <- NULL
+    fsnplist.snv <- fsnplist
+  }
+  if (!is.null(fsnplist.indel)) {
+    snp.sequence.ref.indel <- getSeq(genome.bsgenome, promoters(fsnplist.indel, upstream = k - 1,
+                                                                downstream = k + max(nchar(fsnplist.indel$REF))))
+    at <- as(IRanges(start = k, width = width(fsnplist.indel)), "IRangesList")
+    snp.sequence.alt.indel <- DNAStringSet(Map(replaceAt,
+                                               x = snp.sequence.ref.indel,
+                                               at = at,
+                                               fsnplist.indel$ALT))
 
-    need.alignment <- !(lengths(fsnplist$REF) == 1 | lengths(fsnplist$ALT) == 1)
-    insertion.var <- lengths(fsnplist$REF) < lengths(fsnplist$ALT)
-
-    fsnplist$ALT_loc <- 1L
-    fsnplist[insertion.var]$ALT_loc <- Map(seq,
-                                           from = nchar(fsnplist[insertion.var]$REF) + 1L,
-                                           to = nchar(fsnplist[insertion.var]$ALT))
-    fsnplist[!insertion.var]$ALT_loc <- Map(seq,
-                                            from = nchar(fsnplist[!insertion.var]$ALT) + 1L,
-                                            to = nchar(fsnplist[!insertion.var]$REF))
-    ref.len <- nchar(fsnplist[nchar(fsnplist$REF) == nchar(fsnplist$ALT)]$REF)
-    fsnplist[nchar(fsnplist$REF) == nchar(fsnplist$ALT)]$ALT_loc <- lapply(ref.len,
+    need.alignment <- !(lengths(fsnplist.indel$REF) == 1 | lengths(fsnplist.indel$ALT) == 1)
+    insertion.var <- lengths(fsnplist.indel$REF) < lengths(fsnplist.indel$ALT)
+    fsnplist.indel$ALT_loc <- 1L
+    fsnplist.indel[insertion.var]$ALT_loc <- Map(seq,
+                                           from = nchar(fsnplist.indel[insertion.var]$REF) + 1L,
+                                           to = nchar(fsnplist.indel[insertion.var]$ALT))
+    fsnplist.indel[!insertion.var]$ALT_loc <- Map(seq,
+                                            from = nchar(fsnplist.indel[!insertion.var]$ALT) + 1L,
+                                            to = nchar(fsnplist.indel[!insertion.var]$REF))
+    ref.len <- nchar(fsnplist.indel[nchar(fsnplist.indel$REF) == nchar(fsnplist.indel$ALT)]$REF)
+    fsnplist.indel[nchar(fsnplist.indel$REF) == nchar(fsnplist.indel$ALT)]$ALT_loc <- lapply(ref.len,
                                                                            function(x) {
                                                                              seq(from = 1L,
                                                                                  to = x)
                                                                            })
-    fsnplist$varType <- "Other"
-    fsnplist[insertion.var, ]$varType <- "Insertion"
-    fsnplist[lengths(fsnplist$REF) > lengths(fsnplist$ALT)]$varType <- "Deletion"
-
-    if (any(need.alignment)) {
-      alignment.del <- Map(pairwiseAlignment,
-                           fsnplist[!insertion.var & need.alignment]$ALT,
-                           fsnplist[!insertion.var & need.alignment]$REF, type = "global")
-      names(alignment.del) <- names(fsnplist[!insertion.var & need.alignment])
-      alignment.del <- sapply(sapply(alignment.del, deletion), unlist)
-      alignment.del.valid <- sapply(alignment.del, function(x) {length(x) > 0})
-      numeric.ranges.del <- lapply(alignment.del[alignment.del.valid], function(x) {start(x):end(x)})
-
-      alignment.ins <- Map(pairwiseAlignment,
-                           fsnplist[insertion.var & need.alignment]$ALT,
-                           fsnplist[insertion.var & need.alignment]$REF, type = "global")
-      names(alignment.ins) <- names(fsnplist[insertion.var & need.alignment])
-
-      alignment.ins <- sapply(sapply(alignment.ins, insertion), unlist)
-      alignment.ins.valid <- sapply(alignment.ins, function(x) {length(x) > 0})
-      numeric.ranges.ins <- lapply(alignment.ins[alignment.ins.valid], function(x) {start(x):end(x)})
-
-      rm(ref.len)
-      fsnplist[insertion.var & need.alignment][names(alignment.ins[alignment.ins.valid])]$ALT_loc <- numeric.ranges.ins
-      fsnplist[!insertion.var & need.alignment][names(alignment.del[alignment.del.valid])]$ALT_loc <- numeric.ranges.del
+    fsnplist.indel$varType <- "Other"
+    if (sum(insertion.var) > 0) {
+      fsnplist.indel[insertion.var, ]$varType <- "Insertion"
     }
-  } else {
-    snp.sequence.ref <- getSeq(genome.bsgenome, promoters(fsnplist, upstream = k - 1,
-                                                          downstream = k))
-    at <- matrix(FALSE, nrow = length(snp.sequence.ref), ncol = (k * 2) - 1)
+    if (sum(lengths(fsnplist.indel$REF) > lengths(fsnplist.indel$ALT)) > 0) {
+      fsnplist.indel[lengths(fsnplist.indel$REF) > lengths(fsnplist.indel$ALT)]$varType <- "Deletion"
+    }
+    if (any(need.alignment)) {
+      need.del <- any(!insertion.var & need.alignment)
+      need.ins <- any(insertion.var & need.alignment)
+      if (need.del) {
+        pattern.del <- Map(matchPattern,
+                           fsnplist.indel[!insertion.var & need.alignment]$ALT,
+                           fsnplist.indel[!insertion.var & need.alignment]$REF,
+                           with.indels = F, max.mismatch = 0)
+        names(pattern.del) <- names(fsnplist.indel[!insertion.var & need.alignment])
+        pattern.del <- sapply(pattern.del, function(x) {
+          slen <- length(subject(x))
+          x <- x[start(x) == 1 | end(x) == slen]
+          if (length(x) > 0) {
+            x <- x[1]
+            x <- gaps(x)
+            x <- as(x, "IRanges")
+          }
+        })
+        pattern.del.valid <- sapply(pattern.del, function(x) {length(x) > 0})
+        nr.pattern.del <- lapply(pattern.del[pattern.del.valid], function(x) {start(x):end(x)})
+        fsnplist.indel[!insertion.var & need.alignment][names(pattern.del[pattern.del.valid])]$ALT_loc <- nr.pattern.del
+        if (any((!insertion.var & need.alignment)[!pattern.del.valid])) {
+          alignment.del <- Map(pairwiseAlignment,
+                               fsnplist.indel[!insertion.var & need.alignment][!pattern.del.valid]$ALT,
+                               fsnplist.indel[!insertion.var & need.alignment][!pattern.del.valid]$REF,
+                               type = "global")
+          names(alignment.del) <- names(fsnplist.indel[!insertion.var & need.alignment][!pattern.del.valid])
+          alignment.del <- sapply(sapply(alignment.del, deletion), unlist)
+          alignment.del.valid <- sapply(alignment.del, function(x) {length(x) > 0})
+          nr.alignment.del <- lapply(alignment.del[alignment.del.valid], function(x) {start(x):end(x)})
+          fsnplist.indel[!insertion.var & need.alignment][names(alignment.del[alignment.del.valid])]$ALT_loc <- nr.alignment.del
+          rm(alignment.del, nr.alignment.del)
+        }
+        rm(pattern.del, nr.pattern.del, pattern.del.valid, need.del)
+      }
+      if (need.ins) {
+        pattern.ins <- Map(matchPattern,
+                           fsnplist.indel[insertion.var & need.alignment]$REF,
+                           fsnplist.indel[insertion.var & need.alignment]$ALT,
+                           with.indels = F, max.mismatch = 0)
+        names(pattern.ins) <- names(fsnplist.indel[insertion.var & need.alignment])
+        pattern.ins <- sapply(pattern.ins, function(x) {
+          slen <- length(subject(x))
+          x <- x[start(x) == 1 | end(x) == slen]
+          if (length(x) > 0) {
+            x <- x[1]
+            x <- gaps(x)
+            x <- as(x, "IRanges")
+          }
+        })
+        pattern.ins.valid <- sapply(pattern.ins, function(x) {length(x) > 0})
+        nr.pattern.ins <- lapply(pattern.ins[pattern.ins.valid], function(x) {start(x):end(x)})
+        fsnplist.indel[insertion.var & need.alignment][names(pattern.ins[pattern.ins.valid])]$ALT_loc <- nr.pattern.ins
+        if (any((insertion.var & need.alignment)[!pattern.ins.valid])) {
+          alignment.ins <- Map(pairwiseAlignment,
+                               fsnplist.indel[insertion.var & need.alignment][!pattern.ins.valid]$ALT,
+                               fsnplist.indel[insertion.var & need.alignment][!pattern.ins.valid]$REF,
+                               type = "global")
+          names(alignment.ins) <- names(fsnplist.indel[insertion.var & need.alignment][!pattern.ins.valid])
+          alignment.ins <- sapply(sapply(alignment.ins, insertion), unlist)
+          alignment.ins.valid <- sapply(alignment.ins, function(x) {length(x) > 0})
+          nr.alignment.ins <- lapply(alignment.ins[alignment.ins.valid], function(x) {start(x):end(x)})
+          fsnplist.indel[insertion.var & need.alignment][names(alignment.ins[alignment.ins.valid])]$ALT_loc <- nr.alignment.ins
+          rm(alignment.ins, nr.alignment.ins)
+        }
+        rm(pattern.ins, nr.pattern.ins, pattern.ins.valid, need.ins)
+      }
+      rm(ref.len, insertion.var, need.alignment)
+    }
+  }
+  if (!is.null(fsnplist.snv)) {
+    snp.sequence.ref.snv <- getSeq(genome.bsgenome, promoters(fsnplist.snv, upstream = k - 1,
+                                                              downstream = k + 1))
+    at <- matrix(FALSE, nrow = length(snp.sequence.ref.snv), ncol = (k * 2))
     at[, k] <- TRUE
-    snp.sequence.alt <- replaceLetterAt(snp.sequence.ref, at, fsnplist$ALT)
-    fsnplist$varType <- "SNV"
+    snp.sequence.alt.snv <- replaceLetterAt(snp.sequence.ref.snv, at, fsnplist.snv$ALT)
+    fsnplist.snv$ALT_loc <- 1L
+    fsnplist.snv$varType <- "SNV"
+  }
+  if (sum(is.indel) < length(is.indel) & sum(is.indel) > 0L) {
+    fsnplist <- c(fsnplist.indel, fsnplist.snv)
+    snp.sequence.alt <- strsplit(as.character(c(snp.sequence.alt.indel,
+                                                snp.sequence.alt.snv)), "")
+    snp.sequence.ref <- strsplit(as.character(c(snp.sequence.ref.indel,
+                                                snp.sequence.ref.snv)), "")
+    rm(fsnplist.indel, fsnplist.snv,
+       snp.sequence.alt.indel, snp.sequence.ref.indel,
+       snp.sequence.alt.snv, snp.sequence.ref.snv)
+  } else if (sum(is.indel) == length(is.indel)) {
+    fsnplist <- fsnplist.indel
+    snp.sequence.alt <- strsplit(as.character(snp.sequence.alt.indel), "")
+    snp.sequence.ref <- strsplit(as.character(snp.sequence.ref.indel), "")
+    rm(fsnplist.indel, snp.sequence.alt.indel, snp.sequence.ref.indel)
+  } else if (sum(is.indel) == 0L) {
+    fsnplist <- fsnplist.snv
+    snp.sequence.alt <- strsplit(as.character(snp.sequence.alt.snv), "")
+    snp.sequence.ref <- strsplit(as.character(snp.sequence.ref.snv), "")
+    rm(fsnplist.snv, snp.sequence.alt.snv, snp.sequence.ref.snv)
   }
   rm(at); gc()
-  snp.sequence.alt <- strsplit(as.character(snp.sequence.alt), "")
-  snp.sequence.ref <- strsplit(as.character(snp.sequence.ref), "")
+
   res.el.e <- new.env()
   for (snp.map.i in seq_along(snp.sequence.alt)) {
-  # for (snp.map.i in 564) { 699
     snp.ref <- snp.sequence.ref[[snp.map.i]]
     snp.alt <- snp.sequence.alt[[snp.map.i]]
     ref.len <- nchar(fsnplist[snp.map.i]$REF)
     alt.len <- nchar(fsnplist[snp.map.i]$ALT)
     alt.loc <- fsnplist[snp.map.i]$ALT_loc[[1]]
     res.el <- rep(fsnplist[snp.map.i], length(pwmList))
-    if (fsnplist[snp.map.i]$varType == "Deletion") next()
     res.el$motifPos <- as.integer(NA)
     res.el$motifID <- mcols(pwmList)$providerID
     res.el$geneSymbol <- mcols(pwmList)$geneSymbol
@@ -260,7 +342,6 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
       res.el$Altpvalue <- as.numeric(NA)
     }
     if (ref.len > 1 | alt.len > 1) {
-      res.el$refPos <- as.numeric(NA)
       res.el$altPos <- as.numeric(NA)
       res.el$alleleDiff <- as.numeric(NA)
     } else {
@@ -278,24 +359,18 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
         seq.len <- max(alt.loc)
         seq.start <- min(alt.loc)
         alt.range <- ref.range <- (k - (ncol(pwm) - seq.start)):(k + ncol(pwm) + seq.len - 2)
-### need to find a way to fix the shorter sequence - make it shorter and also have less windows, appropriate for it's shortness'
         if (!show.neutral & identical(snp.ref[ref.range], snp.alt[alt.range])) next()
-        # ref.range <- (k - (ncol(pwm) - 1)):(k + ncol(pwm) + ref.len - 2)
-        # alt.range <- (k - (ncol(pwm) - 1)):(k + ncol(pwm) + alt.len - 2)
       } else {
         alt.range <- ref.range <- (k - (ncol(pwm) - 1)):(k + ncol(pwm) - 1)
-        # ref.range <- (k - (ncol(pwm) - 1)):(k + ncol(pwm) - 1)
-        # alt.range <- (k - (ncol(pwm) - 1)):(k + ncol(pwm) - 1)
+      }
+      seq.remove <- ref.len - alt.len
+      if (seq.remove < 0) {
+        ref.range <- ref.range[1:(length(ref.range) + seq.remove)]
+      } else {
+        alt.range <- alt.range[1:(length(alt.range) - seq.remove)]
       }
       ref.windows <- scoreSeqWindows(ppm = pwm, seq = snp.ref[ref.range])
       alt.windows <- scoreSeqWindows(ppm = pwm, seq = snp.alt[alt.range])
-      # if (ref.len > alt.len) {
-      #   colnames(alt.windows)[alt.loc[1]:ncol(alt.windows)] <-
-      #     (alt.loc[1]:ncol(alt.windows)) + ((max(alt.loc) - min(alt.loc)) + 1L)
-      # } else if (ref.len < alt.len) {
-      #   colnames(alt.windows)[alt.loc] <- paste0(alt.loc[[1]] - 1L, "+", seq_along(alt.loc))
-      #   colnames(alt.windows)[-alt.loc] <- as.character(1:length(colnames(alt.windows)[-alt.loc]))
-      # }
       if (!filterp) {
         ref.windows <- (ref.windows - pwmRanges[[pwm.i]][1]) / (pwmRanges[[pwm.i]][2] - pwmRanges[[pwm.i]][1])
         alt.windows <- (alt.windows - pwmRanges[[pwm.i]][1]) / (pwmRanges[[pwm.i]][2] - pwmRanges[[pwm.i]][1])
@@ -322,14 +397,17 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
         result <- res.el[pwm.i]
         uniquename <- paste(names(result), result$dataSource, result$providerName, result$providerId, sep = "%%")
         if (nchar(result$REF) > 1 | nchar(result$ALT) > 1) {
-          scorediff <- scoreIndel(pwm = pwm.basic,
+          # indel
+          scorediff <- scoreIndel(pwm = pwm,
                                   ref.seq = snp.ref[ref.range],
                                   alt.seq = snp.alt[alt.range],
                                   hit.ref = hit.ref, hit.alt = hit.alt)
           effect <- scorediff$effect
           score <- scorediff$score
-          ref.pos <- ref.range[(ncol(pwm) - (seq.start - 1)):((ncol(pwm) + ref.len - seq.start))]
-          alt.pos <- alt.range[(ncol(pwm) - (seq.start - 1)):((ncol(pwm) + alt.len - seq.start))]
+          #ref.pos <- ref.range[(ncol(pwm) - (seq.start - 1)):((ncol(pwm) + ref.len - seq.start))]
+          ref.pos <- k:(k + nchar(result$REF) - 1L)
+          #alt.pos <- alt.range[(ncol(pwm) - (seq.start - 1)):((ncol(pwm) + alt.len - seq.start))]
+          alt.pos <- k:(k + nchar(result$ALT) - 1L)
           if (effect == "neut") {
             if (show.neutral) {
               res.el.e[[uniquename]] <- updateResultsIndel(result,
@@ -387,7 +465,7 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
     }
     return(NULL)
   } else {
-    #mcols(resultSet) <- mcols(resultSet)[, -(1:2)]
+    if ("ALT_loc" %in% names(mcols(resultSet))) mcols(resultSet)$ALT_loc <- NULL
     max.match <- max(vapply(str_locate_all(resultSet$seqMatch, "\\w"), max, integer(1)))
     min.match <- min(vapply(str_locate_all(resultSet$seqMatch, "\\w"), min, integer(1)))
     resultSet$seqMatch <- str_sub(resultSet$seqMatch,
@@ -449,57 +527,50 @@ updateResultsIndel <- function(result,
   strand.opt <- c("+", "-")
   if (score > 0L) {
     best.hit <- hit.alt
+    matchs <- alt.seq
+    snp.pos <- alt.pos
   } else {
     best.hit <- hit.ref
+    matchs <- ref.seq
+    snp.pos <- ref.pos
   }
   strand(result) <- strand.opt[[best.hit$strand]]
   best.hit$window <- as.integer(best.hit$window)
   mresult <- mcols(result)
-  # position of reference allele in sequence
-  mresult[["refPos"]] <- list(start(result):end(result))
-
-  # position of variant in motif
-  seq.end <- max(mresult$ALT_loc[[1]])
-  seq.start <- min(mresult$ALT_loc[[1]])
-  seq.range <- (k - (len - seq.start)):(k + len + seq.end - 2)
-  seq.window.start <- k - (len - best.hit$window - 1)
-  var.pos.start <- k - seq.window.start
-  var.pos.end <- var.pos.start + seq.end - 1
-  motifpos <- var.pos.start:var.pos.end
-  if (any(motifpos == 0)) {
-    motifpos[!c(motifpos < 0)] <- motifpos[!c(motifpos < 0)] + 1L
-  }
-  mresult[["motifPos"]] <- list(motifpos)
-
-  # position of alternate relative to reference
-  if (mresult$varType == "Insertion") {
-    ins_loc <- setdiff(alt.pos, ref.pos)
-    mresult[["altPos"]] <- list(ins_loc - (min(ins_loc) - 1L))
-    matchs <- alt.seq
-    snp.pos <- alt.pos
+  # if (mresult$SNP_id == "rs572297057;rs541626760" & mresult$providerName %in% c("MA0070.1", "MA1114.1", "MA1113.1")) browser()
+  alt_loc <- range(mresult$ALT_loc)
+  ref_start <- (1 - alt_loc[[1]])
+  ref_start <- ifelse(ref_start <= 0, ref_start - 1, ref_start)
+  # motif.start <- (alt_loc[[1]] - 1) + (-len) + (best.hit$window - 1)
+  motif.start <- (alt_loc[[1]]) + (-len) + (best.hit$window) + ref_start
+  motif.start <- ifelse(motif.start >= 0, motif.start + 1, motif.start)
+  if ((mresult$varType == "Insertion" & score < 0) |
+      (mresult$varType == "Deletion" & score > 0)) {
+    motif.end <- motif.start + len
   } else {
-    mresult[["altPos"]] <- list(-c(mresult$ALT_loc[[1]]))
-    matchs <- ref.seq
-    snp.pos <- ref.pos
+    if (motif.start > 0) {
+      motif.end <- len - length(motif.start:length(alt_loc[1]:alt_loc[2]))
+    } else {
+      motif.end <- motif.start + len - length(alt_loc[1]:alt_loc[2])
+    }
   }
+  motif.end <- ifelse(motif.end <= 0, motif.end - 1, motif.end)
+  mresult$motifPos <- list(c(motif.start, motif.end))
+  mresult$altPos <- mresult$ALT_loc
+  seq.range <- (k - (len - alt_loc[[1]])):(k + len + alt_loc[[2]] - 2)
   matchs[-(snp.pos)] <- tolower(matchs[-(snp.pos)])
   matchs <- paste(matchs[seq.range], collapse = "")
-  mresult[["seqMatch"]] <- str_pad(matchs, width = (k * 2) + seq.end, side = "both")
-  res.start <- start(result)
-  if (res.start - (var.pos.start - 1L) < res.start + (len - 1L)) {
-    end(result) <- res.start + (len - 1L)
-    start(result) <- res.start - (var.pos.start - 1L)
-  }
+  mresult[["seqMatch"]] <- str_pad(matchs, width = (k * 2) + alt_loc[[2]], side = "both")
   if (calcp) {
     mresult[["scoreRef"]] <- ref.windows[hit.ref$strand, hit.ref$window]
     mresult[["scoreAlt"]] <- alt.windows[hit.alt$strand, hit.alt$window]
     mresult[["Refpvalue"]] <- NA
     mresult[["Altpvalue"]] <- NA
-    pwmrange <- colSums(colRanges(pwm))
+    pwmrange <- colSums(colRanges(pwm[-5,]))
     mresult[["pctRef"]] <- (mresult[["scoreRef"]] - pwmrange[[1]]) / (pwmrange[[2]] - pwmrange[[1]])
     mresult[["pctAlt"]] <- (mresult[["scoreAlt"]] - pwmrange[[1]]) / (pwmrange[[2]] - pwmrange[[1]])
   } else {
-    mresult[["pctRef"]] <- ref.windows[hit.ref$strand, hit.alt$window]
+    mresult[["pctRef"]] <- ref.windows[hit.ref$strand, hit.ref$window]
     mresult[["pctAlt"]] <- alt.windows[hit.alt$strand, hit.alt$window]
   }
   mresult[["alleleDiff"]] <- score
@@ -781,18 +852,18 @@ motifbreakR <- function(snpList, pwmList, threshold=0.85, filterp = FALSE,
                      scoreThresh = threshold, bkg = bkg,
                      method = method)
 
-  # x <- try(bplapply(snpList, scoreSnpList,
-  #                   pwmList = pwms$pwmList, threshold = pwms$pwmThreshold,
-  #                   pwmList.pc = pwms$pwmListPseudoCount, pwmRanges = pwms$pwmRange,
-  #                   method = method, bkg = bkg, show.neutral = show.neutral,
-  #                   verbose = ifelse(cores == 1, verbose, FALSE), genome.bsgenome = genome.bsgenome,
-  #                   filterp = filterp, BPPARAM = BPPARAM))
-  x <- lapply(snpList, scoreSnpList,
-              pwmList = pwms$pwmList, threshold = pwms$pwmThreshold,
-              pwmList.pc = pwms$pwmListPseudoCount, pwmRanges = pwms$pwmRange,
-              method = method, bkg = bkg, show.neutral = show.neutral,
-              verbose = ifelse(cores == 1, verbose, FALSE), genome.bsgenome = genome.bsgenome,
-              filterp = filterp)
+  # x <- lapply(snpList, scoreSnpList,
+  #             pwmList = pwms$pwmList, threshold = pwms$pwmThreshold,
+  #             pwmList.pc = pwms$pwmListPseudoCount, pwmRanges = pwms$pwmRange,
+  #             method = method, bkg = bkg, show.neutral = show.neutral,
+  #             verbose = ifelse(cores == 1, verbose, FALSE), genome.bsgenome = genome.bsgenome,
+  #             filterp = filterp)
+  x <- try(bplapply(snpList, scoreSnpList,
+                    pwmList = pwms$pwmList, threshold = pwms$pwmThreshold,
+                    pwmList.pc = pwms$pwmListPseudoCount, pwmRanges = pwms$pwmRange,
+                    method = method, bkg = bkg, show.neutral = show.neutral,
+                    verbose = ifelse(cores == 1, verbose, FALSE), genome.bsgenome = genome.bsgenome,
+                    filterp = filterp, BPPARAM = BPPARAM))
 
   ## Cluster / MC cleanup
   if (inherits(x, "try-error")) {
@@ -898,42 +969,78 @@ calculatePvalue <- function(results,
 #}
 
 
-#' @importFrom grImport PostScriptTrace readPicture grid.picture
-addPWM.stack <- function(identifier, index, GdObject, ...) {
+# #' @importFrom grImport PostScriptTrace readPicture grid.picture
+# addPWM.stack <- function(identifier, index, GdObject, ...) {
+#   psloc <- tempdir()
+#   ps.file <- paste(psloc, "stack.ps", sep = "/")
+#   PostScriptTrace(ps.file, paste0(ps.file, ".xml"))
+#   motif.figure <- readPicture(paste0(ps.file, ".xml"))
+#   # motif.figure <- motif.figure[-1]
+#   snppos <- sapply(sapply(mcols(GdObject@range)[, "feature"], strsplit, "@"), "[[", 2)
+#   motif.i <- 1
+#   highlight <- snppos[[motif.i]]
+#   paths <- motif.figure@paths
+#   for(path.i in seq_along(paths)) {
+#     if (inherits(paths[[path.i]], "PictureText")) {
+#       if (paths[[path.i]]@string == highlight) {
+#         path <- paths[[path.i]]
+#         path@rgb <- "#FF0000"
+#         path@letters <- lapply(path@letters, function(letters) {
+#           letters@rgb <- "#FF0000"
+#           return(letters)
+#         })
+#         paths[[path.i]] <- path
+#         motif.i <- motif.i + 1
+#         if(motif.i <= length(snppos)) {
+#           highlight <- snppos[[motif.i]]
+#         } else {
+#           motif.i <- length(snppos)
+#         }
+#       }
+#     }
+#   }
+#   motif.figure@paths <- paths
+#   grid.picture(motif.figure, distort = FALSE)
+# }
+
+#' @importFrom grImport2 readPicture grid.picture
+addPWM.stack <- function(identifier, index, GdObject, pwm_set, ...) {
+  # motifStack(pwm_set, ncex = 1.0, layout = "stack")
   psloc <- tempdir()
-  ps.file <- paste(psloc, "stack.ps", sep = "/")
-  PostScriptTrace(ps.file, paste0(ps.file, ".xml"))
-  motif.figure <- readPicture(paste0(ps.file, ".xml"))
-  # motif.figure <- motif.figure[-1]
-  snppos <- sapply(sapply(mcols(GdObject@range)[, "feature"], strsplit, "@"), "[[", 2)
-  motif.i <- 1
-  highlight <- snppos[[motif.i]]
-  paths <- motif.figure@paths
-  for(path.i in seq_along(paths)) {
-    if (inherits(paths[[path.i]], "PictureText")) {
-      if (paths[[path.i]]@string == highlight) {
-        path <- paths[[path.i]]
-        path@rgb <- "#FF0000"
-        path@letters <- lapply(path@letters, function(letters) {
-          letters@rgb <- "#FF0000"
-          return(letters)
-        })
-        paths[[path.i]] <- path
-        motif.i <- motif.i + 1
-        if(motif.i <= length(snppos)) {
-          highlight <- snppos[[motif.i]]
-        } else {
-          motif.i <- length(snppos)
-        }
-      }
-    }
-  }
-  motif.figure@paths <- paths
-  grid.picture(motif.figure, distort = FALSE)
+  # ps.file <- paste(psloc, "stack.ps", sep = "/")
+  # PostScriptTrace(ps.file, paste0(ps.file, ".xml"))
+  ps.file <- paste(psloc, "stack.svg", sep = "/")
+  motif.figure <- grImport2::readPicture(ps.file)
+  # # motif.figure <- motif.figure[-1]
+  # snppos <- sapply(sapply(mcols(GdObject@range)[, "feature"], strsplit, "@"), "[[", 2)
+  # motif.i <- 1
+  # highlight <- snppos[[motif.i]]
+  # paths <- motif.figure@paths
+  # for(path.i in seq_along(paths)) {
+  #   if (inherits(paths[[path.i]], "PictureText")) {
+  #     if (paths[[path.i]]@string == highlight) {
+  #       path <- paths[[path.i]]
+  #       path@rgb <- "#FF0000"
+  #       path@letters <- lapply(path@letters, function(letters) {
+  #         letters@rgb <- "#FF0000"
+  #         return(letters)
+  #       })
+  #       paths[[path.i]] <- path
+  #       motif.i <- motif.i + 1
+  #       if(motif.i <= length(snppos)) {
+  #         highlight <- snppos[[motif.i]]
+  #       } else {
+  #         motif.i <- length(snppos)
+  #       }
+  #     }
+  #   }
+  # }
+  # motif.figure@paths <- paths
+  grImport2::grid.picture(motif.figure, distort = FALSE)
 }
 
-selcor <- function(identifier, GdObject, ... ) {
-  if(identifier == mcols(GdObject@range)$id[[1]]) {
+selcor <- function(identifier, index, GdObject, ... ) {
+  if (identical(index, 1L)) {
     return(TRUE)
   } else {
     return(FALSE)
@@ -953,24 +1060,48 @@ plotMotifLogoStack.2 <- function(pfms, ...) {
   })
   opar <- par(mfrow = c(n, 1), mar = c(3.5, 3.5, 1.5, 0.5))
   assign("tmp_motifStack_symbolsCache", list(), pos = ".GlobalEnv")
-  for (i in 1:(n - 1)) {
-    motifStack::plotMotifLogo(pfms[[n - i + 1]], motifName = pfms[[n - i + 1]]@name,
-                              p=rep(0.25, 4), xlab = NA)
+  motifStack::plotMotifLogo(pfms[[1]], motifName = pfms[[1]]@name, p = rep(0.25, 4))
+  for (i in seq.int(n)[-1]) {
+    motifStack::plotMotifLogo(pfms[[n]], motifName = pfms[[n]]@name,
+                              p=rep(0.25, 4), xlab = NA, newpage = FALSE)
   }
-  motifStack::plotMotifLogo(pfms[[1]], motifName = pfms[[1]]@name, p=rep(0.25, 4))
   rm(list = "tmp_motifStack_symbolsCache", pos = ".GlobalEnv")
   par(opar)
 }
 
+#' @importFrom grid grid.newpage pushViewport viewport popViewport
+plotMotifLogoStack.3 <- function(pfms, ...) {
+  n <- length(pfms)
+  lapply(pfms, function(.ele) {
+    if (class(.ele) != "pfm")
+      stop("pfms must be a list of class pfm")
+  })
+  assign("tmp_motifStack_symbolsCache", list(), pos = ".GlobalEnv")
+  grid.newpage()
+  ht <- 1/n
+  y0 <- 0.5 * ht
+  for (i in rev(seq.int(n))) {
+    pushViewport(viewport(y = y0, height = ht))
+    plotMotifLogo(pfms[[i]], motifName = pfms[[i]]@name, ncex = 1,
+                  p = pfms[[i]]@background, colset = pfms[[i]]@color,
+                  xlab = NA, newpage = FALSE, margins = c(1.5, 4.1,
+                                                          1.1, 0.1), ...)
+    popViewport()
+    y0 <- y0 + ht
+  }
+  rm(list = "tmp_motifStack_symbolsCache", pos = ".GlobalEnv")
+  return()
+}
+
 #' @importFrom stringr str_replace
+#' @importFrom motifStack addBlank
 DNAmotifAlignment.2snp <- function(pwms, result) {
-  from <- min(start(result))
-  to <- max(end(result))
+  from <- min(sapply(result$motifPos, `[`, 1))
+  to <- max(sapply(result$motifPos, `[`, 2))
 #  pos <- mcols(result)$motifPos
 #  pos <- pos[as.logical(strand(result) == "+")][1]
-#  browser()
-  for(pwm.i in seq_along(pwms)) {
-    pwm <- pwms[[pwm.i]]@mat
+  for (pwm.i in seq_along(pwms)) {
+    #pwm <- pwms[[pwm.i]]@mat
     ## get pwm info from result data
     pwm.name <- pwms[[pwm.i]]@name
     pwm.name <- str_replace(pwm.name, pattern = "-:rc$", replacement = "")
@@ -978,15 +1109,36 @@ DNAmotifAlignment.2snp <- function(pwms, result) {
     pwm.info <- attributes(result)$motifs
     pwm.id <- mcols(pwm.info[pwm.name, ])$providerId
     pwm.name <- mcols(pwm.info[pwm.name, ])$providerName
-    start.offset <- start(result[result$providerId == pwm.id & result$providerName == pwm.name, ]) - from
-    end.offset <- to - end(result[result$providerId == pwm.id & result$providerName == pwm.name, ])
-    if(start.offset > 0){
-      pwm <- cbind(matrix(c(0.25, 0.25, 0.25, 0.25), ncol = start.offset, nrow = 4), pwm)
+    mresult <- result[result$providerId == pwm.id & result$providerName == pwm.name, ]
+    mstart <- mresult$motifPos[[1]][1]
+    mend <- mresult$motifPos[[1]][2]
+    # browser()
+    if ((mcols(mresult)$varType == "Insertion" & mcols(mresult)$alleleDiff < 0) |
+        (mcols(mresult)$varType == "Deletion" & mcols(mresult)$alleleDiff > 0)) {
+      new.mat <- cbind(pwms[[pwm.i]]@mat[, 1:abs(mresult$motifPos[[1]][1])],
+                       matrix(c(0.25, 0.25, 0.25, 0.25), ncol = length(mcols(mresult)$altPos[[1]]), nrow = 4),
+                       pwms[[pwm.i]]@mat[, (abs(mresult$motifPos[[1]][1]) + 1):ncol(pwms[[pwm.i]]@mat)])
+      pwms[[pwm.i]]@mat <- new.mat
+      start.offset <- mstart - from
+      end.offset <- to - mend
+    } else {
+      if (mstart < 0 | from > 0) {
+        start.offset <- mstart - from
+      } else {
+        start.offset <- (mstart - 1) - from
+      }
+      if (mend > 0 | to < 0) {
+        end.offset <- to - mend
+      } else {
+        end.offset <- to - (mend + 1)
+      }
     }
-    if(end.offset > 0) {
-      pwm <- cbind(pwm, matrix(c(0.25, 0.25, 0.25, 0.25), ncol = end.offset, nrow = 4))
+    if (start.offset > 0) {
+      pwms[[pwm.i]] <- addBlank(x = pwms[[pwm.i]], n = start.offset, b = FALSE)
     }
-    pwms[[pwm.i]]@mat <- pwm
+    if (end.offset > 0) {
+      pwms[[pwm.i]] <- addBlank(x = pwms[[pwm.i]], n = end.offset, b = TRUE)
+    }
   }
   return(pwms)
 }
@@ -1026,29 +1178,31 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, effect = c("strong", "wea
   g <- genome(results)[[1]]
   result <- results[names(results) %in% rsid]
   stackmotif <- TRUE
-  if(length(result) <= 1) stackmotif <- FALSE
-  result <- result[order(start(result), end(result)), ]
+  result <- result[order(sapply(result$motifPos, min), sapply(result$motifPos, max)), ]
   result <- result[result$effect %in% effect]
   chromosome <- as.character(seqnames(result))[[1]]
   genome.package <- attributes(result)$genome.package
   genome.bsgenome <- eval(parse(text = genome.package))
-  distance.to.edge <- max(result[1, ]$snpPos - min(start(result)), max(end(result)) - result[1, ]$snpPos) + 4
-  from <- result[1, ]$snpPos - distance.to.edge + 1
-  to <- result[1, ]$snpPos + distance.to.edge
-  temp.dir <- tempdir()
+  seq.len <- max(length(result$REF[[1]]), length(result$ALT[[1]]))
+  distance.to.edge <- max(abs(c(sapply(result$motifPos, min),
+                                sapply(result$motifPos, max)))) + 4
+  from <- start(result)[[1]] - distance.to.edge + 1
+  to <- end(result)[[1]] + distance.to.edge
   pwmList <- attributes(result)$motifs
   pwm.names <- result$providerId
-  if(stackmotif && length(result) > 1) {
-    getmotifs <- mcols(pwmList)$providerId %in% result$providerId & mcols(pwmList)$providerName %in% result$providerName
+  if (stackmotif) {
+    getmotifs <- mcols(pwmList)$providerId %in% result$providerId &
+      mcols(pwmList)$providerName %in% result$providerName
     pwms <- pwmList[getmotifs, ]
-    pwms <- pwms[order(match(paste0(mcols(pwms)$providerId, mcols(pwms)$providerName), paste0(result$providerId, result$providerName)))]
-    if(reverseMotif) {
-      for(pwm.i in seq_along(pwms)) {
+    pwms <- pwms[order(match(paste0(mcols(pwms)$providerId, mcols(pwms)$providerName),
+                             paste0(result$providerId, result$providerName)))]
+    if (reverseMotif) {
+      for (pwm.i in seq_along(pwms)) {
         pwm.name <- names(pwms[pwm.i])
         pwm.id <- mcols(pwms[pwm.name, ])$providerId
         pwm.name.f <- mcols(pwms[pwm.name, ])$providerName
         doRev <- as.logical(strand(result[result$providerId == pwm.id & result$providerName == pwm.name.f, ]) == "-")
-        if(doRev) {
+        if (doRev) {
           pwm <- pwms[[pwm.i]]
           pwm <- pwm[, rev(1:ncol(pwm))]
           rownames(pwm) <- c("T", "G", "C", "A")
@@ -1057,116 +1211,168 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, effect = c("strong", "wea
           names(pwms)[pwm.i] <- paste0(names(pwms)[pwm.i], "-:rc")
         }
       }
-    } else {
-      for(pwm.i in seq_along(pwms)) {
-        pwm.name <- names(pwms[pwm.i])
-        pwm.id <- mcols(pwms[pwm.name, ])$providerId
-        pwm.name.f <- mcols(pwms[pwm.name, ])$providerName
-        doRev <- as.logical(strand(result[result$providerId == pwm.id & result$providerName == pwm.name.f, ]) == "-")
-        if(doRev) {
-          pwm <- pwms[[pwm.i]]
-          pwm <- pwm[, rev(1:ncol(pwm))]
-          pwms[[pwm.i]] <- pwm
-          names(pwms)[pwm.i] <- paste0(names(pwms)[pwm.i], "-:r")
-        }
-      }
     }
-    pwms <- lapply(names(pwms), function(x, pwms=pwms) {new("pfm", mat=pwms[[x]],
-                                                          name=x)}, pwms)
+    # else {
+    #   for (pwm.i in seq_along(pwms)) {
+    #     pwm.name <- names(pwms[pwm.i])
+    #     pwm.id <- mcols(pwms[pwm.name, ])$providerId
+    #     pwm.name.f <- mcols(pwms[pwm.name, ])$providerName
+    #     doRev <- as.logical(strand(result[result$providerId == pwm.id & result$providerName == pwm.name.f, ]) == "-")
+    #     if(doRev) {
+    #       pwm <- pwms[[pwm.i]]
+    #       pwm <- pwm[, rev(1:ncol(pwm))]
+    #       pwms[[pwm.i]] <- pwm
+    #       names(pwms)[pwm.i] <- paste0(names(pwms)[pwm.i], "-:r")
+    #     }
+    #   }
+    # }
+    pwms <- lapply(names(pwms), function(x, pwms=pwms) {new("pfm", mat = pwms[[x]],
+                                                            name = x)}, pwms)
     pwms <- DNAmotifAlignment.2snp(pwms, result)
     pwmwide <- max(sapply(pwms, function(x) { ncol(x@mat)}))
+
     psloc <- tempdir()
-    postscript(paste(psloc, "stack.ps", sep = "/"),
-               width = pwmwide * (1/3),
-               height = 2 * length(pwm.names),
-               paper="special", horizontal = FALSE,
-               fonts = c("sans"))
-    plotMotifLogoStack(pwms, ncex=1.0)
-    dev.off()
-  } else {
-    getmotifs <- mcols(pwmList)$providerId %in% result$providerId & mcols(pwmList)$providerName %in% result$providerName
-    pwmList <- pwmList[getmotifs, ]
-    pwmList <- pwmList[order(match(mcols(pwmList)$providerId, result$providerId))]
-    for(pwm.i in seq_along(pwmList)) {
-      pwm <- pwmList[pwm.i]
-      if (reverseMotif) {
-        pwm.id <- mcols(pwm)$providerId
-        pwm.name.f <- mcols(pwm)$providerName
-        doRev <- as.logical(strand(result[result$providerId == pwm.id & result$providerName == pwm.name.f, ]) == "-")
-        if(doRev) {
-          pwm.mat <- pwm[[1]]
-          pwm.mat <- pwm.mat[, rev(1:ncol(pwm.mat))]
-          rownames(pwm.mat) <- c("T", "G", "C", "A")
-          pwm.mat <- pwm.mat[c("A", "C", "G", "T"), ]
-          pwm[[pwm.i]] <- pwm.mat
-          names(pwm)[1] <- paste0(names(pwm)[1], "-:rc")
-          pwm@elementMetadata@rownames <- names(pwm)[1]
-          pwmList@elementMetadata[pwm.i,] <- pwm@elementMetadata
-          pwmList@listData[pwm.i] <- pwm@listData
-          names(pwmList@listData)[pwm.i] <- names(pwm)[1]
-        }
-      } else {
-        pwm.id <- mcols(pwm)$providerId
-        pwm.name.f <- mcols(pwm)$providerName
-        doRev <- as.logical(strand(result[result$providerId == pwm.id & result$providerName == pwm.name.f, ]) == "-")
-        if(doRev) {
-          pwm.mat <- pwm[[1]]
-          pwm.mat <- pwm.mat[, rev(1:ncol(pwm.mat))]
-          pwm[[pwm.i]] <- pwm.mat
-          names(pwm)[1] <- paste0(names(pwm)[1], "-:r")
-          pwm@elementMetadata@rownames <- names(pwm)[1]
-          pwmList@elementMetadata[pwm.i,] <- pwm@elementMetadata
-          pwmList@listData[pwm.i] <- pwm@listData
-          names(pwmList@listData)[pwm.i] <- names(pwm)[1]
-        }
-      }
-      p <- new("pfm", mat = pwm[[1]], name = names(pwm[1]))
-      #message(paste(temp.dir, names(pwm[1]), sep="/"))
-      psloc <- tempdir()
-      pwmwide <- ncol(p@mat)
-      postscript(paste(psloc, "stack.ps", sep = "/"), width = pwmwide * (7/11), height =  4, paper="special", horizontal = FALSE)
-      motifStack::plotMotifLogo(p, motifName = p@name)
+    old.list <- dev.list()
+    svg(paste(psloc, "stack.svg", sep = "/"),
+        width = pwmwide * (1/3),
+        height = 2 * length(pwm.names))
+    new.devlist <- dev.list()[!dev.list() %in% old.list]
+    Sys.sleep(1)
+    dev.set(new.devlist)
+    # postscript(paste(psloc, "stack.ps", sep = "/"),
+    #            width = pwmwide * (1/3),
+    #            height = 2 * length(pwm.names),
+    #            paper = "special", horizontal = FALSE,
+    #            fonts = c("sans"))
+    # markerStarts <- sapply(result$motifPos, `[`, 1)
+    # markerEnds <- sapply(result$motifPos, `[`, 2)
+    # markerRect <- new("marker", type = "rect",
+    #                   start = markerStarts,
+    #                   stop = markerEnds,
+    #                   gp = gpar(lty = 2, fill = NA, col = "red"))
+    # sapply(pwms, function(x) {ncol(x@mat)})
+    theplot <- try(plotMotifLogoStack.3(pwms))
+    if (inherits(theplot, "try-error")) {
       dev.off()
+      stop("error plotting motifs: use graphics.off() prior to plotting")
     }
+    dev.off()
+    if (!is.null(dev.list())) dev.set(max(dev.list()))
   }
   ideoT <- try(IdeogramTrack(genome = g, chromosome = chromosome), silent = TRUE)
-  if(inherits(ideoT, "try-error")) {
-    backup.band <- data.frame(chrom = chromosome, chromStart = 0, chromEnd = length(genome.bsgenome[[chromosome]]), name = chromosome, gieStain = "gneg")
+  if (inherits(ideoT, "try-error")) {
+    backup.band <- data.frame(chrom = chromosome, chromStart = 0,
+                              chromEnd = length(genome.bsgenome[[chromosome]]),
+                              name = chromosome, gieStain = "gneg")
     ideoT <- IdeogramTrack(genome = g, chromosome = chromosome, bands = backup.band)
   }
-  seqT <- SequenceTrack(genome.bsgenome, fontcolor = colorset("DNA", "auto"))
+
   ### blank alt sequence
   altseq <- genome.bsgenome[[chromosome]]
-  wherereplace <- rep.int(TRUE, length(altseq))
-  wherereplace[result$snpPos[[1]]] <- FALSE
-  altseq <- replaceLetterAt(altseq, at = wherereplace, letter = rep.int("N", sum(wherereplace)))
-  altseq <- replaceLetterAt(altseq, at = !wherereplace, letter = result$ALT[[1]])
+
+  ### Replace longer sections
+  at <- IRanges(start = start(result[1]), width = width(result[1]))
+  if (result$varType[[1]] == "Deletion") {
+    reflen <- length(result$REF[[1]])
+    addedN <- DNAString(paste0(rep.int(".", reflen), collapse = ""))
+    addedN <- replaceLetterAt(addedN, at = (1:reflen)[-result$altPos[[1]]], result$ALT[[1]])
+    axisT <- GenomeAxisTrack(exponent = 0)
+    seqT <- SequenceTrack(genome.bsgenome, fontcolor = colorset("DNA", "auto"))
+    altseq <- replaceAt(x = altseq, at = at, addedN)
+  } else if (result$varType[[1]] == "Insertion") {
+    # browser()
+    altlen <- length(result$ALT[[1]])
+    addedN <- DNAString(paste0(rep.int(".", altlen), collapse = ""))
+    addedN <- replaceLetterAt(addedN, at = (1:altlen)[-result$altPos[[1]]], result$REF[[1]])
+    refseq <- genome.bsgenome[[chromosome]]
+    refseq <- DNAStringSet(replaceAt(x = refseq, at = at, addedN))
+    altseq <- replaceAt(x = altseq, at = at, result$ALT[[1]])
+    names(refseq) <- chromosome
+    seqT <- SequenceTrack(refseq,
+                          fontcolor = c(colorset("DNA", "auto"), N = "#FFFFFF", . = "#FFE3E6"),
+                          chromosome = chromosome)
+  } else {
+    axisT <- GenomeAxisTrack(exponent = 0)
+    altseq <- replaceAt(x = altseq, at = at, result$ALT[[1]])
+    seqT <- SequenceTrack(genome.bsgenome, fontcolor = colorset("DNA", "auto"))
+  }
   altseq <- DNAStringSet(altseq)
   names(altseq) <- chromosome
-  seqAltT <- SequenceTrack(altseq, fontcolor = c(colorset("DNA", "auto"), N="#FFFFFF"), chromosome = chromosome)
-  axisT <- GenomeAxisTrack(exponent = 0)
-  hiT <- HighlightTrack(trackList = list(seqT, seqAltT), start = result$snpPos[[1]], end = result$snpPos[[1]],
+  seqAltT <- SequenceTrack(altseq,
+                           fontcolor = c(colorset("DNA", "auto"), N = "#FFFFFF", . = "#FFE3E6"),
+                           chromosome = chromosome)
+
+
+  ### end replace longer sections
+
+
+  #altseq <- replaceLetterAt(altseq, at = wherereplace, letter = rep.int("N", sum(wherereplace)))
+  #altseq <- replaceLetterAt(altseq, at = !wherereplace, letter = result$ALT[[1]])
+  hiT <- HighlightTrack(trackList = list(seqT, seqAltT),
+                        start = start(result[1]) + min(result[1]$altPos[[1]]) - 1,
+                        end = start(result[1]) + min(result[1]$altPos[[1]]) - 2 +
+                          length(result[1]$altPos[[1]]),
                         chromosome = chromosome)
-  if(stackmotif){
+  if (stackmotif) {
     selectingfun <- selcor
     detailfun <- addPWM.stack
   } else {
     detailfun <- addPWM.stack
     selectingfun <- selall
   }
+
   getmotifs <- mcols(pwmList)$providerId %in% result$providerId & mcols(pwmList)$providerName %in% result$providerName
-  motifT <- AnnotationTrack(result, id = names(pwmList)[getmotifs],
+  motif_ids <- names(pwmList)[getmotifs]
+  names(motif_ids) <- mcols(pwmList)$providerName[getmotifs]
+
+  for (mymotif_i in seq_along(result)) {
+    mymotif <- result[mymotif_i]
+    start(mymotif) <- start(mymotif) + min(mymotif$altPos[[1]]) - 1
+    width(mymotif) <- length(mymotif$altPos[[1]])
+    variant.start <- start(mymotif)
+    variant.end <- end(mymotif)
+    if (mymotif$motifPos[[1]][1] < 0) {
+      start(mymotif) <- start(mymotif) + (mymotif$motifPos[[1]][1])
+    } else {
+      start(mymotif) <- start(mymotif) + (mymotif$motifPos[[1]][1] - 1)
+    }
+    if (mymotif$motifPos[[1]][2] < 0) {
+      end(mymotif) <- end(mymotif) + (mymotif$motifPos[[1]][2] + 1)
+    } else {
+      end(mymotif) <- end(mymotif) + (mymotif$motifPos[[1]][2])
+    }
+    if ((result[mymotif_i]$varType == "Deletion" & result[mymotif_i]$alleleDiff > 0) |
+        (result[mymotif_i]$varType == "Insertion" & result[mymotif_i]$alleleDiff < 0)) {
+      mymotif <- c(mymotif, mymotif)
+      end(mymotif)[1] <- variant.start - 1
+      start(mymotif)[2] <- variant.end + 1
+      mymotif[which.min(width(mymotif))]$motifPos <- NA
+    }
+    if (exists("mres")) {
+      mres <- c(mres, mymotif)
+    } else {
+      mres <- mymotif
+    }
+  }
+  result <- mres; rm(mres)
+  motif_ids <- motif_ids[result$providerName]
+  motifT <- AnnotationTrack(result, id = motif_ids,
                             fun = detailfun, group = result$providerName,
-                            feature = paste0("snp@",
-                                             ifelse(strand(result) == "-",
-                                                    str_length(str_trim(result$seqMatch)) - result$motifPos + 1,
-                                                    result$motifPos)),
+                            # feature = paste0("snp@",
+                            #                 result$motifPos) ,
+                            feature = ifelse(!is.na(result$motifPos), paste0(result$geneSymbol, "_motif"), ""),
                             name = names(result)[[1]], selectFun = selectingfun)
-  plotTracks(list(ideoT, motifT, hiT, axisT), from = from, to = to, showBandId = TRUE,
+  if (exists("axisT")) {
+    track_list <- list(ideoT, motifT, hiT, axisT)
+  } else {
+    track_list <- list(ideoT, motifT, hiT)
+  }
+  plotTracks(track_list, from = from, to = to, showBandId = TRUE,
              cex.main = 0.8, col.main = "darkgrey",
              add53 = TRUE, labelpos = "below", chromosome = chromosome, groupAnnotation = "group",
              collapse = FALSE, min.width = 1, featureAnnotation = "feature", cex.feature = 0.8,
-             details.size = ifelse(stackmotif, 0.85, 0.5), detailsConnector.pch = NA, detailsConnector.lty = ifelse(stackmotif, 0, 3),
+             details.size = ifelse(stackmotif, 0.85, 0.5), detailsConnector.pch = NA,
+             detailsConnector.lty = ifelse(stackmotif, 0, 3),
              shape = "box", cex.group = 0.8, fonts = c("sans", "Helvetica"))
   return(invisible(NULL))
 }
