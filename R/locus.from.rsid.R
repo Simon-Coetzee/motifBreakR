@@ -25,7 +25,7 @@
 #'                            search.genome = BSgenome.Hsapiens.UCSC.hg19)
 #'
 #' @importFrom BSgenome snpsById snplocs
-#' @importFrom Biostrings DNAStringSet
+#' @importFrom Biostrings DNAStringSet DNAString DNAStringSetList
 #' @export
 snps.from.rsid <- function(rsid = NULL, dbSNP = NULL,
                            search.genome = NULL) {
