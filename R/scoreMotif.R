@@ -832,8 +832,14 @@ preparePWM <- function(pwmList = pwmList,
     }, pwmList.pc, pwmOmegas)
     pwmThresh <- rep.int(scoreThresh, times = length(pwmRanges))
   }
-  pwmList@listData <- lapply(pwmList, function(pwm) { pwm <- rbind(pwm, N = 0); return(pwm) })
-  pwmList.pc <- lapply(pwmList.pc, function(pwm) { pwm <- rbind(pwm, N = 0); return(pwm) })
+  pwmList@listData <- lapply(pwmList, function(pwm) {
+    pwm <- rbind(pwm, N = 0)
+    colnames(pwm) <- as.character(1:ncol(pwm))
+    return(pwm) })
+  pwmList.pc <- lapply(pwmList.pc, function(pwm) {
+    pwm <- rbind(pwm, N = 0)
+    colnames(pwm) <- as.character(1:ncol(pwm))
+    return(pwm) })
   return(list(pwmList = pwmList,
               pwmListPseudoCount = pwmList.pc,
               pwmRange = pwmRanges,
@@ -1016,7 +1022,7 @@ preparePWM <- function(pwmList = pwmList,
 #' @export
 motifbreakR <- function(snpList, pwmList, threshold = 0.85, filterp = FALSE,
                         method = "default", show.neutral = FALSE, verbose = FALSE,
-                        bkg = c(A = 0.25, C = 0.25, G = 0.25, T = 0.25), legacy.score = FALSE,
+                        bkg = c(A = 0.25, C = 0.25, G = 0.25, T = 0.25), legacy.score = TRUE,
                         BPPARAM = bpparam()) {
   ## Cluster / MC setup
   if (.Platform$OS.type == "windows" && inherits(BPPARAM, "MulticoreParam")) {
@@ -1064,18 +1070,18 @@ motifbreakR <- function(snpList, pwmList, threshold = 0.85, filterp = FALSE,
   }
   snpList <- snpList_cores; rm(snpList_cores)
 
-  # x <- lapply(snpList, scoreSnpList,
-  #             pwmList = pwms$pwmList, threshold = pwms$pwmThreshold,
-  #             pwmList.pc = pwms$pwmListPseudoCount, pwmRanges = pwms$pwmRange,
-  #             method = method, bkg = bkg, show.neutral = show.neutral,
-  #             verbose = ifelse(cores == 1, verbose, FALSE), genome.bsgenome = genome.bsgenome,
-  #             filterp = filterp)
-  x <- try(bplapply(snpList, scoreSnpList,
-                    pwmList = pwms$pwmList, threshold = pwms$pwmThreshold,
-                    pwmList.pc = pwms$pwmListPseudoCount, pwmRanges = pwms$pwmRange,
-                    method = method, bkg = bkg, show.neutral = show.neutral,
-                    verbose = ifelse(cores == 1, verbose, FALSE), genome.bsgenome = genome.bsgenome,
-                    filterp = filterp, BPPARAM = BPPARAM))
+  x <- lapply(snpList, scoreSnpList,
+              pwmList = pwms$pwmList, threshold = pwms$pwmThreshold,
+              pwmList.pc = pwms$pwmListPseudoCount, pwmRanges = pwms$pwmRange,
+              method = method, bkg = bkg, show.neutral = show.neutral,
+              verbose = ifelse(cores == 1, verbose, FALSE), genome.bsgenome = genome.bsgenome,
+              filterp = filterp)
+  # x <- bplapply(snpList, scoreSnpList,
+  #               pwmList = pwms$pwmList, threshold = pwms$pwmThreshold,
+  #               pwmList.pc = pwms$pwmListPseudoCount, pwmRanges = pwms$pwmRange,
+  #               method = method, bkg = bkg, show.neutral = show.neutral,
+  #               verbose = ifelse(cores == 1, verbose, FALSE), genome.bsgenome = genome.bsgenome,
+  #               filterp = filterp, BPPARAM = BPPARAM)
 
   ## Cluster / MC cleanup
   if (inherits(x, "try-error")) {
@@ -1096,7 +1102,7 @@ motifbreakR <- function(snpList, pwmList, threshold = 0.85, filterp = FALSE,
 
   if (length(x) > 1) {
     x <- unlist(GRangesList(unname(x)))
-    snpList <- unlist(GRangesList(snpList), use.names = F)
+    snpList <- unlist(GRangesList(lapply(snpList, `[[`, "fsnplist")), use.names = F)
     x <- x[order(match(names(x), names(snpList)), x$geneSymbol), ]
     attributes(x)$genome.package <- genome.package
     attributes(x)$motifs <- pwmList[mcols(pwmList)$providerId %in% unique(x$providerId) &

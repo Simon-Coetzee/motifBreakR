@@ -66,7 +66,8 @@ snps.from.rsid <- function(rsid = NULL, dbSNP = NULL,
   colnames(mcols(rsid.grange)) <- c("RefSNP_id", "alleles_as_ambig", "REF", "ALT")
   rsid.grange$REF <- DNAStringSet(rsid.grange$REF)
   rsid.grange$ALT <- DNAStringSet(rsid.grange$ALT)
-  rsid.grange$alleles_as_ambig <- DNAStringSet(rsid.grange$alleles_as_ambig)
+  # rsid.grange$alleles_as_ambig <- DNAStringSet(rsid.grange$alleles_as_ambig)
+  rsid.grange$alleles_as_ambig <- NULL
   colnames(mcols(rsid.grange))[1] <- "SNP_id"
   attributes(rsid.grange)$genome.package <- attributes(search.genome)$pkgname
   return(rsid.grange)
@@ -194,10 +195,10 @@ formatVcfOut <- function(x, gseq = search.genome) {
 #' @importFrom VariantAnnotation readVcf ref alt isSNV VcfFile ScanVcfParam
 #' @importFrom SummarizedExperiment rowRanges
 #' @importFrom Rsamtools countTabix
-#' @importFrom stringr str_sort
+#' @importFrom stringr str_sort str_split
 #' @export
 snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, format = "bed", indels = FALSE) {
-  if (format == "vcf"){
+  if (format == "vcf") {
     if (!inherits(search.genome, "BSgenome")) {
       stop(paste0(search.genome, " is not a BSgenome object.\n", "Run availible.genomes() and choose the appropriate BSgenome object"))
     }
@@ -209,12 +210,9 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
     vcf_ranges <- rowRanges(vcf)
     vcf_ranges <- unlistColumn(vcf_ranges, "ALT")
     vcf_ranges <- unlistColumn(vcf_ranges, "REF")
+    vcf_ranges$index <- seq_along(vcf_ranges)
     complex.variants <- vcf_ranges[nchar(vcf_ranges$REF) > 1 | nchar(vcf_ranges$ALT) > 1]
     snps <- vcf_ranges[!(nchar(vcf_ranges$REF) > 1 | nchar(vcf_ranges$ALT) > 1)]
-    # complex.variants <- rowRanges(vcf[!isSNV(vcf, singleAltOnly = F)])
-    # snps <- rowRanges(vcf[isSNV(vcf, singleAltOnly = F)])
-    # snps <- unlistColumn(snps, "ALT")
-    # snps <- unlistColumn(snps, "REF")
     if (indels) {
       if (length(complex.variants) > 0) {
         alt_letters <- uniqueLetters(unlist(BStringSetList(complex.variants$ALT)))
@@ -245,19 +243,24 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
         complex.variants <- unlistColumn(complex.variants, "ALT")
         complex.variants <- unlistColumn(complex.variants, "REF")
       }
-      complex.variants <- formatVcfOut(complex.variants, search.genome)
-      snps <- formatVcfOut(snps, search.genome)
-      return(GRangesList(snps = snps, complex.variants = complex.variants))
+      all.variants <- c(complex.variants, snps)
+      all.variants <- formatVcfOut(all.variants[order(all.variants$index), ], search.genome)
+      return(all.variants)
     } else {
       snps <- formatVcfOut(snps, search.genome)
       return(snps)
     }
   } else {
-    if(format == "bed") {
+    if (format == "bed") {
       snps <- import(file, format = "bed")
-      if (any(grepl("rs", snps$name)) & (!inherits(dbSNP, "SNPlocs"))) {
-        stop(paste0(file, " contains at least one variant with an rsID and no SNPlocs has been indicated\n",
-                    "Please run availible.SNPs() to check for availble SNPlocs"))
+      if (!indels) {
+        if (any(grepl("rs", snps$name)) & (!inherits(dbSNP, "SNPlocs"))) {
+          stop(paste0(file, " contains at least one variant with an rsID and no SNPlocs has been indicated\n",
+                      "Please run availible.SNPs() to check for availble SNPlocs"))
+        }
+      } else if (inherits(dbSNP, "SNPlocs")) {
+        warning("Variants are not compared to nor extracted from SNPlocs objects when indels are included.",
+                " SNPlocs will not be used.")
       }
       if (!inherits(search.genome, "BSgenome")) {
         stop(paste0(search.genome, " is not a BSgenome object.\n", "Run availible.genomes() and choose the appropriate BSgenome object"))
@@ -265,27 +268,48 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
       ## spit snps into named and unnamed snps
       snps.noid <- snps[!grepl("rs", snps$name), ]
       ## get ref for unnamed snps
-      snps.noid.ref <- getSeq(search.genome, snps.noid)
-      snps.noid.ref <- as.character(snps.noid.ref)
+      snps.ref <- getSeq(search.genome, snps)
+      snps.ref <- as.character(snps.ref)
       ## get alt for unnamed snps
-      snps.noid.alt <- snps.noid$name
-      snps.noid.alt <- unlist(lapply(snps.noid.alt, strsplit, split = ":"), recursive = FALSE)
-      snps.noid.ref.user <- sapply(snps.noid.alt, "[", 3)
-      if(isTRUE(all.equal(snps.noid.ref, snps.noid.ref.user))) {
-        rm(snps.noid.ref.user)
+      snps.alt <- snps$name
+      snps.alt <- unlist(lapply(snps.alt, strsplit, split = ":"), recursive = FALSE)
+      snps.ref.user <- sapply(snps.alt, "[", 3)
+      if (isTRUE(all.equal(snps.ref, snps.ref.user))) {
+        rm(snps.ref.user)
       } else {
         warning(paste0("User selected reference allele differs from the sequence in ",
                        attributes(search.genome)$pkgname, " continuing with genome specified",
-                       " reference allels\n", " there are ", sum(snps.noid.ref != snps.noid.ref.user),
+                       " reference allels\n", " there are ", sum(snps.ref != snps.ref.user),
                        " differences"))
       }
-      snps.noid.alt <- sapply(snps.noid.alt, "[", 4)
+      snps.alt <- sapply(snps.alt, "[", 4)
+      snps.alt.split <- str_split(snps.alt, ",")
+      rep.vars <- vapply(snps.alt.split, length, integer(1))
+      snps <- rep(snps, rep.vars)
+      snps.ref <- rep(snps.ref, rep.vars)
+      snps.alt <- unlist(snps.alt.split)
+      is.indel <- nchar(snps.alt) > 1 | nchar(snps.ref) > 1
+      if (!indels) {
+        snps <- snps[!is.indel]
+        snps.ref <- snps.ref[!is.indel]
+        snps.alt <- snps.alt[!is.indel]
+      }
+      alt.letters <- uniqueLetters(unlist(BStringSetList(snps.alt)))
+      alt_letters_remove <- alt.letters[!alt.letters %in% DNA_ALPHABET]
+      if (length(alt_letters_remove) > 0) {
+        search.pattern <- paste0(alt_letters_remove, collapse = "|")
+        drop.variants.alt <- vapply(complex.variants$ALT,
+                                    function(x,
+                                             remove_letters = search.pattern) {
+                                      any(grepl(remove_letters, x))
+                                    }, logical(1))
+      } else {
+        drop.variants.alt <- as.logical(rep.int(0, length(snps.alt)))
+      }
       ## check if alt was given for unnamed snps
-      alt.allele.is.valid <- (toupper(snps.noid.alt) %in% c("A", "T", "G", "C")) &
-        (snps.noid.alt != snps.noid.ref)
+      alt.allele.is.valid <- !drop.variants.alt & (snps.alt != snps.ref)
       if (!all(alt.allele.is.valid)) {
-        snpnames <- snps.noid$name[!(toupper(snps.noid.alt) %in% c("A", "T", "G",
-                                                                   "C"))]
+        snpnames <- snps$name[drop.variants.alt]
         if (length(snpnames) < 50 && length(snpnames) > 0) {
           warning(paste("User variant", snpnames, "alternate allele is not one of \"A\", \"T\", \"G\", or \"C\""))
         } else {
@@ -294,72 +318,34 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
                            " These variants were excluded"))
           }
         }
-        equal.to.ref <- snps.noid.alt == snps.noid.ref
+        equal.to.ref <- snps.alt == snps.ref
         if (sum(equal.to.ref) > 0) {
           warning(paste0(sum(equal.to.ref), " user variants are the same as the reference genome ",
                          search.genome@provider_version, " for ", search.genome@common_name, "\n These variants were excluded"))
         }
-        snps.noid <- snps.noid[alt.allele.is.valid]
-        snps.noid.ref <- snps.noid.ref[alt.allele.is.valid]
-        snps.noid.alt <- snps.noid.alt[alt.allele.is.valid]
+        snps <- snps[alt.allele.is.valid]
+        snps.ref <- snps.ref[alt.allele.is.valid]
+        snps.alt <- snps.alt[alt.allele.is.valid]
       }
-      ## if alt was given calculate ambiguous base
-      snps.noid.ambi <- strSort(paste0(snps.noid.alt, snps.noid.ref))
-      IUPAC_code_revmap <- names(IUPAC_CODE_MAP)
-      names(IUPAC_code_revmap) <- IUPAC_CODE_MAP
-      snps.noid.ambi <- IUPAC_code_revmap[snps.noid.ambi]
-      names(snps.noid.ambi) <- NULL
-      #snps.noid.ambi <- names(IUPAC_CODE_MAP[sapply(as.list(sapply(snps.noid.ambi,
-      #                                                             grep, IUPAC_CODE_MAP)), "[", 1)])
-      ## are unnamed snps found in dbsnp ?
-      if (commonName(search.genome) == "Human" && is(dbSNP, "SNPlocs")) {
-        snps.noid.chrom <- as.character(seqnames(snps.noid))
-        snps.noid.chrom <- unique(snps.noid.chrom)
-        snps.noid.chrom <- gsub("chr", "ch", snps.noid.chrom)
-        all.dbsnp.chrom <- snplocs(dbSNP, snps.noid.chrom, as.GRanges = TRUE)
-        all.dbsnp.chrom <- change.to.search.genome(all.dbsnp.chrom, search.genome)
-        present.in.dbsnp <- findOverlaps(snps.noid, all.dbsnp.chrom)
-        ## In dbsnp
-        dbsnp.for.noid <- all.dbsnp.chrom[subjectHits(present.in.dbsnp), ]
-        matches.dbsnp <- snps.noid.ambi[queryHits(present.in.dbsnp)] == dbsnp.for.noid$alleles_as_ambig
-        copy.dbsnp <- queryHits(present.in.dbsnp)[matches.dbsnp]
-        ## matches dbsnp
-        no.dbsnp <- snps.noid[-copy.dbsnp]
-        no.dbsnp <- change.to.search.genome(no.dbsnp, search.genome)
-      } else {
-        copy.dbsnp <- -(1:length(snps.noid))
-        matches.dbsnp <- FALSE
-        no.dbsnp <- sortSeqlevels(snps.noid)
-        no.dbsnp <- change.to.search.genome(no.dbsnp, search.genome)
-      }
-      mcols(no.dbsnp) <- mcols(no.dbsnp)$name
-      colnames(mcols(no.dbsnp)) <- "SNP_id"
-      no.dbsnp$alleles_as_ambig <- snps.noid.ambi[-copy.dbsnp]
-      no.dbsnp$REF <- snps.noid.ref[-copy.dbsnp]
-      no.dbsnp$ALT <- snps.noid.alt[-copy.dbsnp]
-      names(no.dbsnp) <- no.dbsnp$SNP_id
-      if (any(matches.dbsnp)) {
-        dbsnp.for.noid <- dbsnp.for.noid[copy.dbsnp, ]
-        dbsnp.for.noid$REF <- snps.noid.ref[copy.dbsnp]
-        dbsnp.for.noid$ALT <- snps.noid.alt[copy.dbsnp]
-        colnames(mcols(dbsnp.for.noid))[1] <- "SNP_id"
-        names(dbsnp.for.noid) <- dbsnp.for.noid$SNP_id
-        warning(paste0(dbsnp.for.noid$SNP_id, " was found as a match for ",
-                       snps.noid$name[copy.dbsnp], "; using entry from dbSNP"))
-        no.dbsnp <- c(dbsnp.for.noid, no.dbsnp)
-      }
-      no.dbsnp$REF <- DNAStringSet(no.dbsnp$REF)
-      no.dbsnp$ALT <- DNAStringSet(no.dbsnp$ALT)
-      no.dbsnp$alleles_as_ambig <- DNAStringSet(no.dbsnp$alleles_as_ambig)
-      snps.rsid <- snps[grepl("rs", snps$name), ]
+      snps$REF <- snps.ref
+      snps$ALT <- snps.alt
+      strand(snps) <- "*"
+      names(snps) <- paste(as.character(snps), snps.ref, snps.alt, sep = ":")
+      snps <- formatVcfOut(snps, search.genome)
+      if (!indels) {
+        snps.rsid <- snps[grepl("rs", snps$SNP_id), ]
+        snps.noid <- snps[!grepl("rs", snps$SNP_id), ]
       ## get object for named snps
-      if (length(snps.rsid) > 0) {
-        snps.rsid.out <- snps.from.rsid(snps.rsid$name, dbSNP = dbSNP, search.genome = search.genome)
-        colnames(mcols(snps.rsid.out))[1] <- "SNP_id"
-        names(snps.rsid.out) <- snps.rsid.out$SNP_id
-        snps.out <- c(snps.rsid.out, no.dbsnp)
+        if (length(snps.rsid) > 0) {
+          snps.rsid.out <- snps.from.rsid(snps.rsid$name, dbSNP = dbSNP, search.genome = search.genome)
+          colnames(mcols(snps.rsid.out))[1] <- "SNP_id"
+          names(snps.rsid.out) <- snps.rsid.out$SNP_id
+          snps.out <- c(snps.rsid.out, snps.noid)
+        } else {
+          snps.out <- snps.noid
+        }
       } else {
-        snps.out <- no.dbsnp
+        snps.out <- snps
       }
       attributes(snps.out)$genome.package <- attributes(search.genome)$pkgname
       return(snps.out)
@@ -369,3 +355,7 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
   }
 }
 
+#' @export
+variants.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, format = "bed") {
+  return(snps.from.file(file = file, dbSNP = dbSNP, search.genome = search.genome, format = format, indels = TRUE))
+}
