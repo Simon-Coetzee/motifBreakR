@@ -194,7 +194,6 @@ formatVcfOut <- function(x, gseq = search.genome) {
 #' @importFrom Biostrings IUPAC_CODE_MAP uniqueLetters BStringSetList
 #' @importFrom VariantAnnotation readVcf ref alt isSNV VcfFile ScanVcfParam
 #' @importFrom SummarizedExperiment rowRanges
-#' @importFrom Rsamtools countTabix
 #' @importFrom stringr str_sort str_split
 #' @export
 snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, format = "bed", indels = FALSE) {
