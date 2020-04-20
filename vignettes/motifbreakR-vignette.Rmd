@@ -26,14 +26,16 @@ options(width=100)
 knitr::opts_chunk$set(cache=TRUE, autodep=TRUE)
 ```
 # Introduction
-This document offers an introduction and overview of `r Githubpkg("Simon-Coetzee/motifBreakR")`, which allows the biologist to judge whether the sequence surrounding a polymorphism or mutation is a good match to known transcription factor binding sites, and how much information is gained or lost in one allele of the polymorphism relative to another or mutation vs. wildtype. `r Githubpkg("Simon-Coetzee/motifBreakR")` is flexible, giving a choice of algorithms for interrogation of genomes with motifs from public sources that users can choose from; these are 1) a weighted-sum, 2) log-probabilities, and 3) relative entropy. `r Githubpkg("Simon-Coetzee/motifBreakR")` can predict effects for novel or previously described variants in public databases, making it suitable for tasks beyond the scope of its original design. Lastly, it can be used to interrogate any genome curated within Bioconductor.
+This document offers an introduction and overview of `r BiocStyle::Biocpkg("motifbreakR")`, which allows the biologist to judge whether the sequence surrounding a polymorphism or mutation is a good match to known transcription factor binding sites, and how much information is gained or lost in one allele of the polymorphism relative to another or mutation vs. wildtype. `r BiocStyle::Biocpkg("motifbreakR")` is flexible, giving a choice of algorithms for interrogation of genomes with motifs from public sources that users can choose from; these are 1) a weighted-sum, 2) log-probabilities, and 3) relative entropy. `r BiocStyle::Biocpkg("motifbreakR")` can predict effects for novel or previously described variants in public databases, making it suitable for tasks beyond the scope of its original design. Lastly, it can be used to interrogate any genome curated within Bioconductor.
 
-`r Githubpkg("Simon-Coetzee/motifBreakR")` works with position probability matrices (PPM). PPM are derived as the fractional occurrence of nucleotides A,C,G, and T at each position of a position frequency matrix (PFM). PFM are simply the tally of each nucleotide at each position across a set of aligned sequences. With a PPM, one can generate probabilities based on the genome, or more practically, create any number of position specific scoring matrices (PSSM) based on the principle that the PPM contains information about the likelihood of observing a particular nucleotide at a particular position of a true transcription factor binding site.
+As of version 2.0 `r BiocStyle::Biocpkg("motifbreakR")` is also able to perform it's analysis on indels, small insertions or deletions.
 
-This guide includes a brief overview of the [processing flow](#flow), an example focusing more in depth on the [practical](#practical) aspect of using `r Githubpkg("Simon-Coetzee/motifBreakR")`, and finally a detailed section on the [scoring methods](#methods) employed by the package.
+`r BiocStyle::Biocpkg("motifbreakR")` works with position probability matrices (PPM). PPM are derived as the fractional occurrence of nucleotides A,C,G, and T at each position of a position frequency matrix (PFM). PFM are simply the tally of each nucleotide at each position across a set of aligned sequences. With a PPM, one can generate probabilities based on the genome, or more practically, create any number of position specific scoring matrices (PSSM) based on the principle that the PPM contains information about the likelihood of observing a particular nucleotide at a particular position of a true transcription factor binding site.
+
+This guide includes a brief overview of the [processing flow](#flow), an example focusing more in depth on the [practical](#practical) aspect of using `r BiocStyle::Biocpkg("motifbreakR")`, and finally a detailed section on the [scoring methods](#methods) employed by the package.
 
 # Processing overview {#flow}
-`r Githubpkg("Simon-Coetzee/motifBreakR")` may be used to interrogate SNPs or SNVs for their potential effect on transcription factor binding by examining how the two alleles of the variant effect the binding score of a motif.  The basic process is outlined in the figure below.
+`r BiocStyle::Biocpkg("motifbreakR")` may be used to interrogate SNPs or SNVs for their potential effect on transcription factor binding by examining how the two alleles of the variant effect the binding score of a motif.  The basic process is outlined in the figure below.
 
 ## Outline of process
 
@@ -53,21 +55,21 @@ This straightforward process allows the interrogation of SNPs and SNVs in the co
 [^homer]: Website: [Homer](http://homer.salk.edu/homer/index.html)
   Paper: [http://www.sciencedirect.com/science/article/pii/S1097276510003667](http://dx.doi.org/10.1016/j.molcel.2010.05.004)
 
-Practically `r Githubpkg("Simon-Coetzee/motifBreakR")` has involves three phases.
+Practically `r BiocStyle::Biocpkg("motifbreakR")` has involves three phases.
 
-1. *Read in Single Nucleotide Variants:* The first step is to read in the list of variants.  Variants can be a list of rsIDs if your SNPs are represented in one of the SNPlocs packages, may be included as a [.bed](http://www.genome.ucsc.edu/FAQ/FAQformat.html#format1) file with a specifically formatted name field, or may be provided as a [.vcf](http://www.1000genomes.org/wiki/analysis/variant%20call%20format/vcf-variant-call-format-version-41) file. We then transform these input such that it may be read my `r Githubpkg("Simon-Coetzee/motifBreakR")`.
-2. *Find Broken Motifs:* Next we present `r Githubpkg("Simon-Coetzee/motifBreakR")` with the input generated in the previous step, along with a set of motifs formatted as class `MotifList`, and your preferred [scoring method](#methods). 
+1. *Read in Single Nucleotide Variants or Indels:* The first step is to read in the list of variants.  Variants can be a list of rsIDs if your SNPs are represented in one of the SNPlocs packages, may be included as a [.bed](http://www.genome.ucsc.edu/FAQ/FAQformat.html#format1) file with a specifically formatted name field, or may be provided as a [.vcf](http://www.1000genomes.org/wiki/analysis/variant%20call%20format/vcf-variant-call-format-version-41) file. We then transform these input such that it may be read my `r BiocStyle::Biocpkg("motifbreakR")`.
+2. *Find Broken Motifs:* Next we present `r BiocStyle::Biocpkg("motifbreakR")` with the input generated in the previous step, along with a set of motifs formatted as class `MotifList`, and your preferred [scoring method](#methods). 
 3. *Visualize SNPs and motifs:* Finally we can visualize which motifs are broken by any individual SNP using our plotting function.
 
 # How To Use motifbreakR: A Practical Example {#practical}
-This section offers an example of how to use `r Githubpkg("Simon-Coetzee/motifBreakR")` to identify potentially disrupted transcription factor binding sites due to 701 SNPs output from a `r Biocpkg("FunciSNP")` analysis of Prostate Cancer (PCa) genome wide association studies (GWAS) risk loci.
+This section offers an example of how to use `r BiocStyle::Biocpkg("motifbreakR")` to identify potentially disrupted transcription factor binding sites due to 701 SNPs output from a `r Biocpkg("FunciSNP")` analysis of Prostate Cancer (PCa) genome wide association studies (GWAS) risk loci.
 The SNPs are included in this package here:
 ```{r start, cache=TRUE, message=FALSE}
 library(motifbreakR)
 pca.snps.file <- system.file("extdata", "pca.enhancer.snps", package = "motifbreakR")
 pca.snps <- as.character(read.table(pca.snps.file)[,1])
 ```
-The simplest form of a `r Githubpkg("Simon-Coetzee/motifBreakR")` analysis is summarized as follows:
+The simplest form of a `r BiocStyle::Biocpkg("motifbreakR")` analysis is summarized as follows:
 ```{r outline, eval=FALSE}
 variants <- snps.from.rsid(rsid = pca.snps,
                            dbSNP = SNPlocs.Hsapiens.dbSNP142.GRCh37,
@@ -109,7 +111,7 @@ snps.mb <- snps.from.rsid(rsid = pca.snps,
 snps.mb
 ```
 
-A far greater variety of variants may be read into `r Githubpkg("Simon-Coetzee/motifBreakR")` via the `snps.from.file` function. In fact `r Githubpkg("Simon-Coetzee/motifBreakR")` will work with any organism present as a Bioconductor `r Biocpkg("BSgenome")` package. This includes 76 genomes representing 22 species.
+A far greater variety of variants may be read into `r BiocStyle::Biocpkg("motifbreakR")` via the `snps.from.file` function. In fact `r BiocStyle::Biocpkg("motifbreakR")` will work with any organism present as a Bioconductor `r Biocpkg("BSgenome")` package. This includes 76 genomes representing 22 species.
 
 ```{r whichgenome, message=FALSE, cache=TRUE}
 library(BSgenome)
@@ -160,6 +162,24 @@ snps.mb.frombed
 
 `snps.from.file` also can take as input a vcf file with SNVs, by using `format = "vcf"`.
 
+### Indels
+
+As of version 2.0 `r BiocStyle::Biocpkg("motifbreakR")` is able to parse and analyse indels as well as SNVs. The function `variants.from.file()` allows the import of indels and SNVs simultaneously.
+
+```{r getindel, message=FALSE, cache=TRUE}
+snps.indel.vcf <- system.file("extdata", "chek2.vcf.gz", package = "motifbreakR")
+snps.indel <- variants.from.file(file = snps.indel.vcf, 
+                                 search.genome = BSgenome.Hsapiens.UCSC.hg19, 
+                                 format = "vcf")
+snps.indel
+```
+
+We can filter to specifically see the indels like this:
+
+```{r showindel, message=FALSE, cache=TRUE}
+snps.indel[nchar(snps.indel$REF) > 1 | nchar(snps.indel$ALT) > 1]
+```
+
 ## *Step 2* | Find Broken Motifs
 Now that we have our data in the required format, we may continue to the task at hand, and determine which variants modify potential transcription factor binding. An important element of this task is identifying a set of transcription factor binding motifs that we wish to query. Fortunately `r Biocpkg("MotifDb")` includes a large selection of motifs across multiple species that we can see here:
 ```{r motifdb, message=FALSE, cache=TRUE}
@@ -190,7 +210,7 @@ See `?motifbreakR_motif` for more information and citations.
 
 Some of our data sets include a sequenceCount. These include `FlyFactorSurvey`, `hPDI`, `JASPAR_2014`, `JASPAR_CORE`, and `jolma2013` from `r Biocpkg("MotifDb")` and `HOCOMOCO` from the set of `motifbreakR_motif`. Using these we calculate a pseudocount to allow us to calculate the logarithms in the case where we have a `0` in a pwm.  The calculation for incorporating pseudocounts is `ppm <- (ppm * sequenceCount + 0.25)/(sequenceCount + 1)`.  If the sequenceCount for a particular ppm is `NA` we use 20 as a default sequenceCount.
 
-Now that we have the three necessary components to run `r Githubpkg("Simon-Coetzee/motifBreakR")`:
+Now that we have the three necessary components to run `r BiocStyle::Biocpkg("motifbreakR")`:
 
 1. A `BSgenome` object for our organism, in this case `BSgenome.Hsapiens.UCSC.hg19`
 2. A `MotifList` object containing our motifs, in this case `hocomoco`,
@@ -237,15 +257,15 @@ By default `motifbreakR` uses `bpparam()` as an argument to `BPPARAM` and will u
 
 ## *Step 3* | Visualize
 Now that we have our results, we can visualize them with the function `plotMB`.  Lets take a look at rs1006140.
-```{r plotting, cache=TRUE, eval=FALSE, fig.retina=2, fig.align='center', fig.height=8, fig.width=6}
+```{r plotting, cache=TRUE, fig.retina=2, fig.align='center', fig.height=8, fig.width=6}
 plotMB(results = results, rsid = "rs1006140", effect = "strong")
 ```
-<div class="figure" style="text-align: center">
-  <img width="75%" src="motifbreakr_plot.png" />
-</div>
+<!-- <div class="figure" style="text-align: center"> -->
+<!--   <img width="75%" src="motifbreakr_plot.png" /> -->
+<!-- </div> -->
 
 # Methods {#methods}
-`r Githubpkg("Simon-Coetzee/motifBreakR")` works with position probability matrices (PPM). PPM
+`r BiocStyle::Biocpkg("motifbreakR")` works with position probability matrices (PPM). PPM
 are derived as the fractional occurrence of nucleotides A,C,G, and T at
 each position of a position frequency matrix (PFM). PFM are simply the
 tally of each nucleotide at each position across a set of aligned
@@ -255,7 +275,7 @@ scoring matrices (PSSM) based on the principle that the PPM contains
 information about the likelihood of observing a particular nucleotide at
 a particular position of a true transcription factor binding site. What
 follows is a discussion of the three different algorithms that may be
-employed in calls to the `r Githubpkg("Simon-Coetzee/motifBreakR")` function via the `method`
+employed in calls to the `r BiocStyle::Biocpkg("motifbreakR")` function via the `method`
 argument.
 
 Suppose we have a frequency matrix $M$ of width $n$ (*i.e.* a
@@ -315,7 +335,7 @@ Thus, there are 3 possible algorithms to apply via the `method`
 argument. The first is the standard summation of log probabilities
 (`method='log'`). The second and third are the weighted sum and
 information content methods (`method='default'` and `method='ic'`) specified by
-equations for [Weighted Sum](#eqn4.1) and [Relative Entropy](#eqn4.2), respectively. `r Githubpkg("Simon-Coetzee/motifBreakR")` assumes a
+equations for [Weighted Sum](#eqn4.1) and [Relative Entropy](#eqn4.2), respectively. `r BiocStyle::Biocpkg("motifbreakR")` assumes a
 uniform background nucleotide distribution ($b$) in equations [4.1](#eqn1) and
 [4.5](#eqn4.1) unless otherwise specified by the user. Since we are primarily
 interested in the difference between alleles, background frequency is
@@ -324,7 +344,7 @@ inclusion of background frequency introduces potential bias when
 collections of motifs are employed, since motifs are themselves
 unbalanced with respect to nucleotide composition. With these cautions
 in mind, users may override the uniform distribution if so desired. For
-all three methods, `r Githubpkg("Simon-Coetzee/motifBreakR")` scores and reports the reference
+all three methods, `r BiocStyle::Biocpkg("motifbreakR")` scores and reports the reference
 and alternate alleles of the sequence
 ($F( s_{\textrm{REF}},M )$ and
 $F( s_{\textrm{ALT}},M )$), and provides the matrix scores
@@ -334,7 +354,7 @@ the motif matrix, $M$. If either of
 $F( s_{\textrm{REF}},M )$ and
 $F( s_{\textrm{ALT}},M )$ is greater than a user-specified
 threshold (default value of 0.85) the SNP is reported. By default
-`r Githubpkg("Simon-Coetzee/motifBreakR")` does not display neutral effects,
+`r BiocStyle::Biocpkg("motifbreakR")` does not display neutral effects,
 ($\Delta p_{i} < 0.4$) but this behaviour can be
 overridden.
 
