@@ -1153,6 +1153,8 @@ motifbreakR <- function(snpList, pwmList, threshold = 0.85, filterp = FALSE,
 #' rs2661839 <- example.results[names(example.results) %in% "rs2661839"]
 #' rs2661839 <- calculatePvalue(rs2661839)
 #'
+# #' @importFrom qvalue qvalue
+#'
 #' @export
 calculatePvalue <- function(results,
                             background = c(A = 0.25, C = 0.25, G = 0.25, T = 0.25)) {
@@ -1174,6 +1176,12 @@ calculatePvalue <- function(results,
     pvalues.df <- base::do.call("rbind", c(pvalues, make.row.names = FALSE))
     results$Refpvalue <- pvalues.df[, "ref"]
     results$Altpvalue <- pvalues.df[, "alt"]
+    # pvalue_effect <- unlist(Map(function(x, y) {x - y},
+    # results$Refpvalue,
+    # results$Altpvalue))
+    # results$pvalue_effect <- dplyr::case_when(abs(pvalue_effect) < 1e-4 ~ "neutral",
+    # abs(pvalue_effect) < 0.05 ~ "weak",
+    # TRUE ~ "strong")
     return(results)
   }
 }
@@ -1319,6 +1327,10 @@ DNAmotifAlignment.2snp <- function(pwms, result) {
 #'   AnnotationTrack plotTracks
 #' @export
 plotMB <- function(results, rsid, reverseMotif = TRUE, effect = c("strong", "weak")) {
+  motif.starts <- sapply(results$motifPos, `[`, 1)
+  motif.starts <- start(results) + motif.starts
+  motif.starts <- order(motif.starts)
+  results <- results[motif.starts]
   g <- genome(results)[[1]]
   result <- results[names(results) %in% rsid]
   result <- result[order(sapply(result$motifPos, min), sapply(result$motifPos, max)), ]
@@ -1333,12 +1345,9 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, effect = c("strong", "wea
   to <- end(result)[[1]] + distance.to.edge
   pwmList <- attributes(result)$motifs
   pwm.names <- result$providerId
-
-  getmotifs <- mcols(pwmList)$providerId %in% result$providerId &
-    mcols(pwmList)$providerName %in% result$providerName
-  pwms <- pwmList[getmotifs, ]
-  pwms <- pwms[order(match(paste0(mcols(pwms)$providerId, mcols(pwms)$providerName),
-                           paste0(result$providerId, result$providerName)))]
+  results_motifs <- paste0(result$providerId, result$providerName)
+  list_motifs <- paste0(mcols(pwmList)$providerId, mcols(pwmList)$providerName)
+  pwms <- pwmList <- pwmList[match(results_motifs, list_motifs)]
   if (reverseMotif) {
     for (pwm.i in seq_along(pwms)) {
       pwm.name <- names(pwms[pwm.i])
@@ -1455,9 +1464,8 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, effect = c("strong", "wea
   selectingfun <- selcor
   detailfun <- addPWM.stack
 
-  getmotifs <- mcols(pwmList)$providerId %in% result$providerId & mcols(pwmList)$providerName %in% result$providerName
-  motif_ids <- names(pwmList)[getmotifs]
-  names(motif_ids) <- mcols(pwmList)$providerName[getmotifs]
+  motif_ids <- names(pwmList)
+  names(motif_ids) <- mcols(pwmList)$providerName
 
   for (mymotif_i in seq_along(result)) {
     mymotif <- result[mymotif_i]
@@ -1490,14 +1498,24 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, effect = c("strong", "wea
   }
   result <- mres; rm(mres)
   motif_ids <- motif_ids[result$providerName]
-  motifT <- AnnotationTrack(result, id = motif_ids,
+  presult <- result
+  strand(presult) <- "*"
+  pres_cols <- DataFrame(feature = ifelse(!is.na(result$motifPos),
+                                          paste(result$geneSymbol, "motif", sep = "_"), ""),
+                         group = result$providerName,
+                         id = motif_ids)
+  presult <- GRanges(seqnames = seqnames(result[1]),
+                     ranges = ranges(result))
+  mcols(presult) <- pres_cols
+
+  motifT <- AnnotationTrack(presult,
                             fun = detailfun,
-                            group = result$providerName,
                             detailsFunArgs = list(pwm_stack = pwms),
-                            feature = ifelse(!is.na(result$motifPos),
-                                             paste0(result$geneSymbol, "_motif"), ""),
                             name = names(result)[[1]],
-                            selectFun = selectingfun)
+                            selectFun = selectingfun,
+                            reverseStacking = FALSE,
+                            stacking = "squish")
+
   if (exists("axisT")) {
     track_list <- list(ideoT, motifT, hiT, axisT)
   } else {
@@ -1505,7 +1523,8 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, effect = c("strong", "wea
   }
   plotTracks(track_list, from = from, to = to, showBandId = TRUE,
              cex.main = 0.8, col.main = "darkgrey",
-             add53 = TRUE, labelpos = "below", chromosome = chromosome, groupAnnotation = "group",
+             add53 = TRUE, labelpos = "below", chromosome = chromosome, #groupAnnotation = "id",
+             fontcolor.item="black",
              collapse = FALSE, min.width = 1, featureAnnotation = "feature", cex.feature = 0.8,
              details.size = 0.85, detailsConnector.pch = NA, detailsConnector.lty = 0,
              shape = "box", cex.group = 0.8, fonts = c("sans", "Helvetica"))
