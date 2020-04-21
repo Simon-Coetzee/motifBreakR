@@ -4,7 +4,9 @@
 \name{example.results}
 \alias{example.results}
 \title{Example Results from motifbreakR}
-\format{\code{\link[GenomicRanges]{GRanges}} output from \code{motifbreakR}}
+\format{
+\code{\link[GenomicRanges]{GRanges}} output from \code{motifbreakR}
+}
 \usage{
 example.results
 }

@@ -11,8 +11,15 @@
 #' @importFrom compiler cmpfun
 scoreMotif <- cmpfun(scoreMotif.a, options = list(optimize = 3))}
 \usage{
-scoreAllWindows(snp.seq, snp.seq.rc, pwm, from = "default",
-  to = "default", pwm.range = NULL, calcp = TRUE)
+scoreAllWindows(
+  snp.seq,
+  snp.seq.rc,
+  pwm,
+  from = "default",
+  to = "default",
+  pwm.range = NULL,
+  calcp = TRUE
+)
 }
 \description{
 scoreMotif.a <- function(snp.seq, ppm, len, offset = 1) {

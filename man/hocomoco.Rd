@@ -5,7 +5,8 @@
 \alias{hocomoco}
 \title{MotifDb object containing motif information from Homo Sapiens Comprehensive
 Model Collection (HOCOMOCO) of transcription factor (TF) binding models}
-\format{\code{\link[MotifDb]{MotifDb}} object of length 426; to access metadata
+\format{
+\code{\link[MotifDb]{MotifDb}} object of length 426; to access metadata
 use mcols(hocomoco)
 \describe{
  \item{providerName}{Name provided by HOCOMOCO}
@@ -92,7 +93,8 @@ consensus sequence. Quality F (failure) was assigned to TFs for which there
 was no reliable model identified."
 }
  \item{pubmedID}{\code{"23175603"} see \code{Source} for more details}
-}}
+}
+}
 \source{
 Kulakovskiy,I.V., Medvedeva,Y.A., Schaefer,U., Kasianov,A.S.,
   Vorontsov,I.E., Bajic,V.B. and Makeev,V.J. (2013) HOCOMOCO: a comprehensive

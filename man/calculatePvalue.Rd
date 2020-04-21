@@ -8,8 +8,10 @@ H{\'e}l{\`e}ne Touzet and Jean-St{\'e}phane Varr{\'e} (2007) Efficient and accur
  Algorithms for Molecular Biology, \bold{2: 15}.
 }
 \usage{
-calculatePvalue(results, background = c(A = 0.25, C = 0.25, G = 0.25, T =
-  0.25))
+calculatePvalue(
+  results,
+  background = c(A = 0.25, C = 0.25, G = 0.25, T = 0.25)
+)
 }
 \arguments{
 \item{results}{The output of \code{motifbreakR} that was run with \code{filterp=TRUE}}
@@ -32,6 +34,7 @@ this can be (although not always) a very memory and time intensive process if th
 data(example.results)
 rs2661839 <- example.results[names(example.results) \%in\% "rs2661839"]
 rs2661839 <- calculatePvalue(rs2661839)
+
 
 }
 \seealso{

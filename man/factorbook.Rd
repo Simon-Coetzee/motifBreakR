@@ -5,7 +5,8 @@
 \alias{factorbook}
 \title{MotifDb object containing motif information from around the genomic regions
 bound by 119 human transcription factors in Factorbook.}
-\format{\code{\link[MotifDb]{MotifDb}} object of length 79; to access metadata
+\format{
+\code{\link[MotifDb]{MotifDb}} object of length 79; to access metadata
 use mcols(factorbook)
 \describe{
  \item{providerName}{Name listed in meme output of 'Supp TableS2.pdf' for the citation indicated below}
@@ -23,7 +24,8 @@ use mcols(factorbook)
  \item{tfFamily}{\code{NA}}
  \item{experimentType}{\code{NA}}
  \item{pubmedID}{\code{"22955990"} see \code{Source} for more details}
-}}
+}
+}
 \source{
 J Wang, J Zhuang, S Iyer, XY Lin, et al. (2012) Sequence features and
   chromatin structure around the genomic regions bound by 119 human transcription

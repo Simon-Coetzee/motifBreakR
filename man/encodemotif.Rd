@@ -5,7 +5,8 @@
 \alias{encodemotif}
 \title{MotifDb object containing motif information from the known and discovered
 motifs for the ENCODE TF ChIP-seq datasets.}
-\format{\code{\link[MotifDb]{MotifDb}} object of length 2064; to access metadata
+\format{
+\code{\link[MotifDb]{MotifDb}} object of length 2064; to access metadata
 use mcols(encodemotif)
 \describe{
  \item{providerName}{Name provided by ENCODE}
@@ -28,7 +29,8 @@ use mcols(encodemotif)
  For motifs that were "known" the format tends to be \code{TF_source_sourceId} for example \code{AP1_jaspar_MA0099.2}.
 }
  \item{pubmedID}{\code{"24335146"} see \code{Source} for more details}
-}}
+}
+}
 \source{
 Pouya Kheradpour and Manolis Kellis (2013 December 13) Systematic
   discovery and characterization of regulatory motifs in ENCODE TF binding

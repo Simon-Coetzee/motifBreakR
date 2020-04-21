@@ -5,8 +5,7 @@
 \title{Plot a genomic region surrounding a genomic variant, and potentially disrupted
 motifs}
 \usage{
-plotMB(results, rsid, reverseMotif = TRUE, effect = c("strong",
-  "weak"))
+plotMB(results, rsid, reverseMotif = TRUE, effect = c("strong", "weak"))
 }
 \arguments{
 \item{results}{The output of \code{motifbreakR}}

@@ -5,10 +5,18 @@
 \title{Predict The Disruptiveness Of Single Nucleotide Polymorphisms On
 Transcription Factor Binding Sites.}
 \usage{
-motifbreakR(snpList, pwmList, threshold = 0.85, filterp = FALSE,
-  method = "default", show.neutral = FALSE, verbose = FALSE,
-  bkg = c(A = 0.25, C = 0.25, G = 0.25, T = 0.25), legacy.score = TRUE,
-  BPPARAM = bpparam())
+motifbreakR(
+  snpList,
+  pwmList,
+  threshold = 0.85,
+  filterp = FALSE,
+  method = "default",
+  show.neutral = FALSE,
+  verbose = FALSE,
+  bkg = c(A = 0.25, C = 0.25, G = 0.25, T = 0.25),
+  legacy.score = TRUE,
+  BPPARAM = bpparam()
+)
 }
 \arguments{
 \item{snpList}{The output of \code{snps.from.rsid} or \code{snps.from.file}}

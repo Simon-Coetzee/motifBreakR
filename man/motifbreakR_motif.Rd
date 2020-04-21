@@ -5,8 +5,10 @@
 \alias{motifbreakR_motif}
 \title{MotifDb object containing motif information from the motif databases of HOCOMOCO, Homer,
  FactorBook and ENCODE}
-\format{\code{\link[MotifDb]{MotifDb}} object of length 2816; to access metadata
-use mcols(motifbreakR_motif)}
+\format{
+\code{\link[MotifDb]{MotifDb}} object of length 2816; to access metadata
+use mcols(motifbreakR_motif)
+}
 \source{
 Kulakovskiy,I.V., Medvedeva,Y.A., Schaefer,U., Kasianov,A.S.,
   Vorontsov,I.E., Bajic,V.B. and Makeev,V.J. (2013) HOCOMOCO: a comprehensive

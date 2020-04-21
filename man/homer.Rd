@@ -5,7 +5,8 @@
 \alias{homer}
 \title{MotifDb object containing motif information from motif databases included in
 HOMER.}
-\format{\code{\link[MotifDb]{MotifDb}} object of length 247; to access metadata
+\format{
+\code{\link[MotifDb]{MotifDb}} object of length 247; to access metadata
 use mcols(homer)
 \describe{
  \item{providerName}{Name provided HOMER}
@@ -23,7 +24,8 @@ use mcols(homer)
  \item{tfFamily}{\code{NA}}
  \item{experimentType}{The Celltype, IP, Assay, and GEO id if applicable for the motif}
  \item{pubmedID}{\code{"20513432"} see \code{Source} for more details}
-}}
+}
+}
 \source{
 Heinz S, Benner C, Spann N, Bertolino E et al. (2010 May 28) Simple Combinations
   of Lineage-Determining Transcription Factors Prime cis-Regulatory
