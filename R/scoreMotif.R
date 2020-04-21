@@ -1380,6 +1380,9 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, effect = c("strong", "wea
     markerStart <- 1
   } else {
     markerStart <- -1 * markerStart
+    if (result$varType[[1]] %in% c("Other", "SNV")) {
+      markerStart <- markerStart + 1
+    }
     markerEnd <- markerStart + length(result$altPos[[1]])
   }
   varType <- result$varType[[1]]
