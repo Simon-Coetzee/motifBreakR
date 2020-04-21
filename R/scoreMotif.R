@@ -1380,10 +1380,10 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, effect = c("strong", "wea
     markerStart <- 1
   } else {
     markerStart <- -1 * markerStart
+    markerEnd <- markerStart + length(result$altPos[[1]])
     if (result$varType[[1]] %in% c("Other", "SNV")) {
       markerStart <- markerStart + 1
     }
-    markerEnd <- markerStart + length(result$altPos[[1]])
   }
   varType <- result$varType[[1]]
   varType <- switch(varType,
@@ -1444,10 +1444,12 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, effect = c("strong", "wea
 
   #altseq <- replaceLetterAt(altseq, at = wherereplace, letter = rep.int("N", sum(wherereplace)))
   #altseq <- replaceLetterAt(altseq, at = !wherereplace, letter = result$ALT[[1]])
+  histart <- start(result[1]) + min(result[1]$altPos[[1]]) - 2
+  histart <- ifelse(result[1]$varType %in% c("Other", "SNV"), histart + 1, histart)
+  hiend <- start(result[1]) + min(result[1]$altPos[[1]]) - 2 + length(result[1]$altPos[[1]])
   hiT <- HighlightTrack(trackList = list(seqT, seqAltT),
-                        start = start(result[1]) + min(result[1]$altPos[[1]]) - 2,
-                        end = start(result[1]) + min(result[1]$altPos[[1]]) - 2 +
-                          length(result[1]$altPos[[1]]),
+                        start = histart,
+                        end = hiend,
                         chromosome = chromosome)
 
   selectingfun <- selcor
