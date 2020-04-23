@@ -70,17 +70,17 @@ server <- function(input, output) {
 
                          inFile <- readr::read_tsv(file = inFile$datapath, col_names = FALSE)
                          incProgress(1/3)
-                         if (!requireNamespace(input$selected.snplocs, quietly = TRUE, character.only = TRUE)) {
-                             stop("Cannot locate SNPlocs package ", input$selected.snplocs)
-                         } else {
+                         # if (!requireNamespace(input$selected.snplocs, quietly = TRUE, character.only = TRUE)) {
+                             # stop("Cannot locate SNPlocs package ", input$selected.snplocs)
+                         # } else {
                              userSNPlocs <- eval(parse(text = paste(input$selected.snplocs, input$selected.snplocs, sep="::")))
-                         }
+                         # }
 
-                         if(!requireNamespace(input$selected.genome, quietly = TRUE, character.only = TRUE)) {
-                             stop("Cannot locate BSgenome package ", input$selected.genome)
-                         } else {
+                         # if(!requireNamespace(input$selected.genome, quietly = TRUE, character.only = TRUE)) {
+                             # stop("Cannot locate BSgenome package ", input$selected.genome)
+                         # } else {
                              userBSgenome <- eval(parse(text = paste(input$selected.genome, input$selected.genome, sep="::")))
-                         }
+                         # }
                          incProgress(1/3)
                          user.input <- switch(input$selected.format,
                                               rsID = snps.from.rsid(inFile$X1,
@@ -102,33 +102,25 @@ server <- function(input, output) {
         return(mList)
     })
 
+    results <- reactive({
+        motifbreakR(snpList = user.input(),
+                    pwmList = mList(),
+                    threshold = input$selected.pval,
+                    method = "ic",
+                    filterp = TRUE)
+    })
+
     output$user.input <- DT::renderDataTable({
-        # if(is(user.input(), "Observer")) return(NULL)
-        # message(class(user.input))
-        # message("is null? ", is.null(user.input))
-        my_ui <- observe({as.data.frame(user.input())})
-        as.data.frame(my_ui)
+        as.data.frame(user.input())
     })
 
     output$motif.selections <- DT::renderDataTable({
-    # output$motif.selections <- renderPrint({
-        # message(class(mList))
-        # message("is null? ", is.null(mList))
-        as.data.frame(mcols(observe({mList})))
+        as.data.frame(mcols(mList()))
     })
 
+
     output$motifbreakr.results <- DT::renderDataTable({
-
-        if (!exists(mList) | is.null(mList)) {
-            return(NULL)
-        }
-
-        results <- motifbreakR(snpList = user.input,
-                               pwmList = mList,
-                               threshold = input$selected.pval,
-                               method = "ic",
-                               filterp = TRUE)
-        as.data.frame(results)
+        as.data.frame(results())
     })
 }
 
