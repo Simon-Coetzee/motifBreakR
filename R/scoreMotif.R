@@ -1531,3 +1531,13 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, effect = c("strong", "wea
   return(invisible(NULL))
 }
 
+#' @import shinythemes
+#' @export
+shiny_motifbreakR <- function() {
+  appDir <- system.file("shiny", "shiny_motif", package = "motifbreakR")
+  if (appDir == "") {
+    stop("Could not find example directory. Try re-installing `mypackage`.", call. = FALSE)
+  }
+
+  shiny::runApp(appDir, display.mode = "normal")
+}
