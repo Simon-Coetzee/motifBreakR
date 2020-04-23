@@ -39,8 +39,9 @@ ui <- fluidPage(
                 numericInput(inputId = "selected.pval",
                     label = "P-value threshold",
                     value = 5e-5,
-                    max = 1, min = 0, step = 1e-6)
-            )
+                    max = 1, min = 0, step = 1e-6),
+                actionButton(inputId = "execute.analysis", label = "Run")
+            ),
         ),
         mainPanel(
             tabsetPanel(
@@ -102,7 +103,7 @@ server <- function(input, output) {
         return(mList)
     })
 
-    results <- reactive({
+    results <- eventReactive(input$execute.analysis, {
         motifbreakR(snpList = user.input(),
                     pwmList = mList(),
                     threshold = input$selected.pval,
@@ -120,7 +121,7 @@ server <- function(input, output) {
 
 
     output$motifbreakr.results <- DT::renderDataTable({
-        as.data.frame(results())
+        as.data.frame(results(), row.names = NULL)
     })
 }
 
