@@ -116,6 +116,9 @@ unlistColumn <- function(x, column = NULL) {
     x <- rep(x, times = numsplits)
     mcols(x)[[column]] <- columnvals
     return(x)
+  } else if(is(mcols(x)[[column]], "DNAStringSetList")) {
+    mcols(x)[[column]] <- as.character(unlist(mcols(x)[[column]]))
+    return(x)
   } else {
     return(x)
   }
