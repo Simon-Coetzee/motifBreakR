@@ -85,26 +85,16 @@ determine.allele.from.ambiguous <- function(ambiguous.allele, known.allele) {
 }
 
 #' @import GenomeInfoDb
-#' @importFrom stringr str_extract
 change.to.search.genome <- function(granges.object, search.genome) {
-  if (all(!is.na(genome(granges.object)))) {
-    if (identical(genome(granges.object), genome(search.genome))) {
-      return(granges.object)
-    }
-  }
-  if(isTRUE(all.equal(seqlevels(granges.object), seqlevels(search.genome)))) {
-    seqinfo(granges.object) <- seqinfo(search.genome)
-  } else {
-    if(seqlevelsStyle(granges.object) != seqlevelsStyle(search.genome)) {
-      seqlevelsStyle(granges.object) <- seqlevelsStyle(search.genome)
-    }
-    normal.xome <- seqlevels(granges.object)[(regexpr("_", seqlevels(granges.object)) < 0)]
-    #xome.value <- str_extract(normal.xome, "[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9]|6[0-9]|7[0-9]|8[0-9]|9[0-9]|X|Y|M")
-    positions <- unlist(sapply(paste0(normal.xome, "$"), grep, seqnames(seqinfo(search.genome))))
-    new2oldmap <- rep(NA, length(seqinfo(search.genome)))
-    new2oldmap[positions] <- 1:length(positions)
-    seqinfo(granges.object, new2old = new2oldmap) <- seqinfo(search.genome)
-  }
+  sequence <- seqlevels(granges.object)
+  ## sequence is in UCSC format and we want NCBI style
+  newStyle <- mapSeqlevels(sequence,seqlevelsStyle(search.genome))
+  newStyle <- newStyle[complete.cases(newStyle)] # removing NA cases.
+  ## rename the seqlevels
+  granges.object <- renameSeqlevels(granges.object,newStyle)
+  seqlevels(granges.object) <- seqlevelsInUse(granges.object)
+  seqinfo(granges.object) <- keepSeqlevels(seqinfo(search.genome),
+                                           value = seqlevelsInUse(granges.object))
   return(granges.object)
 }
 
@@ -125,6 +115,9 @@ unlistColumn <- function(x, column = NULL) {
     numsplits <- lengths(mcols(x)[[column]])
     x <- rep(x, times = numsplits)
     mcols(x)[[column]] <- columnvals
+    return(x)
+  } else if(is(mcols(x)[[column]], "DNAStringSetList")) {
+    mcols(x)[[column]] <- as.character(unlist(mcols(x)[[column]]))
     return(x)
   } else {
     return(x)
