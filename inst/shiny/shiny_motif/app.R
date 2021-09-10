@@ -9,11 +9,14 @@ library(shinythemes)
 
 strToObj <- function(x) {eval(parse(text=x))}
 
-ui <- fluidPage(
+ui <- fluidPage(theme = shinytheme("simplex"),
     titlePanel("MotifBreakR"),
     sidebarLayout(
         sidebarPanel(
             wellPanel(
+                radioButtons(inputId = "indels",
+                             label = "Variant Types:",
+                             choices = c("SNVs and/or Indels", "SNVs only")),
                 selectInput(inputId = "selected.genome",
                     label = "Select Genome",
                     choices = c("Choose BSgenome" = "", available.genomes())),
@@ -51,7 +54,19 @@ ui <- fluidPage(
                         tabPanel("Individual Motifs", DT::dataTableOutput("motif.selections"))
                     )
                 ),
-                tabPanel("Results", DT::dataTableOutput("motifbreakr.results")),
+                tabPanel("Results",
+                         selectInput("select_results", "Select columns to display",
+                                     choices = c("seqnames", "start", "end", "width", "strand",
+                                       "SNP_id", "REF", "ALT", "varType", "motifPos",
+                                       "geneSymbol", "dataSource", "providerName", "providerID",
+                                       "seqMatch", "pctRef", "pctAlt", "scoreRef", "scoreAlt",
+                                       "Refpvalue", "Altpvalue", "altPos", "alleleDiff", "effect"),
+                                     selected = c("seqnames", "start", "end", "SNP_id", "REF", "ALT",
+                                                  "geneSymbol", "dataSource", "providerName",
+                                                  "pctRef", "pctAlt", "scoreRef", "scoreAlt", "alleleDiff", "effect"),
+                                     width = '80%',
+                                     multiple = TRUE),
+                         DT::dataTableOutput("motifbreakr.results")),
                 tabPanel("Plot", "This is where the plots will be")
             )
         )
@@ -59,7 +74,13 @@ ui <- fluidPage(
 )
 
 server <- function(input, output) {
+    output$dbsnp <- renderUI({
+        if (input$indels == "SNVs only") {
+
+        }
+    })
     user.input <- reactive({
+        req(input$user.data, input$selected.snplocs, input$selected.genome)
         withProgress(message = "Data getting ready",
                      detail = "This can take a while, looking up variants ...",
                      value = 0, {
@@ -69,26 +90,25 @@ server <- function(input, output) {
                              return(NULL)
                          }
 
-                         inFile <- readr::read_tsv(file = inFile$datapath, col_names = FALSE)
+                         inFiler <- readr::read_tsv(file = inFile$datapath, col_names = FALSE)
                          incProgress(1/3)
-                         # if (!requireNamespace(input$selected.snplocs, quietly = TRUE, character.only = TRUE)) {
-                             # stop("Cannot locate SNPlocs package ", input$selected.snplocs)
-                         # } else {
-                             userSNPlocs <- eval(parse(text = paste(input$selected.snplocs, input$selected.snplocs, sep="::")))
-                         # }
 
-                         # if(!requireNamespace(input$selected.genome, quietly = TRUE, character.only = TRUE)) {
-                             # stop("Cannot locate BSgenome package ", input$selected.genome)
-                         # } else {
-                             userBSgenome <- eval(parse(text = paste(input$selected.genome, input$selected.genome, sep="::")))
-                         # }
+                         if (input$selected.snplocs == "") {
+                             userSNPlocs <- NULL
+                         } else {
+                             userSNPlocs <- eval(parse(text = paste(input$selected.snplocs, input$selected.snplocs, sep="::")))
+                         }
+                         userBSgenome <- eval(parse(text = paste(input$selected.genome, input$selected.genome, sep="::")))
+
                          incProgress(1/3)
                          user.input <- switch(input$selected.format,
-                                              rsID = snps.from.rsid(inFile$X1,
+                                              rsID = snps.from.rsid(inFiler$X1,
                                                                     dbSNP = userSNPlocs,
                                                                     search.genome = userBSgenome),
-                                              BED = snps.from.file(inFile, format = "blah"),
-                                              VCF = snps.from.file(inFile, format = "blah"))
+                                              BED = snps.from.file(file = inFile$datapath, search.genome = userBSgenome,
+                                                                   dbSNP = userSNPlocs, format = "bed", indels = ifelse(input$indels == "SNVs only", FALSE, TRUE)),
+                                              VCF = snps.from.file(file = inFile$datapath, search.genome = userBSgenome,
+                                                                   dbSNP = userSNPlocs, format = "vcf", indels = ifelse(input$indels == "SNVs only", FALSE, TRUE)))
                          incProgress(1/3)
                          return(user.input)
                      })
@@ -108,10 +128,12 @@ server <- function(input, output) {
                     pwmList = mList(),
                     threshold = input$selected.pval,
                     method = "ic",
+                    legacy.score = FALSE,
                     filterp = TRUE)
     })
 
     output$user.input <- DT::renderDataTable({
+        req(user.input())
         as.data.frame(user.input())
     })
 
@@ -121,7 +143,8 @@ server <- function(input, output) {
 
 
     output$motifbreakr.results <- DT::renderDataTable({
-        as.data.frame(results(), row.names = NULL)
+        DT::formatRound(DT::datatable(as.data.frame(results(), row.names = NULL)[, input$select_results]),
+                                      columns = c("pctRef", "pctAlt", "scoreRef", "scoreAlt", "alleleDiff"), digits = 3)
     })
 }
 

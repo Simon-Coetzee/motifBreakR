@@ -85,16 +85,26 @@ determine.allele.from.ambiguous <- function(ambiguous.allele, known.allele) {
 }
 
 #' @import GenomeInfoDb
+#' @importFrom stringr str_extract
 change.to.search.genome <- function(granges.object, search.genome) {
-  sequence <- seqlevels(granges.object)
-  ## sequence is in UCSC format and we want NCBI style
-  newStyle <- mapSeqlevels(sequence,seqlevelsStyle(search.genome))
-  newStyle <- newStyle[complete.cases(newStyle)] # removing NA cases.
-  ## rename the seqlevels
-  granges.object <- renameSeqlevels(granges.object,newStyle)
-  seqlevels(granges.object) <- seqlevelsInUse(granges.object)
-  seqinfo(granges.object) <- keepSeqlevels(seqinfo(search.genome),
-                                           value = seqlevelsInUse(granges.object))
+  if (all(!is.na(genome(granges.object)))) {
+    if (identical(genome(granges.object), genome(search.genome))) {
+      return(granges.object)
+    }
+  }
+  if(isTRUE(all.equal(seqlevels(granges.object), seqlevels(search.genome)))) {
+    seqinfo(granges.object) <- seqinfo(search.genome)
+  } else {
+    if(!all(seqlevelsStyle(granges.object) %in% seqlevelsStyle(search.genome))) {
+      seqlevelsStyle(granges.object) <- seqlevelsStyle(search.genome)
+    }
+    normal.xome <- seqlevels(granges.object)[(regexpr("_", seqlevels(granges.object)) < 0)]
+    #xome.value <- str_extract(normal.xome, "[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9]|6[0-9]|7[0-9]|8[0-9]|9[0-9]|X|Y|M")
+    positions <- unlist(sapply(paste0(normal.xome, "$"), grep, seqnames(seqinfo(search.genome))))
+    new2oldmap <- rep(NA, length(seqinfo(search.genome)))
+    new2oldmap[positions] <- 1:length(positions)
+    seqinfo(granges.object, new2old = new2oldmap) <- seqinfo(search.genome)
+  }
   return(granges.object)
 }
 
@@ -115,9 +125,6 @@ unlistColumn <- function(x, column = NULL) {
     numsplits <- lengths(mcols(x)[[column]])
     x <- rep(x, times = numsplits)
     mcols(x)[[column]] <- columnvals
-    return(x)
-  } else if(is(mcols(x)[[column]], "DNAStringSetList")) {
-    mcols(x)[[column]] <- as.character(unlist(mcols(x)[[column]]))
     return(x)
   } else {
     return(x)
@@ -260,10 +267,10 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
       ## spit snps into named and unnamed snps
       snps.noid <- snps[!grepl("rs", snps$name), ]
       ## get ref for unnamed snps
-      snps.ref <- getSeq(search.genome, snps)
+      snps.ref <- getSeq(search.genome, snps.noid)
       snps.ref <- as.character(snps.ref)
       ## get alt for unnamed snps
-      snps.alt <- snps$name
+      snps.alt <- snps.noid$name
       snps.alt <- unlist(lapply(snps.alt, strsplit, split = ":"), recursive = FALSE)
       snps.ref.user <- sapply(snps.alt, "[", 3)
       if (isTRUE(all.equal(snps.ref, snps.ref.user))) {
@@ -277,7 +284,7 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
       snps.alt <- sapply(snps.alt, "[", 4)
       snps.alt.split <- str_split(snps.alt, ",")
       rep.vars <- vapply(snps.alt.split, length, integer(1))
-      snps <- rep(snps, rep.vars)
+      snps.noid <- rep(snps.noid, rep.vars)
       snps.ref <- rep(snps.ref, rep.vars)
       snps.alt <- unlist(snps.alt.split)
       is.indel <- nchar(snps.alt) > 1 | nchar(snps.ref) > 1
@@ -301,7 +308,7 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
       ## check if alt was given for unnamed snps
       alt.allele.is.valid <- !drop.variants.alt & (snps.alt != snps.ref)
       if (!all(alt.allele.is.valid)) {
-        snpnames <- snps$name[drop.variants.alt]
+        snpnames <- snps.noid$name[drop.variants.alt]
         if (length(snpnames) < 50 && length(snpnames) > 0) {
           warning(paste("User variant", snpnames, "alternate allele is not one of \"A\", \"T\", \"G\", or \"C\""))
         } else {
@@ -315,32 +322,27 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
           warning(paste0(sum(equal.to.ref), " user variants are the same as the reference genome ",
                          search.genome@provider_version, " for ", search.genome@common_name, "\n These variants were excluded"))
         }
-        snps <- snps[alt.allele.is.valid]
+        snps.noid <- snps.noid[alt.allele.is.valid]
         snps.ref <- snps.ref[alt.allele.is.valid]
         snps.alt <- snps.alt[alt.allele.is.valid]
       }
-      snps$REF <- snps.ref
-      snps$ALT <- snps.alt
-      strand(snps) <- "*"
-      names(snps) <- paste(as.character(snps), snps.ref, snps.alt, sep = ":")
-      snps <- formatVcfOut(snps, search.genome)
-      if (!indels) {
-        snps.rsid <- snps[grepl("rs", snps$SNP_id), ]
-        snps.noid <- snps[!grepl("rs", snps$SNP_id), ]
+      snps.noid$REF <- snps.ref
+      snps.noid$ALT <- snps.alt
+      strand(snps.noid) <- "*"
+      names(snps.noid) <- paste(as.character(snps.noid), snps.ref, snps.alt, sep = ":")
+      snps.noid <- formatVcfOut(snps.noid, search.genome)
+      snps.rsid <- snps[grepl("rs", snps$name), ]
       ## get object for named snps
-        if (length(snps.rsid) > 0) {
-          snps.rsid.out <- snps.from.rsid(snps.rsid$name, dbSNP = dbSNP, search.genome = search.genome)
-          colnames(mcols(snps.rsid.out))[1] <- "SNP_id"
-          names(snps.rsid.out) <- snps.rsid.out$SNP_id
-          snps.out <- c(snps.rsid.out, snps.noid)
-        } else {
-          snps.out <- snps.noid
-        }
+      if (length(snps.rsid) > 0) {
+        snps.rsid.out <- snps.from.rsid(snps.rsid$name, dbSNP = dbSNP, search.genome = search.genome)
+        colnames(mcols(snps.rsid.out))[1] <- "SNP_id"
+        names(snps.rsid.out) <- snps.rsid.out$SNP_id
+        snps.out <- c(snps.rsid.out, snps.noid)
       } else {
-        snps.out <- snps
+        snps.out <- snps.noid
       }
       attributes(snps.out)$genome.package <- attributes(search.genome)$pkgname
-      return(snps.out)
+      return(sort(snps.out))
     } else {
       stop("format must be one of 'vcf' or 'bed'; currently set as ", format)
     }
