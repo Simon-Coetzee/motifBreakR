@@ -1017,6 +1017,8 @@ preparePWM <- function(pwmList = pwmList,
 #'                         method = "ic",
 #'                         BPPARAM=BiocParallel::SerialParam())
 #' @import BiocParallel
+#' @import parallel
+#' @importFrom parallel clusterEvalQ
 #' @importFrom BiocParallel bplapply
 #' @importFrom stringr str_length str_trim
 #' @export
@@ -1034,7 +1036,7 @@ motifbreakR <- function(snpList, pwmList, threshold = 0.85, filterp = FALSE,
   if (num.snps < cores) {
     cores <- num.snps
   }
-  if (is(BPPARAM, "SnowParam")) {
+  if (!(is(BPPARAM, "MulticoreParam")|is(BPPARAM, "SerialParam"))) {
     bpstart(BPPARAM)
     cl <- bpbackend(BPPARAM)
     clusterEvalQ(cl, library("MotifDb"))
@@ -1070,18 +1072,18 @@ motifbreakR <- function(snpList, pwmList, threshold = 0.85, filterp = FALSE,
   }
   snpList <- snpList_cores; rm(snpList_cores)
 
-  x <- lapply(snpList, scoreSnpList,
-              pwmList = pwms$pwmList, threshold = pwms$pwmThreshold,
-              pwmList.pc = pwms$pwmListPseudoCount, pwmRanges = pwms$pwmRange,
-              method = method, bkg = bkg, show.neutral = show.neutral,
-              verbose = ifelse(cores == 1, verbose, FALSE), genome.bsgenome = genome.bsgenome,
-              filterp = filterp)
-  # x <- bplapply(snpList, scoreSnpList,
-  #               pwmList = pwms$pwmList, threshold = pwms$pwmThreshold,
-  #               pwmList.pc = pwms$pwmListPseudoCount, pwmRanges = pwms$pwmRange,
-  #               method = method, bkg = bkg, show.neutral = show.neutral,
-  #               verbose = ifelse(cores == 1, verbose, FALSE), genome.bsgenome = genome.bsgenome,
-  #               filterp = filterp, BPPARAM = BPPARAM)
+  # x <- lapply(snpList, scoreSnpList,
+  #             pwmList = pwms$pwmList, threshold = pwms$pwmThreshold,
+  #             pwmList.pc = pwms$pwmListPseudoCount, pwmRanges = pwms$pwmRange,
+  #             method = method, bkg = bkg, show.neutral = show.neutral,
+  #             verbose = ifelse(cores == 1, verbose, FALSE), genome.bsgenome = genome.bsgenome,
+  #             filterp = filterp)
+  x <- bplapply(snpList, scoreSnpList,
+                pwmList = pwms$pwmList, threshold = pwms$pwmThreshold,
+                pwmList.pc = pwms$pwmListPseudoCount, pwmRanges = pwms$pwmRange,
+                method = method, bkg = bkg, show.neutral = show.neutral,
+                verbose = ifelse(cores == 1, verbose, FALSE), genome.bsgenome = genome.bsgenome,
+                filterp = filterp, BPPARAM = BPPARAM)
 
   ## Cluster / MC cleanup
   if (inherits(x, "try-error")) {
