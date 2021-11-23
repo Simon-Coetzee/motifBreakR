@@ -604,7 +604,7 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
                                                          k, pwm, calcp = filterp)
           }
         } else {
-          snp.pos <- len - hit$window + 1L
+          snp.pos <- k:(k + nchar(result$REF) - 1L)
           if (legacy) {
             if (hit$strand == 1) {
               allelR <- pwm.basic[as.character(result$REF), snp.pos]
@@ -623,14 +623,14 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
           if (effect == "neut") {
             if (show.neutral) {
               if (legacy) {
-                res.el.e[[uniquename]] <- updateResultsSnv(result, snp.ref[ref.range], snp.pos,
+                res.el.e[[uniquename]] <- updateResultsSnv(result, snp.ref[ref.range], snp.pos - 1,
                                                            hit, ref.windows, alt.windows,
                                                            allelR, allelA, effect, len,
                                                            k, pwm, calcp = filterp)
               } else {
                 res.el.e[[uniquename]] <- updateResultsIndel(result,
                                                              snp.ref, snp.alt,
-                                                             21, 21,
+                                                             snp.pos, snp.pos,
                                                              hit.ref, hit.alt,
                                                              ref.windows, alt.windows,
                                                              score, effect, len,
@@ -639,14 +639,14 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
             }
           } else {
             if (legacy) {
-              res.el.e[[uniquename]] <- updateResultsSnv(result, snp.ref[ref.range], snp.pos,
+              res.el.e[[uniquename]] <- updateResultsSnv(result, snp.ref[ref.range], snp.pos - 1,
                                                          hit, ref.windows, alt.windows,
                                                          allelR, allelA, effect, len,
                                                          k, pwm, calcp = filterp)
             } else {
               res.el.e[[uniquename]] <- updateResultsIndel(result,
                                                            snp.ref, snp.alt,
-                                                           21, 21,
+                                                           snp.pos, snp.pos,
                                                            hit.ref, hit.alt,
                                                            ref.windows, alt.windows,
                                                            score, effect, len,
@@ -734,6 +734,7 @@ updateResultsIndel <- function(result,
     matchs <- ref.seq
     snp.pos <- ref.pos
   }
+
   strand(result) <- strand.opt[[best.hit$strand]]
   best.hit$window <- as.integer(best.hit$window)
   mresult <- mcols(result)
@@ -1057,6 +1058,7 @@ motifbreakR <- function(snpList, pwmList, threshold = 0.85, filterp = FALSE,
                      method = method)
 
   k <- max(sapply(pwms$pwmList, ncol))
+
   snpList <- prepareVariants(fsnplist = snpList,
                              genome.bsgenome = genome.bsgenome,
                              max.pwm.width = k,
@@ -1072,12 +1074,6 @@ motifbreakR <- function(snpList, pwmList, threshold = 0.85, filterp = FALSE,
   }
   snpList <- snpList_cores; rm(snpList_cores)
 
-  # x <- lapply(snpList, scoreSnpList,
-  #             pwmList = pwms$pwmList, threshold = pwms$pwmThreshold,
-  #             pwmList.pc = pwms$pwmListPseudoCount, pwmRanges = pwms$pwmRange,
-  #             method = method, bkg = bkg, show.neutral = show.neutral,
-  #             verbose = ifelse(cores == 1, verbose, FALSE), genome.bsgenome = genome.bsgenome,
-  #             filterp = filterp)
   x <- bplapply(snpList, scoreSnpList,
                 pwmList = pwms$pwmList, threshold = pwms$pwmThreshold,
                 pwmList.pc = pwms$pwmListPseudoCount, pwmRanges = pwms$pwmRange,
