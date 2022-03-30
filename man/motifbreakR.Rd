@@ -46,25 +46,28 @@ evaluation.}
 }
 \value{
 a GRanges object containing:
- \item{REF}{the reference allele for the SNP}
- \item{ALT}{the alternate allele for the SNP}
- \item{snpPos}{the coordinates of the SNP}
- \item{motifPos}{the coordinates of the SNP within the TF binding motif}
+ \item{REF}{the reference allele for the variant}
+ \item{ALT}{the alternate allele for the variant}
+ \item{snpPos}{the coordinates of the variant}
+ \item{motifPos}{The position of the motif relative the the variant}
  \item{geneSymbol}{the geneSymbol corresponding to the TF of the TF binding motif}
  \item{dataSource}{the source of the TF binding motif}
  \item{providerName, providerId}{the name and id provided by the source}
  \item{seqMatch}{the sequence on the 5' -> 3' direction of the "+" strand
  that corresponds to DNA at the position that the TF binding motif was found.}
- \item{pctRef}{The score as determined by the scoring method, when the sequence contains the reference SNP allele, normalized to a scale from 0 - 1. If \code{filterp = FALSE},
+ \item{pctRef}{The score as determined by the scoring method, when the sequence contains the reference variant allele, normalized to a scale from 0 - 1. If \code{filterp = FALSE},
  this is the value that is thresholded.}
- \item{pctAlt}{The score as determined by the scoring method, when the sequence contains the alternate SNP allele, normalized to a scale from 0 - 1. If \code{filterp = FALSE},
+ \item{pctAlt}{The score as determined by the scoring method, when the sequence contains the alternate variant allele, normalized to a scale from 0 - 1. If \code{filterp = FALSE},
  this is the value that is thresholded.}
- \item{scoreRef}{The score as determined by the scoring method, when the sequence contains the reference SNP allele}
- \item{scoreAlt}{The score as determined by the scoring method, when the sequence contains the alternate SNP allele}
+ \item{scoreRef}{The score as determined by the scoring method, when the sequence contains the reference variant allele}
+ \item{scoreAlt}{The score as determined by the scoring method, when the sequence contains the alternate variant allele}
  \item{Refpvalue}{p-value for the match for the pctRef score, initially set to \code{NA}. see \code{\link{calculatePvalue}} for more information}
  \item{Altpvalue}{p-value for the match for the pctAlt score, initially set to \code{NA}. see \code{\link{calculatePvalue}} for more information}
  \item{alleleRef}{The proportional frequency of the reference allele at position \code{motifPos} in the motif}
  \item{alleleAlt}{The proportional frequency of the alternate allele at position \code{motifPos} in the motif}
+ \item{altPos}{the position, relative to the reference allele, of the alternate allele}
+ \item{alleleDiff}{The difference between the score on the reference allele and the score on the alternate allele}
+ \item{alleleEffectSize}{The ratio of the \code{alleleDiff} and the maximal score of a sequence under the PWM}
  \item{effect}{one of weak, strong, or neutral indicating the strength of the effect.}
  each SNP in this object may be plotted with \code{\link{plotMB}}
 }

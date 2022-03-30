@@ -10,13 +10,17 @@ H{\'e}l{\`e}ne Touzet and Jean-St{\'e}phane Varr{\'e} (2007) Efficient and accur
 \usage{
 calculatePvalue(
   results,
-  background = c(A = 0.25, C = 0.25, G = 0.25, T = 0.25)
+  background = c(A = 0.25, C = 0.25, G = 0.25, T = 0.25),
+  granularity = NULL,
+  BPPARAM = bpparam()
 )
 }
 \arguments{
 \item{results}{The output of \code{motifbreakR} that was run with \code{filterp=TRUE}}
 
-\item{background}{Numeric Vector; the background probabilites of the nucleotides}
+\item{background}{Numeric Vector; the background probabilities of the nucleotides}
+
+\item{granularity}{Numeric Vector; the granularity to which to round the PWM, larger values compromise full accuracy for speed of calculation. A value of \code{NULL} does no rounding.}
 }
 \value{
 a GRanges object. The same Granges object that was input as \code{results}, but with

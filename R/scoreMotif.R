@@ -334,168 +334,7 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
                          threshold = 1e-3, show.neutral = FALSE, verbose = FALSE, legacy = FALSE,
                          genome.bsgenome=NULL, pwmList.pc = NULL, pwmRanges = NULL, filterp=TRUE) {
   k <- max(sapply(pwmList, ncol))
-  # ref_len <- nchar(fsnplist$REF)
-  # alt_len <- nchar(fsnplist$ALT)
-  # is.indel <- ref_len > 1L | alt_len > 1L
-  # ## check that reference matches ref genome
-  # equals.ref <- getSeq(genome.bsgenome, fsnplist) == fsnplist$REF
-  # if (!all(equals.ref)) {
-  #   stop(paste(names(fsnplist[!equals.ref]), "reference allele does not match value in reference genome",
-  #              sep = " "))
-  # }
-  # if (sum(is.indel) < length(is.indel) & sum(is.indel) > 0L) {
-  #   if (legacy) {
-  #     warning("Indels are included in variant input set, but legacy scoring was enabled.\n",
-  #             "Legacy scoring is not availble with indels and they will be dropped from analysis")
-  #     fsnplist.indel <- NULL
-  #     fsnplist.snv <- fsnplist[!is.indel]
-  #   } else {
-  #     fsnplist.indel <- fsnplist[is.indel]
-  #     fsnplist.snv <- fsnplist[!is.indel]
-  #   }
-  # } else if (sum(is.indel) == length(is.indel)) {
-  #   fsnplist.indel <- fsnplist
-  #   fsnplist.snv <- NULL
-  #   if (legacy) {
-  #     warning("The only variants included in the input set are indels, but legacy scoring was selected.\n",
-  #             "Legacy scoring is not availble for use with indels and will be disabled.")
-  #     legacy <- FALSE
-  #   }
-  # } else if (sum(is.indel) == 0L) {
-  #   fsnplist.indel <- NULL
-  #   fsnplist.snv <- fsnplist
-  # }
-  # if (!is.null(fsnplist.indel)) {
-  #   snp.sequence.ref.indel <- getSeq(genome.bsgenome, promoters(fsnplist.indel, upstream = k - 1,
-  #                                                               downstream = k + max(nchar(fsnplist.indel$REF))))
-  #   at <- as(IRanges(start = k, width = width(fsnplist.indel)), "IRangesList")
-  #   snp.sequence.alt.indel <- DNAStringSet(Map(replaceAt,
-  #                                              x = snp.sequence.ref.indel,
-  #                                              at = at,
-  #                                              fsnplist.indel$ALT))
-  #
-  #   need.alignment <- !(lengths(fsnplist.indel$REF) == 1 | lengths(fsnplist.indel$ALT) == 1)
-  #   insertion.var <- lengths(fsnplist.indel$REF) < lengths(fsnplist.indel$ALT)
-  #   fsnplist.indel$ALT_loc <- 1L
-  #   fsnplist.indel[insertion.var]$ALT_loc <- Map(seq,
-  #                                          from = nchar(fsnplist.indel[insertion.var]$REF) + 1L,
-  #                                          to = nchar(fsnplist.indel[insertion.var]$ALT))
-  #   fsnplist.indel[!insertion.var]$ALT_loc <- Map(seq,
-  #                                           from = nchar(fsnplist.indel[!insertion.var]$ALT) + 1L,
-  #                                           to = nchar(fsnplist.indel[!insertion.var]$REF))
-  #   ref.len <- nchar(fsnplist.indel[nchar(fsnplist.indel$REF) == nchar(fsnplist.indel$ALT)]$REF)
-  #   fsnplist.indel[nchar(fsnplist.indel$REF) == nchar(fsnplist.indel$ALT)]$ALT_loc <- lapply(ref.len,
-  #                                                                          function(x) {
-  #                                                                            seq(from = 1L,
-  #                                                                                to = x)
-  #                                                                          })
-  #   fsnplist.indel$varType <- "Other"
-  #   if (sum(insertion.var) > 0) {
-  #     fsnplist.indel[insertion.var, ]$varType <- "Insertion"
-  #   }
-  #   if (sum(lengths(fsnplist.indel$REF) > lengths(fsnplist.indel$ALT)) > 0) {
-  #     fsnplist.indel[lengths(fsnplist.indel$REF) > lengths(fsnplist.indel$ALT)]$varType <- "Deletion"
-  #   }
-  #   if (any(need.alignment)) {
-  #     need.del <- any(!insertion.var & need.alignment)
-  #     need.ins <- any(insertion.var & need.alignment)
-  #     if (need.del) {
-  #       pattern.del <- Map(matchPattern,
-  #                          fsnplist.indel[!insertion.var & need.alignment]$ALT,
-  #                          fsnplist.indel[!insertion.var & need.alignment]$REF,
-  #                          with.indels = F, max.mismatch = 0)
-  #       names(pattern.del) <- names(fsnplist.indel[!insertion.var & need.alignment])
-  #       pattern.del <- sapply(pattern.del, function(x) {
-  #         slen <- length(subject(x))
-  #         x <- x[start(x) == 1 | end(x) == slen]
-  #         if (length(x) > 0) {
-  #           x <- x[1]
-  #           x <- gaps(x)
-  #           x <- as(x, "IRanges")
-  #         }
-  #       })
-  #       pattern.del.valid <- sapply(pattern.del, function(x) {length(x) > 0})
-  #       nr.pattern.del <- lapply(pattern.del[pattern.del.valid], function(x) {start(x):end(x)})
-  #       fsnplist.indel[!insertion.var & need.alignment][names(pattern.del[pattern.del.valid])]$ALT_loc <- nr.pattern.del
-  #       if (any((!insertion.var & need.alignment)[!pattern.del.valid])) {
-  #         alignment.del <- Map(pairwiseAlignment,
-  #                              fsnplist.indel[!insertion.var & need.alignment][!pattern.del.valid]$ALT,
-  #                              fsnplist.indel[!insertion.var & need.alignment][!pattern.del.valid]$REF,
-  #                              type = "global")
-  #         names(alignment.del) <- names(fsnplist.indel[!insertion.var & need.alignment][!pattern.del.valid])
-  #         alignment.del <- sapply(sapply(alignment.del, deletion), unlist)
-  #         alignment.del.valid <- sapply(alignment.del, function(x) {length(x) > 0})
-  #         nr.alignment.del <- lapply(alignment.del[alignment.del.valid], function(x) {start(x):end(x)})
-  #         fsnplist.indel[!insertion.var & need.alignment][names(alignment.del[alignment.del.valid])]$ALT_loc <- nr.alignment.del
-  #         rm(alignment.del, nr.alignment.del)
-  #       }
-  #       rm(pattern.del, nr.pattern.del, pattern.del.valid, need.del)
-  #     }
-  #     if (need.ins) {
-  #       pattern.ins <- Map(matchPattern,
-  #                          fsnplist.indel[insertion.var & need.alignment]$REF,
-  #                          fsnplist.indel[insertion.var & need.alignment]$ALT,
-  #                          with.indels = F, max.mismatch = 0)
-  #       names(pattern.ins) <- names(fsnplist.indel[insertion.var & need.alignment])
-  #       pattern.ins <- sapply(pattern.ins, function(x) {
-  #         slen <- length(subject(x))
-  #         x <- x[start(x) == 1 | end(x) == slen]
-  #         if (length(x) > 0) {
-  #           x <- x[1]
-  #           x <- gaps(x)
-  #           x <- as(x, "IRanges")
-  #         }
-  #       })
-  #       pattern.ins.valid <- sapply(pattern.ins, function(x) {length(x) > 0})
-  #       nr.pattern.ins <- lapply(pattern.ins[pattern.ins.valid], function(x) {start(x):end(x)})
-  #       fsnplist.indel[insertion.var & need.alignment][names(pattern.ins[pattern.ins.valid])]$ALT_loc <- nr.pattern.ins
-  #       if (any((insertion.var & need.alignment)[!pattern.ins.valid])) {
-  #         alignment.ins <- Map(pairwiseAlignment,
-  #                              fsnplist.indel[insertion.var & need.alignment][!pattern.ins.valid]$ALT,
-  #                              fsnplist.indel[insertion.var & need.alignment][!pattern.ins.valid]$REF,
-  #                              type = "global")
-  #         names(alignment.ins) <- names(fsnplist.indel[insertion.var & need.alignment][!pattern.ins.valid])
-  #         alignment.ins <- sapply(sapply(alignment.ins, insertion), unlist)
-  #         alignment.ins.valid <- sapply(alignment.ins, function(x) {length(x) > 0})
-  #         nr.alignment.ins <- lapply(alignment.ins[alignment.ins.valid], function(x) {start(x):end(x)})
-  #         fsnplist.indel[insertion.var & need.alignment][names(alignment.ins[alignment.ins.valid])]$ALT_loc <- nr.alignment.ins
-  #         rm(alignment.ins, nr.alignment.ins)
-  #       }
-  #       rm(pattern.ins, nr.pattern.ins, pattern.ins.valid, need.ins)
-  #     }
-  #     rm(ref.len, insertion.var, need.alignment)
-  #   }
-  # }
-  # if (!is.null(fsnplist.snv)) {
-  #   snp.sequence.ref.snv <- getSeq(genome.bsgenome, promoters(fsnplist.snv, upstream = k - 1,
-  #                                                             downstream = k + 1))
-  #   at <- matrix(FALSE, nrow = length(snp.sequence.ref.snv), ncol = (k * 2))
-  #   at[, k] <- TRUE
-  #   snp.sequence.alt.snv <- replaceLetterAt(snp.sequence.ref.snv, at, fsnplist.snv$ALT)
-  #   fsnplist.snv$ALT_loc <- 1L
-  #   fsnplist.snv$varType <- "SNV"
-  # }
-  # if (sum(is.indel) < length(is.indel) & sum(is.indel) > 0L) {
-  #   fsnplist <- c(fsnplist.indel, fsnplist.snv)
-  #   snp.sequence.alt <- strsplit(as.character(c(snp.sequence.alt.indel,
-  #                                               snp.sequence.alt.snv)), "")
-  #   snp.sequence.ref <- strsplit(as.character(c(snp.sequence.ref.indel,
-  #                                               snp.sequence.ref.snv)), "")
-  #   rm(fsnplist.indel, fsnplist.snv,
-  #      snp.sequence.alt.indel, snp.sequence.ref.indel,
-  #      snp.sequence.alt.snv, snp.sequence.ref.snv)
-  # } else if (sum(is.indel) == length(is.indel)) {
-  #   fsnplist <- fsnplist.indel
-  #   snp.sequence.alt <- strsplit(as.character(snp.sequence.alt.indel), "")
-  #   snp.sequence.ref <- strsplit(as.character(snp.sequence.ref.indel), "")
-  #   rm(fsnplist.indel, snp.sequence.alt.indel, snp.sequence.ref.indel)
-  # } else if (sum(is.indel) == 0L) {
-  #   fsnplist <- fsnplist.snv
-  #   snp.sequence.alt <- strsplit(as.character(snp.sequence.alt.snv), "")
-  #   snp.sequence.ref <- strsplit(as.character(snp.sequence.ref.snv), "")
-  #   rm(fsnplist.snv, snp.sequence.alt.snv, snp.sequence.ref.snv)
-  # }
-  # rm(at); gc()
+
   snp.sequence.alt <- fsnplist$alt.seq
   snp.sequence.ref <- fsnplist$ref.seq
   fsnplist <- fsnplist$fsnplist
@@ -526,6 +365,7 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
     if (ref.len > 1 | alt.len > 1 | !legacy) {
       res.el$altPos <- as.numeric(NA)
       res.el$alleleDiff <- as.numeric(NA)
+      res.el$alleleEffectSize <- as.numeric(NA)
     } else {
       res.el$snpPos <- as.integer(NA)
       res.el$alleleRef <- as.numeric(NA)
@@ -774,6 +614,7 @@ updateResultsIndel <- function(result,
   }
   mresult[["alleleDiff"]] <- score
   mresult[["effect"]] <- effect
+  mresult[["alleleEffectSize"]] <- score/pwmrange[[2]]
   mcols(result) <- mresult
   return(result)
 }
@@ -981,25 +822,28 @@ preparePWM <- function(pwmList = pwmList,
 #' calculated by \code{\link{TFMsc2pv}}.  This can be (although not always) a very memory and time intensive process if the algorithm doesn't converge rapidly.
 #'
 #' @return a GRanges object containing:
-#'  \item{REF}{the reference allele for the SNP}
-#'  \item{ALT}{the alternate allele for the SNP}
-#'  \item{snpPos}{the coordinates of the SNP}
-#'  \item{motifPos}{the coordinates of the SNP within the TF binding motif}
+#'  \item{REF}{the reference allele for the variant}
+#'  \item{ALT}{the alternate allele for the variant}
+#'  \item{snpPos}{the coordinates of the variant}
+#'  \item{motifPos}{The position of the motif relative the the variant}
 #'  \item{geneSymbol}{the geneSymbol corresponding to the TF of the TF binding motif}
 #'  \item{dataSource}{the source of the TF binding motif}
 #'  \item{providerName, providerId}{the name and id provided by the source}
 #'  \item{seqMatch}{the sequence on the 5' -> 3' direction of the "+" strand
 #'  that corresponds to DNA at the position that the TF binding motif was found.}
-#'  \item{pctRef}{The score as determined by the scoring method, when the sequence contains the reference SNP allele, normalized to a scale from 0 - 1. If \code{filterp = FALSE},
+#'  \item{pctRef}{The score as determined by the scoring method, when the sequence contains the reference variant allele, normalized to a scale from 0 - 1. If \code{filterp = FALSE},
 #'  this is the value that is thresholded.}
-#'  \item{pctAlt}{The score as determined by the scoring method, when the sequence contains the alternate SNP allele, normalized to a scale from 0 - 1. If \code{filterp = FALSE},
+#'  \item{pctAlt}{The score as determined by the scoring method, when the sequence contains the alternate variant allele, normalized to a scale from 0 - 1. If \code{filterp = FALSE},
 #'  this is the value that is thresholded.}
-#'  \item{scoreRef}{The score as determined by the scoring method, when the sequence contains the reference SNP allele}
-#'  \item{scoreAlt}{The score as determined by the scoring method, when the sequence contains the alternate SNP allele}
+#'  \item{scoreRef}{The score as determined by the scoring method, when the sequence contains the reference variant allele}
+#'  \item{scoreAlt}{The score as determined by the scoring method, when the sequence contains the alternate variant allele}
 #'  \item{Refpvalue}{p-value for the match for the pctRef score, initially set to \code{NA}. see \code{\link{calculatePvalue}} for more information}
 #'  \item{Altpvalue}{p-value for the match for the pctAlt score, initially set to \code{NA}. see \code{\link{calculatePvalue}} for more information}
 #'  \item{alleleRef}{The proportional frequency of the reference allele at position \code{motifPos} in the motif}
 #'  \item{alleleAlt}{The proportional frequency of the alternate allele at position \code{motifPos} in the motif}
+#'  \item{altPos}{the position, relative to the reference allele, of the alternate allele}
+#'  \item{alleleDiff}{The difference between the score on the reference allele and the score on the alternate allele}
+#'  \item{alleleEffectSize}{The ratio of the \code{alleleDiff} and the maximal score of a sequence under the PWM}
 #'  \item{effect}{one of weak, strong, or neutral indicating the strength of the effect.}
 #'  each SNP in this object may be plotted with \code{\link{plotMB}}
 #' @examples
@@ -1136,7 +980,8 @@ motifbreakR <- function(snpList, pwmList, threshold = 0.85, filterp = FALSE,
 #' Calculate the significance of the matches for the reference and alternate alleles for the for their PWM
 #'
 #' @param results The output of \code{motifbreakR} that was run with \code{filterp=TRUE}
-#' @param background Numeric Vector; the background probabilites of the nucleotides
+#' @param background Numeric Vector; the background probabilities of the nucleotides
+#' @param granularity Numeric Vector; the granularity to which to round the PWM, larger values compromise full accuracy for speed of calculation. A value of \code{NULL} does no rounding.
 #' @return a GRanges object. The same Granges object that was input as \code{results}, but with
 #'  \code{Refpvalue} and \code{Altpvalue} columns in the output modified from \code{NA} to the p-value
 #'  calculated by \code{\link{TFMsc2pv}}.
@@ -1155,31 +1000,61 @@ motifbreakR <- function(snpList, pwmList, threshold = 0.85, filterp = FALSE,
 #'
 #' @export
 calculatePvalue <- function(results,
-                            background = c(A = 0.25, C = 0.25, G = 0.25, T = 0.25)) {
+                            background = c(A = 0.25, C = 0.25, G = 0.25, T = 0.25),
+                            granularity = NULL,
+                            BPPARAM = bpparam()) {
+
+  ## Cluster / MC setup
+  if (.Platform$OS.type == "windows" && inherits(BPPARAM, "MulticoreParam")) {
+    warning(paste0("Serial evaluation under effect, to achive parallel evaluation under\n",
+                   "Windows, please supply an alternative BPPARAM"))
+  }
+  cores <- bpnworkers(BPPARAM)
+  num.res <- length(results)
+  if (num.res < cores) {
+    cores <- num.snps
+  }
+  if (!(is(BPPARAM, "MulticoreParam")|is(BPPARAM, "SerialParam"))) {
+    bpstart(BPPARAM)
+    cl <- bpbackend(BPPARAM)
+    clusterEvalQ(cl, library("MotifDb"))
+  }
   if(!("scoreRef" %in% names(mcols(results)))) {
     stop('incorrect results format; please rerun analysis with filterp=TRUE')
   } else {
     pwmListmeta <- mcols(attributes(results)$motifs, use.names=TRUE)
     pwmList <- attributes(results)$scoremotifs
-    pvalues <- lapply(seq_along(results), function(i, pwmList, pwmListmeta, bkg) {
-                        result <- results[i]
-                        pwm.id <- result$providerId
-                        pwm.name.f <- result$providerName
-                        pwmmeta <- pwmListmeta[pwmListmeta$providerId == pwm.id & pwmListmeta$providerName == pwm.name.f, ]
-                        pwm <- pwmList[[rownames(pwmmeta)[1]]]
-                        ref <- TFMsc2pv(pwm, mcols(result)[["scoreRef"]], bg = bkg, type="PWM")
-                        alt <- TFMsc2pv(pwm, mcols(result)[["scoreAlt"]], bg = bkg, type="PWM")
-                        return(data.frame(ref=ref, alt=alt))
-    }, pwmList=pwmList, pwmListmeta=pwmListmeta, bkg = background)
+    if(!is.null(granularity)) {
+      pwmList <- lapply(pwmList, function(x, g) {x <- floor(x/g)*g; return(x)}, g = granularity)
+    }
+    results_sp <- split(results, 1:length(results))
+
+    pvalues <- bplapply(results_sp, function(i, pwmList, pwmListmeta, bkg) {
+      result <- i
+      pwm.id <- result$providerId
+      pwm.name.f <- result$providerName
+      pwmmeta <- pwmListmeta[pwmListmeta$providerId == pwm.id & pwmListmeta$providerName == pwm.name.f, ]
+      pwm <- pwmList[[rownames(pwmmeta)[1]]]
+      ref <- TFMsc2pv(pwm, mcols(result)[["scoreRef"]], bg = bkg, type="PWM")
+      alt <- TFMsc2pv(pwm, mcols(result)[["scoreAlt"]], bg = bkg, type="PWM")
+      gc()
+      return(data.frame(ref=ref, alt=alt))
+    }, pwmList=pwmList, pwmListmeta=pwmListmeta, bkg = background, BPPARAM = BPPARAM)
     pvalues.df <- base::do.call("rbind", c(pvalues, make.row.names = FALSE))
     results$Refpvalue <- pvalues.df[, "ref"]
     results$Altpvalue <- pvalues.df[, "alt"]
-    # pvalue_effect <- unlist(Map(function(x, y) {x - y},
-    # results$Refpvalue,
-    # results$Altpvalue))
-    # results$pvalue_effect <- dplyr::case_when(abs(pvalue_effect) < 1e-4 ~ "neutral",
-    # abs(pvalue_effect) < 0.05 ~ "weak",
-    # TRUE ~ "strong")
+
+    ## Cluster / MC cleanup
+    if (inherits(pvalues, "try-error")) {
+      if (is(BPPARAM, "SnowParam")) {
+        bpstop(BPPARAM)
+      }
+      stop(attributes(pvalues)$condition)
+    }
+    if (is(BPPARAM, "SnowParam")) {
+      bpstop(BPPARAM)
+    }
+
     return(results)
   }
 }
@@ -1261,7 +1136,6 @@ DNAmotifAlignment.2snp <- function(pwms, result) {
     mresult <- result[result$providerId == pwm.id & result$providerName == pwm.name, ]
     mstart <- mresult$motifPos[[1]][1]
     mend <- mresult$motifPos[[1]][2]
-    # browser()
     if ((mcols(mresult)$varType == "Insertion" & mcols(mresult)$alleleDiff < 0) |
         (mcols(mresult)$varType == "Deletion" & mcols(mresult)$alleleDiff > 0)) {
       new.mat <- cbind(pwms[[pwm.i]]@mat[, 1:abs(mresult$motifPos[[1]][1])],
