@@ -1,7 +1,7 @@
 Package: motifbreakR
 Title: A Package For Predicting The Disruptiveness Of Single Nucleotide
         Polymorphisms On Transcription Factor Binding Sites
-Version: 2.8.99
+Version: 2.9.2
 Authors@R: c(person(given="Simon Gert", family="Coetzee",
         email="simon.coetzee@cshs.org", role = c("aut", "cre")),
         person(given="Dennis J.", family="Hazelett",
@@ -19,9 +19,10 @@ Description: We introduce motifbreakR, which allows the biologist to
         previously described variants in public databases, making it
         suitable for tasks beyond the scope of its original design.
         Lastly, it can be used to interrogate any genome curated within
-        Bioconductor (currently there are 22).
-Depends: R (>= 3.5.0), grid, MotifDb
-Imports: methods, compiler, grDevices, grImport, stringr,
+        Bioconductor (currently there are 32 species, a total of 109 
+        versions).
+Depends: R (>= 4.1.0), grid, MotifDb
+Imports: methods, grDevices, stringr, parallel,
         BiocGenerics, S4Vectors (>= 0.9.25), IRanges, GenomeInfoDb,
         GenomicRanges, Biostrings, BSgenome, rtracklayer, VariantAnnotation,
         BiocParallel, motifStack, Gviz, matrixStats, TFMPvalue, SummarizedExperiment
@@ -30,8 +31,7 @@ Suggests: BSgenome.Hsapiens.UCSC.hg19, SNPlocs.Hsapiens.dbSNP.20120608,
         BSgenome.Drerio.UCSC.danRer7, BiocStyle
 VignetteBuilder: knitr
 License: GPL-2
-LazyData: true
 BugReports: https://github.com/Simon-Coetzee/motifbreakR/issues
-biocViews: ChIPSeq, Visualization, MotifAnnotation
+biocViews: ChIPSeq, Visualization, MotifAnnotation, Transcription
 NeedsCompilation: no
 RoxygenNote: 7.1.2

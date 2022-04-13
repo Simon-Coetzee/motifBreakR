@@ -20,7 +20,15 @@ calculatePvalue(
 
 \item{background}{Numeric Vector; the background probabilities of the nucleotides}
 
-\item{granularity}{Numeric Vector; the granularity to which to round the PWM, larger values compromise full accuracy for speed of calculation. A value of \code{NULL} does no rounding.}
+\item{granularity}{Numeric Vector; the granularity to which to round the PWM,
+larger values compromise full accuracy for speed of calculation. A value of
+\code{NULL} does no rounding.}
+
+\item{BPPARAM}{a BiocParallel object see \code{\link[BiocParallel]{register}}
+and see \code{getClass("BiocParallelParam")} for additional parameter
+classes.  Try \code{BiocParallel::registered()} to see what's available and
+for example \code{BiocParallel::bpparam("SerialParam")} would allow serial
+evaluation.}
 }
 \value{
 a GRanges object. The same Granges object that was input as \code{results}, but with

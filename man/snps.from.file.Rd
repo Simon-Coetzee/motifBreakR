@@ -2,6 +2,7 @@
 % Please edit documentation in R/locus.from.rsid.R
 \name{snps.from.file}
 \alias{snps.from.file}
+\alias{variants.from.file}
 \title{Import SNPs from a BED file or VCF file for use in motifbreakR}
 \usage{
 snps.from.file(
@@ -10,6 +11,13 @@ snps.from.file(
   search.genome = NULL,
   format = "bed",
   indels = FALSE
+)
+
+variants.from.file(
+  file = NULL,
+  dbSNP = NULL,
+  search.genome = NULL,
+  format = "bed"
 )
 }
 \arguments{
@@ -23,6 +31,8 @@ see Details for a description of the required format}
 see \code{\link[BSgenome]{available.genomes}} for a list of species}
 
 \item{format}{Character; one of \code{bed} or \code{vcf}}
+
+\item{indels}{Logical; allow the import of indels.}
 }
 \value{
 a GRanges object containing:
@@ -45,6 +55,11 @@ Import SNPs from a BED file or VCF file for use in motifbreakR
  For example if you were to include rs123 in it's alternate
  format it would be entered as chr7:24966446:C:A
 }
+\section{Functions}{
+\itemize{
+\item \code{variants.from.file}: Allows the use of indels by default
+}}
+
 \examples{
  library(BSgenome.Drerio.UCSC.danRer7)
  library(SNPlocs.Hsapiens.dbSNP142.GRCh37)

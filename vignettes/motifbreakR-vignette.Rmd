@@ -222,13 +222,15 @@ We have several options that we may pass to the function, the main ones that wil
 
 Here we specify the `snpList`, `pwmList`, `threshold` that we declare as the cutoff for reporting results, `filterp` set to true declares that we are filtering by p-value, the `method`, and `bkg` the relative nucleotide frequency of A, C, G, and T.
 
+For the purposes of this small example, we use the `SerialParam` back end. However, for larger variant lists, `MulticoreParam` or one of the other `r Biocpkg("BiocParallel")` back-ends could speed up completion.
+
 ```{r runmotifbreakr, message=TRUE, cache=TRUE}
 results <- motifbreakR(snpList = snps.mb[1:5], filterp = TRUE,
                        pwmList = hocomoco,
                        threshold = 1e-4,
                        method = "ic",
                        bkg = c(A=0.25, C=0.25, G=0.25, T=0.25),
-                       BPPARAM = BiocParallel::bpparam())
+                       BPPARAM = BiocParallel::SerialParam())
 ```
 The results reveal which variants disrupt which motifs, and to which degree.  If we want to examine a single variant, we can select one like this:
 ```{r getonesnp, cache=TRUE}

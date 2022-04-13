@@ -124,7 +124,7 @@ unlistColumn <- function(x, column = NULL) {
   }
 }
 
-formatVcfOut <- function(x, gseq = search.genome) {
+formatVcfOut <- function(x, gseq) {
   x$SNP_id <- names(x)
   mcols(x) <- mcols(x)[, c("SNP_id", "REF", "ALT")]
   x$REF <- unlist(DNAStringSetList(x$REF))
@@ -156,6 +156,7 @@ formatVcfOut <- function(x, gseq = search.genome) {
 #' @param search.genome an object of class BSgenome for the species you are interrogating;
 #'  see \code{\link[BSgenome]{available.genomes}} for a list of species
 #' @param format Character; one of \code{bed} or \code{vcf}
+#' @param indels Logical; allow the import of indels.
 #' @seealso See \code{\link{motifbreakR}} for analysis; See \code{\link{snps.from.rsid}}
 #'   for an alternate method for generating a list of variants.
 #' @details \code{snps.from.file} takes a character vector describing the file path
@@ -184,7 +185,7 @@ formatVcfOut <- function(x, gseq = search.genome) {
 #'                            format = "bed")
 #'
 #' @importFrom rtracklayer import
-#' @importFrom Biostrings IUPAC_CODE_MAP uniqueLetters BStringSetList
+#' @importFrom Biostrings IUPAC_CODE_MAP uniqueLetters BStringSetList DNA_ALPHABET
 #' @importFrom VariantAnnotation readVcf ref alt isSNV VcfFile ScanVcfParam
 #' @importFrom SummarizedExperiment rowRanges
 #' @importFrom stringr str_sort str_split
@@ -346,6 +347,7 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
   }
 }
 
+#' @describeIn snps.from.file Allows the use of indels by default
 #' @export
 variants.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, format = "bed") {
   return(snps.from.file(file = file, dbSNP = dbSNP, search.genome = search.genome, format = format, indels = TRUE))

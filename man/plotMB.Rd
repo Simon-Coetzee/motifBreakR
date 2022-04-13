@@ -34,7 +34,8 @@ motifs
 \examples{
 data(example.results)
 example.results
-\dontrun{
+\donttest{
+library(BSgenome.Hsapiens.UCSC.hg19)
 plotMB(example.results, "rs2661839", effect = "strong")
 }
 }
