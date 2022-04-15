@@ -12,7 +12,7 @@ calculatePvalue(
   results,
   background = c(A = 0.25, C = 0.25, G = 0.25, T = 0.25),
   granularity = NULL,
-  BPPARAM = bpparam()
+  BPPARAM = BiocParallel::SerialParam()
 )
 }
 \arguments{
@@ -45,7 +45,7 @@ this can be (although not always) a very memory and time intensive process if th
 \examples{
 data(example.results)
 rs2661839 <- example.results[names(example.results) \%in\% "rs2661839"]
-rs2661839 <- calculatePvalue(rs2661839)
+rs2661839 <- calculatePvalue(rs2661839, BPPARAM=BiocParallel::SerialParam())
 
 
 }

@@ -937,7 +937,7 @@ motifbreakR <- function(snpList, pwmList, threshold = 0.85, filterp = FALSE,
 #' @examples
 #' data(example.results)
 #' rs2661839 <- example.results[names(example.results) %in% "rs2661839"]
-#' rs2661839 <- calculatePvalue(rs2661839)
+#' rs2661839 <- calculatePvalue(rs2661839, BPPARAM=BiocParallel::SerialParam())
 #'
 # #' @importFrom qvalue qvalue
 #'
@@ -945,7 +945,7 @@ motifbreakR <- function(snpList, pwmList, threshold = 0.85, filterp = FALSE,
 calculatePvalue <- function(results,
                             background = c(A = 0.25, C = 0.25, G = 0.25, T = 0.25),
                             granularity = NULL,
-                            BPPARAM = bpparam()) {
+                            BPPARAM = BiocParallel::SerialParam()) {
 
   ## Cluster / MC setup
   if (.Platform$OS.type == "windows" && inherits(BPPARAM, "MulticoreParam")) {
@@ -983,10 +983,6 @@ calculatePvalue <- function(results,
       gc()
       return(data.frame(ref=ref, alt=alt))
     }, pwmList=pwmList, pwmListmeta=pwmListmeta, bkg = background, BPPARAM = BPPARAM)
-    pvalues.df <- base::do.call("rbind", c(pvalues, make.row.names = FALSE))
-    results$Refpvalue <- pvalues.df[, "ref"]
-    results$Altpvalue <- pvalues.df[, "alt"]
-
     ## Cluster / MC cleanup
     if (inherits(pvalues, "try-error")) {
       if (is(BPPARAM, "SnowParam")) {
@@ -994,6 +990,10 @@ calculatePvalue <- function(results,
       }
       stop(attributes(pvalues)$condition)
     }
+    pvalues.df <- base::do.call("rbind", c(pvalues, make.row.names = FALSE))
+    results$Refpvalue <- pvalues.df[, "ref"]
+    results$Altpvalue <- pvalues.df[, "alt"]
+
     if (is(BPPARAM, "SnowParam")) {
       bpstop(BPPARAM)
     }
@@ -1023,7 +1023,7 @@ plotMotifLogoStack.3 <- function(pfms, ...) {
   n <- length(pfms)
   lapply(pfms, function(.ele) {
     #if (class(.ele) != "pfm")
-    if (is(.ele, 'pfm'))
+    if (!is(.ele, 'pfm'))
       stop("pfms must be a list of class pfm")
   })
   assign("tmp_motifStack_symbolsCache", list(), pos = ".GlobalEnv")
@@ -1119,7 +1119,8 @@ DNAmotifAlignment.2snp <- function(pwms, result) {
 #' library(BSgenome.Hsapiens.UCSC.hg19)
 #' plotMB(example.results, "rs2661839", effect = "strong")
 #' }
-#' @import motifStack
+#' @importFrom motifStack DNAmotifAlignment colorset motifStack plotMotifLogo plotMotifLogoStack
+#' @importClassesFrom motifStack pfm marker
 #' @import grDevices
 #' @importFrom grid gpar
 #' @importFrom Gviz IdeogramTrack SequenceTrack GenomeAxisTrack HighlightTrack

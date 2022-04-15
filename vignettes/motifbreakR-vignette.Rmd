@@ -368,6 +368,8 @@ decimal place, and calculating a scoring threshold based upon that. The second s
 on a selection of results which will change the `Refpvalue` and `Altpvalue` columns in the output from `NA` to the p-value
 calculated by `TFMsc2pv`.  This can be (although not always) a very memory and time intensive process if the algorithm doesn't converge rapidly.
 
+P-values can also be calculated in parallel, it is highly recommended to round the PWM matrix with the granularity argument. This trades the accuracy of the p-value calculation for speed of convergence. For most purposes a range of 1e-4 to 1e-6 is an acceptable trade off between accuracy and speed.
+
 # Session Info
 ```{r, cache=TRUE}
 sessionInfo()
