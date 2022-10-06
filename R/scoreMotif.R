@@ -534,12 +534,12 @@ updateResultsIndel <- function(result,
   matchs[-(snp.pos)] <- tolower(matchs[-(snp.pos)])
   matchs <- paste(matchs[seq.range], collapse = "")
   mresult[["seqMatch"]] <- str_pad(matchs, width = (k * 2) + alt_loc[[2]], side = "both")
+  pwmrange <- colSums(colRanges(pwm[-5,]))
   if (calcp) {
     mresult[["scoreRef"]] <- ref.windows[hit.ref$strand, hit.ref$window]
     mresult[["scoreAlt"]] <- alt.windows[hit.alt$strand, hit.alt$window]
     mresult[["Refpvalue"]] <- NA
     mresult[["Altpvalue"]] <- NA
-    pwmrange <- colSums(colRanges(pwm[-5,]))
     mresult[["pctRef"]] <- (mresult[["scoreRef"]] - pwmrange[[1]]) / (pwmrange[[2]] - pwmrange[[1]])
     mresult[["pctAlt"]] <- (mresult[["scoreAlt"]] - pwmrange[[1]]) / (pwmrange[[2]] - pwmrange[[1]])
   } else {
