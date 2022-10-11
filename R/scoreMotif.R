@@ -289,9 +289,9 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
     res.el$seqMatch <- as.character(NA)
     res.el$pctRef <- as.numeric(NA)
     res.el$pctAlt <- as.numeric(NA)
+    res.el$scoreRef <- as.numeric(NA)
+    res.el$scoreAlt <- as.numeric(NA)
     if (filterp) {
-      res.el$scoreRef <- as.numeric(NA)
-      res.el$scoreAlt <- as.numeric(NA)
       res.el$Refpvalue <- as.numeric(NA)
       res.el$Altpvalue <- as.numeric(NA)
     }
@@ -322,11 +322,11 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
       }
       ref.windows <- scoreSeqWindows(ppm = pwm, seq = snp.ref[ref.range])
       alt.windows <- scoreSeqWindows(ppm = pwm, seq = snp.alt[alt.range])
-      if (!filterp) {
-        ref.windows <- (ref.windows - pwmRanges[[pwm.i]][1]) / (pwmRanges[[pwm.i]][2] - pwmRanges[[pwm.i]][1])
-        alt.windows <- (alt.windows - pwmRanges[[pwm.i]][1]) / (pwmRanges[[pwm.i]][2] - pwmRanges[[pwm.i]][1])
-      }
-      if (any(alt.windows > thresh) | any(ref.windows > thresh)) {
+      pass.effect <- ifelse(filterp,
+                            any(alt.windows > thresh) | any(ref.windows > thresh),
+                            any(((alt.windows - pwmRanges[[pwm.i]][1]) / (pwmRanges[[pwm.i]][2] - pwmRanges[[pwm.i]][1]) > thresh) |
+                                ((ref.windows - pwmRanges[[pwm.i]][1]) / (pwmRanges[[pwm.i]][2] - pwmRanges[[pwm.i]][1]) > thresh)))
+      if (pass.effect) {
         hit.alt <- maxThresholdWindows(alt.windows)
         hit.ref <- maxThresholdWindows(ref.windows)
         bigger <- ref.windows[hit.ref$strand, hit.ref$window] >= alt.windows[hit.alt$strand, hit.alt$window]
@@ -535,16 +535,13 @@ updateResultsIndel <- function(result,
   matchs <- paste(matchs[seq.range], collapse = "")
   mresult[["seqMatch"]] <- str_pad(matchs, width = (k * 2) + alt_loc[[2]], side = "both")
   pwmrange <- colSums(colRanges(pwm[-5,]))
+  mresult[["scoreRef"]] <- ref.windows[hit.ref$strand, hit.ref$window]
+  mresult[["scoreAlt"]] <- alt.windows[hit.alt$strand, hit.alt$window]
+  mresult[["pctRef"]] <- (mresult[["scoreRef"]] - pwmrange[[1]]) / (pwmrange[[2]] - pwmrange[[1]])
+  mresult[["pctAlt"]] <- (mresult[["scoreAlt"]] - pwmrange[[1]]) / (pwmrange[[2]] - pwmrange[[1]])
   if (calcp) {
-    mresult[["scoreRef"]] <- ref.windows[hit.ref$strand, hit.ref$window]
-    mresult[["scoreAlt"]] <- alt.windows[hit.alt$strand, hit.alt$window]
     mresult[["Refpvalue"]] <- NA
     mresult[["Altpvalue"]] <- NA
-    mresult[["pctRef"]] <- (mresult[["scoreRef"]] - pwmrange[[1]]) / (pwmrange[[2]] - pwmrange[[1]])
-    mresult[["pctAlt"]] <- (mresult[["scoreAlt"]] - pwmrange[[1]]) / (pwmrange[[2]] - pwmrange[[1]])
-  } else {
-    mresult[["pctRef"]] <- ref.windows[hit.ref$strand, hit.ref$window]
-    mresult[["pctAlt"]] <- alt.windows[hit.alt$strand, hit.alt$window]
   }
   mresult[["alleleDiff"]] <- score
   mresult[["effect"]] <- effect
@@ -594,19 +591,15 @@ preparePWM <- function(pwmList,
       pwm <- pwm * omegamatrix
     }
   }, pwmList.pc, pwmOmegas)
+  pwmRanges <- Map(function(pwm, omega) {
+    x <- colSums(colRanges(pwm))
+    return(x)
+  }, pwmList.pc, pwmOmegas)
   if (filterp) {
-    pwmRanges <- Map(function(pwm, omega) {
-      x <- colSums(colRanges(pwm))
-      return(x)
-    }, pwmList.pc, pwmOmegas)
     pwmList.pc2 <- lapply(pwmList.pc, round, digits = 2)
     pwmThresh <- lapply(pwmList.pc2, TFMpv2sc, pvalue = scoreThresh, bg = bkg, type = "PWM")
     pwmThresh <- Map("+", pwmThresh, -0.02)
   } else {
-    pwmRanges <- Map(function(pwm, omega) {
-      x <- colSums(colRanges(pwm))
-      return(x)
-    }, pwmList.pc, pwmOmegas)
     pwmThresh <- rep.int(scoreThresh, times = length(pwmRanges))
   }
   pwmList@listData <- lapply(pwmList, function(pwm) {
