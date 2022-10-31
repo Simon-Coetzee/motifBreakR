@@ -315,7 +315,7 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
         equal.to.ref <- snps.alt == snps.ref
         if (sum(equal.to.ref) > 0) {
           warning(paste0(sum(equal.to.ref), " user variants are the same as the reference genome ",
-                         search.genome@provider_version, " for ", search.genome@common_name, "\n These variants were excluded"))
+                         metadata(search.genome)$genome, " for ", metadata(search.genome)$common_name, "\n These variants were excluded"))
         }
         snps.noid <- snps.noid[alt.allele.is.valid]
         snps.ref <- snps.ref[alt.allele.is.valid]
