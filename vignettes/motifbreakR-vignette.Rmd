@@ -72,7 +72,7 @@ pca.snps <- as.character(read.table(pca.snps.file)[,1])
 The simplest form of a `r BiocStyle::Biocpkg("motifbreakR")` analysis is summarized as follows:
 ```{r outline, eval=FALSE}
 variants <- snps.from.rsid(rsid = pca.snps,
-                           dbSNP = SNPlocs.Hsapiens.dbSNP142.GRCh37,
+                           dbSNP = SNPlocs.Hsapiens.dbSNP155.GRCh37,
                            search.genome = BSgenome.Hsapiens.UCSC.hg19)
 motifbreakr.results <- motifbreakR(snpList = variants, pwmList = MotifDb, threshold = 0.9)
 plotMB(results = motifbreakr.results, rsid = "rs7837328", effect = "strong")
@@ -99,14 +99,14 @@ More to the point here are the two methods for reading in the variants.
 
 
 
-We use the `r Biocannopkg("SNPlocs.Hsapiens.dbSNP142.GRCh37")` which is the SNP locations and alleles defined in [dbSNP142](http://www.ncbi.nlm.nih.gov/projects/SNP/snp_summary.cgi?view+summary=view+summary&build_id=142) as a source for looking up our rsIDs and `r Biocannopkg("BSgenome.Hsapiens.UCSC.hg19")` which holds the reference sequence for [UCSC genome build hg19](http://www.ncbi.nlm.nih.gov/assembly/2758/). Additional SNPlocs packages are availble from Bioconductor.
+We use the `r Biocannopkg("SNPlocs.Hsapiens.dbSNP155.GRCh37")` which is the SNP locations and alleles defined in [dbSNP155](http://www.ncbi.nlm.nih.gov/projects/SNP/snp_summary.cgi?view+summary=view+summary&build_id=155) as a source for looking up our rsIDs and `r Biocannopkg("BSgenome.Hsapiens.UCSC.hg19")` which holds the reference sequence for [UCSC genome build hg19](http://www.ncbi.nlm.nih.gov/assembly/2758/). Additional SNPlocs packages are availble from Bioconductor.
 
 ```{r fromrsid, message=FALSE, cache=TRUE}
-library(SNPlocs.Hsapiens.dbSNP142.GRCh37) # dbSNP142 in hg19
+library(SNPlocs.Hsapiens.dbSNP155.GRCh37) # dbSNP155 in hg19
 library(BSgenome.Hsapiens.UCSC.hg19)     # hg19 genome
 head(pca.snps)
 snps.mb <- snps.from.rsid(rsid = pca.snps,
-                          dbSNP = SNPlocs.Hsapiens.dbSNP142.GRCh37,
+                          dbSNP = SNPlocs.Hsapiens.dbSNP155.GRCh37,
                           search.genome = BSgenome.Hsapiens.UCSC.hg19)
 snps.mb
 ```
@@ -130,24 +130,24 @@ read.table(snps.bed.file, header = FALSE)
 ```
 Seeing as we have some SNPs listed by their rsIDs we can query those by including a SNPlocs object as an argument to `snps.from.file`
 ```{r getbedrs, message=FALSE, echo = TRUE, eval = FALSE}
-library(SNPlocs.Hsapiens.dbSNP142.GRCh37)
+library(SNPlocs.Hsapiens.dbSNP155.GRCh37)
 #import the BED file
 snps.mb.frombed <- snps.from.file(file = snps.bed.file,
-                                  dbSNP = SNPlocs.Hsapiens.dbSNP142.GRCh37,
+                                  dbSNP = SNPlocs.Hsapiens.dbSNP155.GRCh37,
                                   search.genome = BSgenome.Hsapiens.UCSC.hg19,
-                                  format = "bed")
+                                  format = "bed", check.unnamed.for.rsid = TRUE)
 snps.mb.frombed
 ```
 ```{r getbedrs.t, message=TRUE, echo = FALSE, eval = TRUE, cache=TRUE}
-library(SNPlocs.Hsapiens.dbSNP142.GRCh37)
+library(SNPlocs.Hsapiens.dbSNP155.GRCh37)
 example.snpfrombed <- system.file("extdata", "example.snpfrombed.rda", package = "motifbreakR")
 load(example.snpfrombed)
-message("Warning message:
-In snps.from.file(file = snps.bed.file, dbSNP = SNPlocs.Hsapiens.dbSNP142.GRCh37:
-  7601289 was found as a match for chr2:12594018:G:A; using entry from dbSNP")
+message("Warning in snps.from.file(file = snps.bed.file, dbSNP = SNPlocs.Hsapiens.dbSNP155.GRCh37,  :
+  rs7601289 was found as a match for chr2:12594018:G:A; using entry from dbSNP
+  rs11753604 was found as a match for chr6:44503246:A:T; using entry from dbSNP")
 snps.mb.frombed
 ```
-We see also that one of our custom variants `chr2:12594018:G:A` was actually already included in dbSNP, and was therefor annotated in the output as `rs7601289`
+We see also that two of our custom variants `chr2:12594018:G:A` and `chr6:44503246:A:T` were actually already included in dbSNP155, and were therefor annotated in the output as `rs7601289` and `rs11753604` respectively.
 
 If our BED file includes no rsIDs, then we may omit the `dbSNP` argument from the function. This example uses variants from *Danio rerio*
 ```{r getbedcust, message=FALSE, cache=TRUE}
