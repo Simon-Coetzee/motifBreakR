@@ -225,8 +225,9 @@ Here we specify the `snpList`, `pwmList`, `threshold` that we declare as the cut
 For the purposes of this small example, we use the `SerialParam` back end. However, for larger variant lists, `MulticoreParam` or one of the other `r Biocpkg("BiocParallel")` back-ends could speed up completion.
 
 ```{r runmotifbreakr, message=TRUE, cache=TRUE}
-results <- motifbreakR(snpList = snps.mb[1:5], filterp = TRUE,
-                       pwmList = hocomoco,
+results <- motifbreakR(snpList = snps.mb[1:12], filterp = TRUE,
+                       pwmList = subset(MotifDb, 
+                                        dataSource %in% c("HOCOMOCOv11-core-A", "HOCOMOCOv11-core-B", "HOCOMOCOv11-core-C")),
                        threshold = 1e-4,
                        method = "ic",
                        bkg = c(A=0.25, C=0.25, G=0.25, T=0.25),
@@ -234,12 +235,12 @@ results <- motifbreakR(snpList = snps.mb[1:5], filterp = TRUE,
 ```
 The results reveal which variants disrupt which motifs, and to which degree.  If we want to examine a single variant, we can select one like this:
 ```{r getonesnp, cache=TRUE}
-rs1006140 <- results[names(results) %in% "rs1006140"]
+rs1006140 <- results[results$SNP_id == "rs1006140"]
 rs1006140
 ```
 Here we can see that SNP rs1006140 disrupts multiple motifs. We can then check what the pvalue for each allele is with regard to each motif, using `calculatePvalue`.
 ```{r calcp.show, eval=FALSE}
-rs1006140 <- calculatePvalue(rs1006140)
+rs1006140 <- calculatePvalue(rs1006140, granularity = 1e-6)
 rs1006140
 ```
 ```{r calcp, cache=TRUE, echo=FALSE}
@@ -260,7 +261,8 @@ By default `motifbreakR` uses `bpparam()` as an argument to `BPPARAM` and will u
 ## *Step 3* | Visualize
 Now that we have our results, we can visualize them with the function `plotMB`.  Lets take a look at rs1006140.
 ```{r plotting, cache=TRUE, fig.retina=2, fig.align='center', fig.height=8, fig.width=6}
-plotMB(results = results, rsid = "rs1006140", effect = "strong")
+plotMB(results = results, rsid = "rs1006140", effect = "strong", altAllele = "G")
+plotMB(results = results, rsid = "rs1006140", effect = "strong", altAllele = "C")
 ```
 <!-- <div class="figure" style="text-align: center"> -->
 <!--   <img width="75%" src="motifbreakr_plot.png" /> -->

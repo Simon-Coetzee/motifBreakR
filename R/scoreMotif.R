@@ -906,7 +906,6 @@ calculatePvalue <- function(results,
       pwmList <- lapply(pwmList, function(x, g) {x <- floor(x/g)*g; return(x)}, g = granularity)
     }
     results_sp <- split(results, 1:length(results))
-
     pvalues <- bplapply(results_sp, function(i, pwmList, pwmListmeta, bkg) {
       result <- i
       pwm.id <- result$providerId
@@ -1038,13 +1037,18 @@ DNAmotifAlignment.2snp <- function(pwms, result) {
 #'   the motifs as reversed \code{FALSE} or reverse complement \code{TRUE}
 #' @param effect Character; show motifs that are strongly effected \code{c("strong")},
 #'   weakly effected \code{c("weak")}, or both \code{c("strong", "weak")}
+#' @param altAllele Character; The default value of \code{NULL} uses the first (or only)
+#'   alternative allele for the SNP to be plotted.
 #' @seealso See \code{\link{motifbreakR}} for the function that produces output to be
 #'   visualized here, also \code{\link{snps.from.rsid}} and \code{\link{snps.from.file}}
 #'   for information about how to generate the input to \code{\link{motifbreakR}}
 #'   function.
 #' @details \code{plotMB} produces output showing the location of the SNP on the
 #'   chromosome, the surrounding sequence of the + strand, the footprint of any
-#'   motif that is disrupted by the SNP or SNV, and the DNA sequence motif(s)
+#'   motif that is disrupted by the SNP or SNV, and the DNA sequence motif(s).
+#'   The \code{altAllele} argument is included for variants like rs1006140 where
+#'   multiple alternate alleles exist, the reference allele is A, and the alternate
+#'   can be G,T, or C. \code{plotMB} only plots one alternate allele at a time.
 #' @return plots a figure representing the results of \code{motifbreakR} at the
 #'   location of a single SNP, returns invisible \code{NULL}.
 #' @examples
@@ -1061,13 +1065,17 @@ DNAmotifAlignment.2snp <- function(pwms, result) {
 #' @importFrom Gviz IdeogramTrack SequenceTrack GenomeAxisTrack HighlightTrack
 #'   AnnotationTrack plotTracks
 #' @export
-plotMB <- function(results, rsid, reverseMotif = TRUE, effect = c("strong", "weak")) {
+plotMB <- function(results, rsid, reverseMotif = TRUE, effect = c("strong", "weak"), altAllele = NULL) {
   motif.starts <- sapply(results$motifPos, `[`, 1)
   motif.starts <- start(results) + motif.starts
   motif.starts <- order(motif.starts)
   results <- results[motif.starts]
   g <- genome(results)[[1]]
-  result <- results[names(results) %in% rsid]
+  result <- results[results$SNP_id %in% rsid]
+  if(is.null(altAllele)) {
+    altAllele <- result[result$ALT[[1]]]
+  }
+  result <- result[result$ALT == altAllele]
   result <- result[order(sapply(result$motifPos, min), sapply(result$motifPos, max)), ]
   result <- result[result$effect %in% effect]
   chromosome <- as.character(seqnames(result))[[1]]

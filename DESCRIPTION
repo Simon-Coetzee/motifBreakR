@@ -1,7 +1,7 @@
 Package: motifbreakR
 Title: A Package For Predicting The Disruptiveness Of Single Nucleotide
         Polymorphisms On Transcription Factor Binding Sites
-Version: 2.13.1
+Version: 2.13.2
 Authors@R: c(person(given="Simon Gert", family="Coetzee",
         email="simon.coetzee@cshs.org", role = c("aut", "cre")),
         person(given="Dennis J.", family="Hazelett",
@@ -34,4 +34,4 @@ License: GPL-2
 BugReports: https://github.com/Simon-Coetzee/motifbreakR/issues
 biocViews: ChIPSeq, Visualization, MotifAnnotation, Transcription
 NeedsCompilation: no
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.3
