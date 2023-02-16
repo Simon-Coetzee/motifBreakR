@@ -53,7 +53,7 @@ if (!requireNamespace("BiocManager", quietly=TRUE))
 BiocManager::install(c("BiocParallel", "motifStack", "BSgenome", "BiocGenerics",
            "Biostrings", "GenomeInfoDb", "GenomicRanges", "Gviz", "S4Vectors",
            "rtracklayer", "IRanges", "MotifDb", "BSgenome.Hsapiens.UCSC.hg19",
-           "SNPlocs.Hsapiens.dbSNP.20120608", "SNPlocs.Hsapiens.dbSNP142.GRCh37",
+           "SNPlocs.Hsapiens.dbSNP.20120608", "SNPlocs.Hsapiens.dbSNP155.GRCh37",
            "VariantAnnotation", "matrixStats", "BiocStyle"))
 install.packages(c("TFMPvalue", "knitr", "rmarkdown"))
 ```

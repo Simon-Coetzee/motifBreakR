@@ -66,7 +66,7 @@ Import SNPs from a BED file or VCF file for use in motifbreakR
 }}
 \examples{
  library(BSgenome.Drerio.UCSC.danRer7)
- library(SNPlocs.Hsapiens.dbSNP142.GRCh37)
+ library(SNPlocs.Hsapiens.dbSNP155.GRCh37)
  snps.bed.file <- system.file("extdata", "danRer.bed", package = "motifbreakR")
  # see the contents
  read.table(snps.bed.file, header = FALSE)

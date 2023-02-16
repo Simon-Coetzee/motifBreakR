@@ -32,11 +32,11 @@ Import SNPs from rsid for use in motifbreakR
 }
 \examples{
  library(BSgenome.Hsapiens.UCSC.hg19)
- library(SNPlocs.Hsapiens.dbSNP142.GRCh37)
+ library(SNPlocs.Hsapiens.dbSNP155.GRCh37)
  snps.file <- system.file("extdata", "pca.enhancer.snps", package = "motifbreakR")
  snps <- as.character(read.table(snps.file)[,1])
  snps.mb <- snps.from.rsid(snps[1],
-                           dbSNP = SNPlocs.Hsapiens.dbSNP142.GRCh37,
+                           dbSNP = SNPlocs.Hsapiens.dbSNP155.GRCh37,
                            search.genome = BSgenome.Hsapiens.UCSC.hg19)
 
 }
