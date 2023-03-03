@@ -93,9 +93,15 @@ prepareVariants <- function(fsnplist, genome.bsgenome, max.pwm.width) {
                                fsnplist.indel[!insertion.var & need.alignment][!pattern.del.valid]$ALT,
                                fsnplist.indel[!insertion.var & need.alignment][!pattern.del.valid]$REF,
                                type = "global")
+          alt.width <- width(fsnplist.indel[!insertion.var & need.alignment][!pattern.del.valid]$ALT)
+          ref.width <- width(fsnplist.indel[!insertion.var & need.alignment][!pattern.del.valid]$REF)
           names(alignment.del) <- names(fsnplist.indel[!insertion.var & need.alignment][!pattern.del.valid])
+          alignment.ins <- sapply(sapply(alignment.del, insertion), unlist)
           alignment.del <- sapply(sapply(alignment.del, deletion), unlist)
           alignment.del.valid <- sapply(alignment.del, function(x) {length(x) > 0})
+          alignment.ins.valid <- sapply(alignment.ins, function(x) {length(x) > 0})
+          full.replace <- (alignment.del.valid & alignment.ins.valid & alt.width == ref.width)
+          alignment.del.valid <- alignment.del.valid & !full.replace
           nr.alignment.del <- lapply(alignment.del[alignment.del.valid], function(x) {start(x):end(x)})
           fsnplist.indel[!insertion.var & need.alignment][names(alignment.del[alignment.del.valid])]$ALT_loc <- nr.alignment.del
           rm(alignment.del, nr.alignment.del)
@@ -1073,7 +1079,7 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, effect = c("strong", "wea
   g <- genome(results)[[1]]
   result <- results[results$SNP_id %in% rsid]
   if(is.null(altAllele)) {
-    altAllele <- result[result$ALT[[1]]]
+    altAllele <- result$ALT[[1]]
   }
   result <- result[result$ALT == altAllele]
   result <- result[order(sapply(result$motifPos, min), sapply(result$motifPos, max)), ]
