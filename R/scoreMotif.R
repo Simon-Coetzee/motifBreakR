@@ -15,7 +15,7 @@ revcom <- function(ltr) {
   rclist[[ltr]]
 }
 
-prepareVariants <- function(fsnplist, genome.bsgenome, max.pwm.width, legacy) {
+prepareVariants <- function(fsnplist, genome.bsgenome, max.pwm.width) {
   k <- max.pwm.width; rm(max.pwm.width)
   ref_len <- nchar(fsnplist$REF)
   alt_len <- nchar(fsnplist$ALT)
@@ -27,23 +27,11 @@ prepareVariants <- function(fsnplist, genome.bsgenome, max.pwm.width, legacy) {
                sep = " "))
   }
   if (sum(is.indel) < length(is.indel) & sum(is.indel) > 0L) {
-    if (legacy) {
-      warning("Indels are included in variant input set, but legacy scoring was enabled.\n",
-              "Legacy scoring is not availble with indels and they will be dropped from analysis")
-      fsnplist.indel <- NULL
-      fsnplist.snv <- fsnplist[!is.indel]
-    } else {
-      fsnplist.indel <- fsnplist[is.indel]
-      fsnplist.snv <- fsnplist[!is.indel]
-    }
+    fsnplist.indel <- fsnplist[is.indel]
+    fsnplist.snv <- fsnplist[!is.indel]
   } else if (sum(is.indel) == length(is.indel)) {
     fsnplist.indel <- fsnplist
     fsnplist.snv <- NULL
-    if (legacy) {
-      warning("The only variants included in the input set are indels, but legacy scoring was selected.\n",
-              "Legacy scoring is not availble for use with indels and will be disabled.")
-      legacy <- FALSE
-    }
   } else if (sum(is.indel) == 0L) {
     fsnplist.indel <- NULL
     fsnplist.snv <- fsnplist
@@ -105,9 +93,15 @@ prepareVariants <- function(fsnplist, genome.bsgenome, max.pwm.width, legacy) {
                                fsnplist.indel[!insertion.var & need.alignment][!pattern.del.valid]$ALT,
                                fsnplist.indel[!insertion.var & need.alignment][!pattern.del.valid]$REF,
                                type = "global")
+          alt.width <- width(fsnplist.indel[!insertion.var & need.alignment][!pattern.del.valid]$ALT)
+          ref.width <- width(fsnplist.indel[!insertion.var & need.alignment][!pattern.del.valid]$REF)
           names(alignment.del) <- names(fsnplist.indel[!insertion.var & need.alignment][!pattern.del.valid])
+          alignment.ins <- sapply(sapply(alignment.del, insertion), unlist)
           alignment.del <- sapply(sapply(alignment.del, deletion), unlist)
           alignment.del.valid <- sapply(alignment.del, function(x) {length(x) > 0})
+          alignment.ins.valid <- sapply(alignment.ins, function(x) {length(x) > 0})
+          full.replace <- (alignment.del.valid & alignment.ins.valid & alt.width == ref.width)
+          alignment.del.valid <- alignment.del.valid & !full.replace
           nr.alignment.del <- lapply(alignment.del[alignment.del.valid], function(x) {start(x):end(x)})
           fsnplist.indel[!insertion.var & need.alignment][names(alignment.del[alignment.del.valid])]$ALT_loc <- nr.alignment.del
           rm(alignment.del, nr.alignment.del)
@@ -186,7 +180,7 @@ prepareVariants <- function(fsnplist, genome.bsgenome, max.pwm.width, legacy) {
 
 ## An evaluator function for SNP effect
 
- varEff <- function(allelR, allelA) {
+varEff <- function(allelR, allelA) {
   score <- allelA - allelR
   if (abs(score) >= 0.7) {
     return(list(score = score, effect = "strong"))
@@ -264,7 +258,7 @@ maxThresholdWindows <- function(window.frame) {
 #' @importFrom TFMPvalue TFMpv2sc
 #' @importFrom stringr str_locate_all str_sub
 scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
-                         threshold = 1e-3, show.neutral = FALSE, verbose = FALSE, legacy = FALSE,
+                         threshold = 1e-3, show.neutral = FALSE, verbose = FALSE,
                          genome.bsgenome=NULL, pwmList.pc = NULL, pwmRanges = NULL, filterp=TRUE) {
   k <- max(sapply(pwmList, ncol))
 
@@ -295,7 +289,7 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
       res.el$Refpvalue <- as.numeric(NA)
       res.el$Altpvalue <- as.numeric(NA)
     }
-    if (ref.len > 1 | alt.len > 1 | !legacy) {
+    if (ref.len > 1 | alt.len > 1) {
       res.el$altPos <- as.numeric(NA)
       res.el$alleleDiff <- as.numeric(NA)
       res.el$alleleEffectSize <- as.numeric(NA)
@@ -324,8 +318,8 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
       alt.windows <- scoreSeqWindows(ppm = pwm, seq = snp.alt[alt.range])
       pass.effect <- ifelse(filterp,
                             any(alt.windows > thresh) | any(ref.windows > thresh),
-                            any(((alt.windows - pwmRanges[[pwm.i]][1]) / (pwmRanges[[pwm.i]][2] - pwmRanges[[pwm.i]][1]) > thresh) |
-                                ((ref.windows - pwmRanges[[pwm.i]][1]) / (pwmRanges[[pwm.i]][2] - pwmRanges[[pwm.i]][1]) > thresh)))
+                            any(((alt.windows - pwmRanges[[pwm.i]][1]) / (pwmRanges[[pwm.i]][2] - pwmRanges[[pwm.i]][1]) > thresh)) |
+                              any((ref.windows - pwmRanges[[pwm.i]][1]) / (pwmRanges[[pwm.i]][2] - pwmRanges[[pwm.i]][1]) > thresh))
       if (pass.effect) {
         hit.alt <- maxThresholdWindows(alt.windows)
         hit.ref <- maxThresholdWindows(ref.windows)
@@ -357,17 +351,7 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
           ref.pos <- k:(k + nchar(result$REF) - 1L)
           #alt.pos <- alt.range[(ncol(pwm) - (seq.start - 1)):((ncol(pwm) + alt.len - seq.start))]
           alt.pos <- k:(k + nchar(result$ALT) - 1L)
-          if (effect == "neut") {
-            if (show.neutral) {
-              res.el.e[[uniquename]] <- updateResultsIndel(result,
-                                                           snp.ref, snp.alt,
-                                                           ref.pos, alt.pos,
-                                                           hit.ref, hit.alt,
-                                                           ref.windows, alt.windows,
-                                                           score, effect, len,
-                                                           k, pwm, calcp = filterp)
-            }
-          } else {
+          if ((effect == "neut" & show.neutral) | effect != "neut") {
             res.el.e[[uniquename]] <- updateResultsIndel(result,
                                                          snp.ref, snp.alt,
                                                          ref.pos, alt.pos,
@@ -378,53 +362,19 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
           }
         } else {
           snp.pos <- k:(k + nchar(result$REF) - 1L)
-          if (legacy) {
-            if (hit$strand == 1) {
-              allelR <- pwm.basic[as.character(result$REF), snp.pos]
-              allelA <- pwm.basic[as.character(result$ALT), snp.pos]
-            } else {
-              allelR <- pwm.basic[as.character(complement(result$REF)), snp.pos]
-              allelA <- pwm.basic[as.character(complement(result$ALT)), snp.pos]
-            }
-          } else {
-            allelR <- ref.windows[hit.ref$strand, hit.ref$window]
-            allelA <- alt.windows[hit.alt$strand, hit.alt$window]
-          }
+          allelR <- ref.windows[hit.ref$strand, hit.ref$window]
+          allelA <- alt.windows[hit.alt$strand, hit.alt$window]
           scorediff <- varEff(allelR, allelA)
           effect <- scorediff$effect
           score <- scorediff$score
-          if (effect == "neut") {
-            if (show.neutral) {
-              if (legacy) {
-                res.el.e[[uniquename]] <- updateResultsSnv(result, snp.ref[ref.range], snp.pos - 1,
-                                                           hit, ref.windows, alt.windows,
-                                                           allelR, allelA, effect, len,
-                                                           k, pwm, calcp = filterp)
-              } else {
-                res.el.e[[uniquename]] <- updateResultsIndel(result,
-                                                             snp.ref, snp.alt,
-                                                             snp.pos, snp.pos,
-                                                             hit.ref, hit.alt,
-                                                             ref.windows, alt.windows,
-                                                             score, effect, len,
-                                                             k, pwm, calcp = filterp)
-              }
-            }
-          } else {
-            if (legacy) {
-              res.el.e[[uniquename]] <- updateResultsSnv(result, snp.ref[ref.range], snp.pos - 1,
-                                                         hit, ref.windows, alt.windows,
-                                                         allelR, allelA, effect, len,
+          if ((effect == "neut" & show.neutral) | effect != "neut") {
+            res.el.e[[uniquename]] <- updateResultsIndel(result,
+                                                         snp.ref, snp.alt,
+                                                         snp.pos, snp.pos,
+                                                         hit.ref, hit.alt,
+                                                         ref.windows, alt.windows,
+                                                         score, effect, len,
                                                          k, pwm, calcp = filterp)
-            } else {
-              res.el.e[[uniquename]] <- updateResultsIndel(result,
-                                                           snp.ref, snp.alt,
-                                                           snp.pos, snp.pos,
-                                                           hit.ref, hit.alt,
-                                                           ref.windows, alt.windows,
-                                                           score, effect, len,
-                                                           k, pwm, calcp = filterp)
-            }
           }
         }
       }
@@ -802,7 +752,7 @@ motifbreakR <- function(snpList, pwmList, threshold = 0.85, filterp = FALSE,
   ## Cluster / MC setup
   if (.Platform$OS.type == "windows" && inherits(BPPARAM, "MulticoreParam")) {
     warning(paste0("Serial evaluation under effect, to achive parallel evaluation under\n",
-            "Windows, please supply an alternative BPPARAM"))
+                   "Windows, please supply an alternative BPPARAM"))
   }
   cores <- bpnworkers(BPPARAM)
   num.snps <- length(snpList)
@@ -831,11 +781,9 @@ motifbreakR <- function(snpList, pwmList, threshold = 0.85, filterp = FALSE,
 
   k <- max(sapply(pwms$pwmList, ncol))
 
-  legacy.score <- FALSE
   snpList <- prepareVariants(fsnplist = snpList,
                              genome.bsgenome = genome.bsgenome,
-                             max.pwm.width = k,
-                             legacy = legacy.score)
+                             max.pwm.width = k)
 
   snpList_cores <- split(as.list(rep(names(snpList), times = cores)), 1:cores)
   for (splitr in seq_along(snpList)) {
@@ -964,7 +912,6 @@ calculatePvalue <- function(results,
       pwmList <- lapply(pwmList, function(x, g) {x <- floor(x/g)*g; return(x)}, g = granularity)
     }
     results_sp <- split(results, 1:length(results))
-
     pvalues <- bplapply(results_sp, function(i, pwmList, pwmListmeta, bkg) {
       result <- i
       pwm.id <- result$providerId
@@ -1008,7 +955,7 @@ selcor <- function(identifier, index, GdObject, ... ) {
 }
 
 selall <- function(identifier, GdObject, ... ) {
-    return(TRUE)
+  return(TRUE)
 }
 
 #' @importFrom grid grid.newpage pushViewport viewport popViewport
@@ -1041,8 +988,8 @@ plotMotifLogoStack.3 <- function(pfms, ...) {
 DNAmotifAlignment.2snp <- function(pwms, result) {
   from <- min(sapply(result$motifPos, `[`, 1))
   to <- max(sapply(result$motifPos, `[`, 2))
-#  pos <- mcols(result)$motifPos
-#  pos <- pos[as.logical(strand(result) == "+")][1]
+  #  pos <- mcols(result)$motifPos
+  #  pos <- pos[as.logical(strand(result) == "+")][1]
   for (pwm.i in seq_along(pwms)) {
     #pwm <- pwms[[pwm.i]]@mat
     ## get pwm info from result data
@@ -1096,13 +1043,18 @@ DNAmotifAlignment.2snp <- function(pwms, result) {
 #'   the motifs as reversed \code{FALSE} or reverse complement \code{TRUE}
 #' @param effect Character; show motifs that are strongly effected \code{c("strong")},
 #'   weakly effected \code{c("weak")}, or both \code{c("strong", "weak")}
+#' @param altAllele Character; The default value of \code{NULL} uses the first (or only)
+#'   alternative allele for the SNP to be plotted.
 #' @seealso See \code{\link{motifbreakR}} for the function that produces output to be
 #'   visualized here, also \code{\link{snps.from.rsid}} and \code{\link{snps.from.file}}
 #'   for information about how to generate the input to \code{\link{motifbreakR}}
 #'   function.
 #' @details \code{plotMB} produces output showing the location of the SNP on the
 #'   chromosome, the surrounding sequence of the + strand, the footprint of any
-#'   motif that is disrupted by the SNP or SNV, and the DNA sequence motif(s)
+#'   motif that is disrupted by the SNP or SNV, and the DNA sequence motif(s).
+#'   The \code{altAllele} argument is included for variants like rs1006140 where
+#'   multiple alternate alleles exist, the reference allele is A, and the alternate
+#'   can be G,T, or C. \code{plotMB} only plots one alternate allele at a time.
 #' @return plots a figure representing the results of \code{motifbreakR} at the
 #'   location of a single SNP, returns invisible \code{NULL}.
 #' @examples
@@ -1119,13 +1071,17 @@ DNAmotifAlignment.2snp <- function(pwms, result) {
 #' @importFrom Gviz IdeogramTrack SequenceTrack GenomeAxisTrack HighlightTrack
 #'   AnnotationTrack plotTracks
 #' @export
-plotMB <- function(results, rsid, reverseMotif = TRUE, effect = c("strong", "weak")) {
+plotMB <- function(results, rsid, reverseMotif = TRUE, effect = c("strong", "weak"), altAllele = NULL) {
   motif.starts <- sapply(results$motifPos, `[`, 1)
   motif.starts <- start(results) + motif.starts
   motif.starts <- order(motif.starts)
   results <- results[motif.starts]
   g <- genome(results)[[1]]
-  result <- results[names(results) %in% rsid]
+  result <- results[results$SNP_id %in% rsid]
+  if(is.null(altAllele)) {
+    altAllele <- result$ALT[[1]]
+  }
+  result <- result[result$ALT == altAllele]
   result <- result[order(sapply(result$motifPos, min), sapply(result$motifPos, max)), ]
   result <- result[result$effect %in% effect]
   chromosome <- as.character(seqnames(result))[[1]]
@@ -1323,4 +1279,3 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, effect = c("strong", "wea
              shape = "box", cex.group = 0.8, fonts = c("sans", "Helvetica"))
   return(invisible(NULL))
 }
-

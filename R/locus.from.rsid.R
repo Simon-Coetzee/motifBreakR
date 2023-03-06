@@ -157,6 +157,8 @@ formatVcfOut <- function(x, gseq) {
 #'  see \code{\link[BSgenome]{available.genomes}} for a list of species
 #' @param format Character; one of \code{bed} or \code{vcf}
 #' @param indels Logical; allow the import of indels.
+#' @param check.unnamed.for.rsid Logical; check snps in the form chr:pos:ref:alt
+#'  for corresponding rsid, lookup may be slow, requires param dbSNP.
 #' @seealso See \code{\link{motifbreakR}} for analysis; See \code{\link{snps.from.rsid}}
 #'   for an alternate method for generating a list of variants.
 #' @details \code{snps.from.file} takes a character vector describing the file path
@@ -190,7 +192,7 @@ formatVcfOut <- function(x, gseq) {
 #' @importFrom SummarizedExperiment rowRanges
 #' @importFrom stringr str_sort str_split
 #' @export
-snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, format = "bed", indels = FALSE) {
+snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, format = "bed", indels = FALSE, check.unnamed.for.rsid = FALSE) {
   if (format == "vcf") {
     if (!inherits(search.genome, "BSgenome")) {
       stop(paste0(search.genome, " is not a BSgenome object.\n", "Run availible.genomes() and choose the appropriate BSgenome object"))
@@ -325,9 +327,29 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
       snps.noid$ALT <- snps.alt
       strand(snps.noid) <- "*"
       names(snps.noid) <- paste(as.character(snps.noid), snps.ref, snps.alt, sep = ":")
+      if(check.unnamed.for.rsid) {
+        snps.noid <- change.to.search.genome(snps.noid, dbSNP)
+        snps.actually.name <- GRanges(snpsByOverlaps(dbSNP, snps.noid, drop.rs.prefix = FALSE))
+        which.actually.name <- findOverlaps(snps.actually.name, snps.noid)
+        if(length(which.actually.name) > 0) {
+          if(length(which.actually.name) < 50) {
+            warning(paste0(snps.actually.name[queryHits(which.actually.name)]$RefSNP_id,
+                           " was found as a match for ",
+                           snps.noid[subjectHits(which.actually.name),]$name,
+                           "; using entry from dbSNP\n  "))
+          } else {
+            warning(length(which.actually.name), " variants had names replaced using entries from dbSNP")
+          }
+          snps.noid[subjectHits(which.actually.name),]$name <- snps.actually.name[queryHits(which.actually.name)]$RefSNP_id
+          snps.noid <- change.to.search.genome(snps.noid, search.genome)
+          names(snps.noid) <- snps.noid$name
+        } else {
+          snps.noid <- change.to.search.genome(snps.noid, search.genome)
+        }
+      }
       snps.noid <- formatVcfOut(snps.noid, search.genome)
       if (!indels) {
-      ## get object for named snps
+        ## get object for named snps
         if (length(snps.rsid) > 0) {
           snps.rsid.out <- snps.from.rsid(snps.rsid$name, dbSNP = dbSNP, search.genome = search.genome)
           colnames(mcols(snps.rsid.out))[1] <- "SNP_id"
