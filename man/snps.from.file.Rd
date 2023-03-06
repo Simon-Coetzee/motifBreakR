@@ -10,7 +10,8 @@ snps.from.file(
   dbSNP = NULL,
   search.genome = NULL,
   format = "bed",
-  indels = FALSE
+  indels = FALSE,
+  check.unnamed.for.rsid = FALSE
 )
 
 variants.from.file(
@@ -33,6 +34,9 @@ see \code{\link[BSgenome]{available.genomes}} for a list of species}
 \item{format}{Character; one of \code{bed} or \code{vcf}}
 
 \item{indels}{Logical; allow the import of indels.}
+
+\item{check.unnamed.for.rsid}{Logical; check snps in the form chr:pos:ref:alt
+for corresponding rsid, lookup may be slow, requires param dbSNP.}
 }
 \value{
 a GRanges object containing:
@@ -57,9 +61,9 @@ Import SNPs from a BED file or VCF file for use in motifbreakR
 }
 \section{Functions}{
 \itemize{
-\item \code{variants.from.file}: Allows the use of indels by default
-}}
+\item \code{variants.from.file()}: Allows the use of indels by default
 
+}}
 \examples{
  library(BSgenome.Drerio.UCSC.danRer7)
  library(SNPlocs.Hsapiens.dbSNP155.GRCh37)

@@ -5,7 +5,13 @@
 \title{Plot a genomic region surrounding a genomic variant, and potentially disrupted
 motifs}
 \usage{
-plotMB(results, rsid, reverseMotif = TRUE, effect = c("strong", "weak"))
+plotMB(
+  results,
+  rsid,
+  reverseMotif = TRUE,
+  effect = c("strong", "weak"),
+  altAllele = NULL
+)
 }
 \arguments{
 \item{results}{The output of \code{motifbreakR}}
@@ -17,6 +23,9 @@ the motifs as reversed \code{FALSE} or reverse complement \code{TRUE}}
 
 \item{effect}{Character; show motifs that are strongly effected \code{c("strong")},
 weakly effected \code{c("weak")}, or both \code{c("strong", "weak")}}
+
+\item{altAllele}{Character; The default value of \code{NULL} uses the first (or only)
+alternative allele for the SNP to be plotted.}
 }
 \value{
 plots a figure representing the results of \code{motifbreakR} at the
@@ -29,7 +38,10 @@ motifs
 \details{
 \code{plotMB} produces output showing the location of the SNP on the
   chromosome, the surrounding sequence of the + strand, the footprint of any
-  motif that is disrupted by the SNP or SNV, and the DNA sequence motif(s)
+  motif that is disrupted by the SNP or SNV, and the DNA sequence motif(s).
+  The \code{altAllele} argument is included for variants like rs1006140 where
+  multiple alternate alleles exist, the reference allele is A, and the alternate
+  can be G,T, or C. \code{plotMB} only plots one alternate allele at a time.
 }
 \examples{
 data(example.results)
