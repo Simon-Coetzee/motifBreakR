@@ -318,8 +318,8 @@ scoreSnpList <- function(fsnplist, pwmList, method = "default", bkg = NULL,
       alt.windows <- scoreSeqWindows(ppm = pwm, seq = snp.alt[alt.range])
       pass.effect <- ifelse(filterp,
                             any(alt.windows > thresh) | any(ref.windows > thresh),
-                            any(((alt.windows - pwmRanges[[pwm.i]][1]) / (pwmRanges[[pwm.i]][2] - pwmRanges[[pwm.i]][1]) > thresh) |
-                                ((ref.windows - pwmRanges[[pwm.i]][1]) / (pwmRanges[[pwm.i]][2] - pwmRanges[[pwm.i]][1]) > thresh)))
+                            any(((alt.windows - pwmRanges[[pwm.i]][1]) / (pwmRanges[[pwm.i]][2] - pwmRanges[[pwm.i]][1]) > thresh)) |
+                                any((ref.windows - pwmRanges[[pwm.i]][1]) / (pwmRanges[[pwm.i]][2] - pwmRanges[[pwm.i]][1]) > thresh))
       if (pass.effect) {
         hit.alt <- maxThresholdWindows(alt.windows)
         hit.ref <- maxThresholdWindows(ref.windows)
