@@ -553,10 +553,12 @@ preparePWM <- function(pwmList,
     pwmThresh <- rep.int(scoreThresh, times = length(pwmRanges))
   }
   pwmList@listData <- lapply(pwmList, function(pwm) {
+    pwm <- pwm[c("A", "C", "G", "T"), ]
     pwm <- rbind(pwm, N = 0)
     colnames(pwm) <- as.character(1:ncol(pwm))
     return(pwm) })
   pwmList.pc <- lapply(pwmList.pc, function(pwm) {
+    pwm <- pwm[c("A", "C", "G", "T"), ]
     pwm <- rbind(pwm, N = 0)
     colnames(pwm) <- as.character(1:ncol(pwm))
     return(pwm) })
