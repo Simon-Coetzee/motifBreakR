@@ -44,8 +44,9 @@ this can be (although not always) a very memory and time intensive process if th
 }
 \examples{
 data(example.results)
-rs2661839 <- example.results[names(example.results) \%in\% "rs2661839"]
-rs2661839 <- calculatePvalue(rs2661839, BPPARAM=BiocParallel::SerialParam())
+rs1006140 <- example.results[names(example.results) \%in\% "rs1006140"]
+# low granularity for speed; 1e-6 or 1e-7 recommended for accuracy
+rs1006140 <- calculatePvalue(rs1006140, BPPARAM=BiocParallel::SerialParam(), granularity = 1e-4)
 
 
 }
