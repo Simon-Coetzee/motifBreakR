@@ -879,7 +879,7 @@ motifbreakR <- function(snpList, pwmList, threshold = 0.85, filterp = FALSE,
 #'  Algorithms for Molecular Biology, \bold{2: 15}.
 #' @examples
 #' data(example.results)
-#' rs1006140 <- example.results[names(example.results) %in% "rs1006140"]
+#' rs1006140 <- example.results[example.results$SNP_id %in% "rs1006140"]
 #' # low granularity for speed; 1e-6 or 1e-7 recommended for accuracy
 #' rs1006140 <- calculatePvalue(rs1006140, BPPARAM=BiocParallel::SerialParam(), granularity = 1e-4)
 #'
