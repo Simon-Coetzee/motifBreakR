@@ -24,7 +24,7 @@
 #'                            dbSNP = SNPlocs.Hsapiens.dbSNP155.GRCh37,
 #'                            search.genome = BSgenome.Hsapiens.UCSC.hg19)
 #'
-#' @importFrom BSgenome snpsById snplocs
+#' @importFrom BSgenome snpsById snplocs snpsByOverlaps
 #' @importFrom Biostrings DNAStringSet DNAString DNAStringSetList
 #' @export
 snps.from.rsid <- function(rsid = NULL, dbSNP = NULL,
