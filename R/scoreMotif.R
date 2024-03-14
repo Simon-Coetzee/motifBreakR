@@ -1283,3 +1283,34 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, effect = c("strong", "wea
   return(invisible(NULL))
 }
 
+#' Export motifbreakR results to csv or tsv
+#'
+#' @param results The output of \code{motifbreakR}
+#' @param file Character; the file name of the destination file
+#' @param format Character; one of tsv (tab separated values) or csv (comma separated values)
+#' @return \code{exportMBresults} produces an output file containing the output
+#' of the motifbreakR function.
+#' @examples
+#' data(example.results)
+#' example.results
+#' \donttest{
+#' exportMBresults(example.results, file = "output.tsv", format = "tsv")
+#' }
+#' @export
+exportMBresults <- function(results, file, format = c("tsv")) {
+  if(missing(file)) {stop("select output file location")}
+  if(!(format %in% c("csv", "tsv"))) {stop("format must be one of csv or tsv")}
+  sep <- switch(format,
+                csv = ",",
+                tsv = "\t")
+  names(results) <- NULL
+  results <- as.data.frame(results)
+  results <- results[, !colnames(results) %in% "width"]
+  results$start <- results$start - 1
+  results$motifPos <- vapply(results$motifPos, function(x) { paste0(x[1], ";", x[2]) }, FUN.VALUE = character(1))
+  if(format == "tsv") {
+    write.table(x = results, file = file, quote = FALSE, sep = sep, row.names = FALSE, col.names = TRUE)
+  } else {
+    write.csv(x = results, file = file, row.names = FALSE, col.names = TRUE)
+  }
+}

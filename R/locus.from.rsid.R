@@ -248,14 +248,9 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
   } else {
     if (format == "bed") {
       snps <- import(file, format = "bed")
-      if (!indels) {
-        if (any(grepl("rs", snps$name)) & (!inherits(dbSNP, "SNPlocs"))) {
-          stop(paste0(file, " contains at least one variant with an rsID and no SNPlocs has been indicated\n",
-                      "Please run availible.SNPs() to check for availble SNPlocs"))
-        }
-      } else if (inherits(dbSNP, "SNPlocs")) {
-        warning("Variants are not compared to nor extracted from SNPlocs objects when indels are included.",
-                " SNPlocs will not be used.")
+      if (any(grepl("rs", snps$name)) & (!inherits(dbSNP, "SNPlocs"))) {
+        stop(paste0(file, " contains at least one variant with an rsID and no SNPlocs has been indicated\n",
+                    "Please run availible.SNPs() to check for availble SNPlocs"))
       }
       if (!inherits(search.genome, "BSgenome")) {
         stop(paste0(search.genome, " is not a BSgenome object.\n", "Run availible.genomes() and choose the appropriate BSgenome object"))
@@ -348,19 +343,19 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
         }
       }
       snps.noid <- formatVcfOut(snps.noid, search.genome)
-      if (!indels) {
+      # if (!indels) {
       ## get object for named snps
-        if (length(snps.rsid) > 0) {
-          snps.rsid.out <- snps.from.rsid(snps.rsid$name, dbSNP = dbSNP, search.genome = search.genome)
-          colnames(mcols(snps.rsid.out))[1] <- "SNP_id"
-          names(snps.rsid.out) <- snps.rsid.out$SNP_id
-          snps.out <- c(snps.rsid.out, snps.noid)
-        } else {
-          snps.out <- snps.noid
-        }
+      if (length(snps.rsid) > 0) {
+        snps.rsid.out <- snps.from.rsid(snps.rsid$name, dbSNP = dbSNP, search.genome = search.genome)
+        colnames(mcols(snps.rsid.out))[1] <- "SNP_id"
+        names(snps.rsid.out) <- snps.rsid.out$SNP_id
+        snps.out <- c(snps.rsid.out, snps.noid)
       } else {
         snps.out <- snps.noid
       }
+      # } else {
+      # snps.out <- snps.noid
+      # }
       attributes(snps.out)$genome.package <- attributes(search.genome)$pkgname
       return(snps.out)
     } else {
