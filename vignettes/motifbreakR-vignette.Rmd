@@ -225,6 +225,7 @@ Here we specify the `snpList`, `pwmList`, `threshold` that we declare as the cut
 For the purposes of this small example, we use the `SerialParam` back end. However, for larger variant lists, `MulticoreParam` or one of the other `r Biocpkg("BiocParallel")` back-ends could speed up completion.
 
 ```{r runmotifbreakr, message=TRUE, cache=TRUE}
+library("BSgenome.Hsapiens.UCSC.hg19")
 results <- motifbreakR(snpList = snps.mb[1:12], filterp = TRUE,
                        pwmList = subset(MotifDb, 
                                         dataSource %in% c("HOCOMOCOv11-core-A", "HOCOMOCOv11-core-B", "HOCOMOCOv11-core-C")),
