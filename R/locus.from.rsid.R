@@ -170,7 +170,7 @@ biomartToGranges <- function(bm.snp, biomart.dataset) {
                                  REF = DNAStringSet(REF),
                                  ALT = DNAStringSet(ALT),
                                  seqinfo = ens.genome))
-  # browser()
+
   bm.snp <- keepSeqlevels(bm.snp, value = unique(as.character(runValue(seqnames(bm.snp)))), pruning.mode = "coarse")
   names(bm.snp) <- bm.snp$SNP_id
   return(bm.snp)
@@ -198,6 +198,19 @@ unlistColumn <- function(x, column = NULL) {
     return(x)
   } else {
     return(x)
+  }
+}
+
+cleanVariants <- function(variants) {
+  letters <- uniqueLetters(unlist(BStringSetList(variants)))
+  letters_remove <- letters[!letters %in% DNA_ALPHABET]
+  if(length(letters_remove) > 0) {
+    warning(paste0("The following non-standard nucleotide codes were found in the VCF file and variants containing these codes were removed: ", paste(letters_remove, collapse = " ")))
+    search.pattern <- paste0(letters_remove, collapse = "|")
+    drop.variants <- grepl(search.pattern, variants)
+    return(drop.variants)
+  } else {
+    return(FALSE)
   }
 }
 
@@ -233,7 +246,6 @@ formatVcfOut <- function(x, gseq) {
 #' @param search.genome an object of class BSgenome for the species you are interrogating;
 #'  see \code{\link[BSgenome]{available.genomes}} for a list of species
 #' @param format Character; one of \code{bed} or \code{vcf}
-#' @param indels Logical; allow the import of indels.
 #' @param biomart.dataset a Mart object from \code{\link{useEnsembl}} specifying
 #'  the \code{snps} biomart, which dataset i.e., \code{hsapiens_snp}, and which
 #'  version i.e., \code{111} or \code{GRCm39}. This will override \code{SNPlocs} and must
@@ -274,7 +286,7 @@ formatVcfOut <- function(x, gseq) {
 #' @importFrom SummarizedExperiment rowRanges
 #' @importFrom stringr str_sort str_split
 #' @export
-snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, format = "bed", indels = FALSE, biomart.dataset = NULL, check.unnamed.for.rsid = FALSE) {
+snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, format = "bed", biomart.dataset = NULL, check.unnamed.for.rsid = FALSE) {
   if (format == "vcf") {
     if (!inherits(search.genome, "BSgenome")) {
       stop(paste0(search.genome, " is not a BSgenome object.\n", "Run availible.genomes() and choose the appropriate BSgenome object"))
@@ -284,49 +296,18 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
     vcffile = open(VcfFile(file))
     vcf = readVcf(vcffile, genome = genome.name, param = vcfparam)
     close(vcffile)
+
     vcf_ranges <- rowRanges(vcf)
     vcf_ranges <- unlistColumn(vcf_ranges, "ALT")
     vcf_ranges <- unlistColumn(vcf_ranges, "REF")
     vcf_ranges$index <- seq_along(vcf_ranges)
-    complex.variants <- vcf_ranges[nchar(vcf_ranges$REF) > 1 | nchar(vcf_ranges$ALT) > 1]
-    snps <- vcf_ranges[!(nchar(vcf_ranges$REF) > 1 | nchar(vcf_ranges$ALT) > 1)]
-    if (indels) {
-      if (length(complex.variants) > 0) {
-        alt_letters <- uniqueLetters(unlist(BStringSetList(complex.variants$ALT)))
-        ref_letters <- uniqueLetters(unlist(BStringSetList(complex.variants$REF)))
-        alt_letters_remove <- alt_letters[!alt_letters %in% DNA_ALPHABET]
-        ref_letters_remove <- ref_letters[!ref_letters %in% DNA_ALPHABET]
-        if (length(alt_letters_remove) > 0) {
-          search.pattern <- paste0(alt_letters_remove, collapse = "|")
-          drop.variants.alt <- vapply(complex.variants$ALT,
-                                      function(x,
-                                               remove_letters = search.pattern) {
-                                        any(grepl(remove_letters, x))
-                                      }, logical(1))
-        } else {
-          drop.variants.alt <- as.logical(rep.int(0, length(complex.variants)))
-        }
-        if (length(ref_letters_remove) > 0) {
-          search.pattern <- paste0(ref_letters_remove, collapse = "|")
-          drop.variants.ref <- vapply(complex.variants$REF,
-                                      function(x,
-                                               remove_letters = search.pattern) {
-                                        any(grepl(remove_letters, x))
-                                      }, logical(1))
-        } else {
-          drop.variants.ref <- as.logical(rep.int(0, length(complex.variants)))
-        }
-        complex.variants <- complex.variants[!(drop.variants.alt | drop.variants.ref)]
-        complex.variants <- unlistColumn(complex.variants, "ALT")
-        complex.variants <- unlistColumn(complex.variants, "REF")
-      }
-      all.variants <- c(complex.variants, snps)
-      all.variants <- formatVcfOut(all.variants[order(all.variants$index), ], search.genome)
-      return(all.variants)
-    } else {
-      snps <- formatVcfOut(snps, search.genome)
-      return(snps)
-    }
+
+    drop.variants.alt <- cleanVariants(vcf_ranges$ALT)
+    drop.variants.ref <- cleanVariants(vcf_ranges$REF)
+    vcf_ranges <- vcf_ranges[!(drop.variants.alt | drop.variants.ref)]
+    vcf_ranges <- formatVcfOut(vcf_ranges[order(vcf_ranges$index), ], search.genome)
+
+    return(vcf_ranges)
   } else {
     if (format == "bed") {
       snps <- import(file, format = "bed")
@@ -361,24 +342,9 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
       snps.noid <- rep(snps.noid, rep.vars)
       snps.ref <- rep(snps.ref, rep.vars)
       snps.alt <- unlist(snps.alt.split)
-      is.indel <- nchar(snps.alt) > 1 | nchar(snps.ref) > 1
-      if (!indels) {
-        snps.noid <- snps.noid[!is.indel]
-        snps.ref <- snps.ref[!is.indel]
-        snps.alt <- snps.alt[!is.indel]
-      }
-      alt.letters <- uniqueLetters(unlist(BStringSetList(snps.alt)))
-      alt_letters_remove <- alt.letters[!alt.letters %in% DNA_ALPHABET]
-      if (length(alt_letters_remove) > 0) {
-        search.pattern <- paste0(alt_letters_remove, collapse = "|")
-        drop.variants.alt <- vapply(complex.variants$ALT,
-                                    function(x,
-                                             remove_letters = search.pattern) {
-                                      any(grepl(remove_letters, x))
-                                    }, logical(1))
-      } else {
-        drop.variants.alt <- as.logical(rep.int(0, length(snps.alt)))
-      }
+      drop.variants.alt <- cleanVariants(snps.alt)
+      drop.variants.ref <- cleanVariants(snps.ref)
+
       ## check if alt was given for unnamed snps
       alt.allele.is.valid <- !drop.variants.alt & (snps.alt != snps.ref)
       if (!all(alt.allele.is.valid)) {
@@ -392,7 +358,7 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
           }
         }
         equal.to.ref <- snps.alt == snps.ref
-        if (sum(equal.to.ref) > 0) {
+        if (any(equal.to.ref)) {
           warning(paste0(sum(equal.to.ref), " user variants are the same as the reference genome ",
                          metadata(search.genome)$genome, " for ", metadata(search.genome)$common_name, "\n These variants were excluded"))
         }
@@ -459,6 +425,7 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
         snps.rsid.out <- snps.from.rsid(snps.rsid$name, dbSNP = dbSNP, search.genome = search.genome, biomart.dataset = biomart.dataset)
         colnames(mcols(snps.rsid.out))[1] <- "SNP_id"
         names(snps.rsid.out) <- snps.rsid.out$SNP_id
+        snps.rsid.out <- formatVcfOut(snps.rsid.out, search.genome)
         snps.out <- c(snps.rsid.out, snps.noid)
       } else {
         snps.out <- snps.noid
@@ -474,5 +441,5 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
 #' @describeIn snps.from.file Allows the use of indels by default
 #' @export
 variants.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, biomart.dataset = NULL, format = "bed") {
-  return(snps.from.file(file = file, dbSNP = dbSNP, search.genome = search.genome, format = format, biomart.dataset = biomart.dataset, indels = TRUE))
+  return(snps.from.file(file = file, dbSNP = dbSNP, search.genome = search.genome, format = format, biomart.dataset = biomart.dataset))
 }

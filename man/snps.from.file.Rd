@@ -10,7 +10,6 @@ snps.from.file(
   dbSNP = NULL,
   search.genome = NULL,
   format = "bed",
-  indels = FALSE,
   biomart.dataset = NULL,
   check.unnamed.for.rsid = FALSE
 )
@@ -34,8 +33,6 @@ see Details for a description of the required format}
 see \code{\link[BSgenome]{available.genomes}} for a list of species}
 
 \item{format}{Character; one of \code{bed} or \code{vcf}}
-
-\item{indels}{Logical; allow the import of indels.}
 
 \item{biomart.dataset}{a Mart object from \code{\link{useEnsembl}} specifying
 the \code{snps} biomart, which dataset i.e., \code{hsapiens_snp}, and which
