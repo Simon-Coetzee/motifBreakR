@@ -5,3 +5,6 @@
 motifbreakR_scores.pdf
 practicedata.rda
 .Rbuildignore
+.positai
+.DS_Store
+._*
