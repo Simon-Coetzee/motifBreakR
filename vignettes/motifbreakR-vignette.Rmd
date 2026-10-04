@@ -322,7 +322,7 @@ scale for effect_size (blue representing stronger binding in `REF`}`, red
 representing stronger binding in `ALT`), or a sequential color scale
 otherwise (low values as purple, high values as yellow). The score column is
 either the `effect_size` (`alleleDiff` column), the -log10(p-value)
-(capped at 10), corresponding to `Refpvalue`, `Altpvalue`, or the
+(capped at 10), corresponding to `pValueRef`, `pValueAlt`, or the
 best match of the two, or the `score` `pctRef`, `pctAlt`, or the
 highest match of the two.
 
@@ -429,7 +429,7 @@ Additionally, now, with the use of `r CRANpkg("TFMPvalue")`, we may filter by p-
 This is unfortunately a two step process. First, by invoking `filterp=TRUE` and setting a threshold at
 a desired p-value e.g 1e-4, we perform a rough filter on the results by rounding all values in the PWM to two
 decimal place, and calculating a scoring threshold based upon that. The second step is to use the function `calculatePvalue()`
-on a selection of results which will change the `Refpvalue` and `Altpvalue` columns in the output from `NA` to the p-value
+on a selection of results which will change the `pValueRef` and `pValueAlt` columns in the output from `NA` to the p-value
 calculated by `TFMsc2pv`.  This can be (although not always) a very memory and time intensive process if the algorithm doesn't converge rapidly.
 
 P-values can also be calculated in parallel, it is highly recommended to round the PWM matrix with the granularity argument. This trades the accuracy of the p-value calculation for speed of convergence. For most purposes a range of 1e-4 to 1e-6 is an acceptable trade off between accuracy and speed.

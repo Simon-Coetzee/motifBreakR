@@ -13,9 +13,9 @@ exportMBbed(results, file, name = NULL, color = "effect_size")
 
 \item{name}{Character; name for the BED track, defaults to "motifbreakR results"}
 
-\item{color}{Character; one of ref_sig (\code{Refpvalue}), alt_sig
-(\code{Altpvalue}), best_sig (lowest between \code{Refpvalue} and
-\code{Altpvalue}), (each of which require pre-computation of p-values with
+\item{color}{Character; one of ref_sig (\code{pValueRef}), alt_sig
+(\code{pValueAlt}), best_sig (lowest between \code{pValueRef} and
+\code{pValueAlt}), (each of which require pre-computation of p-values with
 \code{\link{calculatePvalue}}), or ref_score (\code{pctRef}), alt_score
 (\code{pctAlt}), best_score (highest between \code{pctRef} and \code{pctAlt}),
 or the default value of effect_size (\code{alleleDiff}).}
@@ -26,7 +26,7 @@ scale for effect_size (blue representing stronger binding in \code{REF}, red
 representing stronger binding in \code{ALT}), or a sequential color scale
 otherwise (low values as purple, high values as yellow). The score column is
 either the effect_size (\code{alleleDiff} column), the -log10(p-value)
-(capped at 10), corresponding to \code{Refpvalue}, \code{Altpvalue}, or the
+(capped at 10), corresponding to \code{pValueRef}, \code{pValueAlt}, or the
 best match of the two, or the score \code{pctRef}, \code{pctAlt}, or the
 highest match of the two. The name column is formatted
 \code{SNP_id:REF/ALT:providerId}. Additionally a color key is returned

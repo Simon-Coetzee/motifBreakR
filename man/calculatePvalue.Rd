@@ -10,15 +10,12 @@ H{\'e}l{\`e}ne Touzet and Jean-St{\'e}phane Varr{\'e} (2007) Efficient and accur
 \usage{
 calculatePvalue(
   results,
-  background = c(A = 0.25, C = 0.25, G = 0.25, T = 0.25),
   granularity = NULL,
   BPPARAM = BiocParallel::SerialParam()
 )
 }
 \arguments{
 \item{results}{The output of \code{motifbreakR} that was run with \code{filterp=TRUE}}
-
-\item{background}{Numeric Vector; the background probabilities of the nucleotides}
 
 \item{granularity}{Numeric Vector; the granularity to which to round the PWM,
 larger values compromise full accuracy for speed of calculation. A value of
@@ -32,8 +29,8 @@ evaluation.}
 }
 \value{
 a GRanges object. The same Granges object that was input as \code{results}, but with
- \code{Refpvalue} and \code{Altpvalue} columns in the output modified from \code{NA} to the p-value
- calculated by \code{\link{TFMsc2pv}}. Additionally a \code{pvalueEffect} column that indicates "strong"
+ \code{pValueRef} and \code{pValueAlt} columns in the output modified from \code{NA} to the p-value
+ calculated by \code{\link{TFMsc2pv}}. Additionally a \code{pValueEffect} column that indicates "strong"
  when the lower p-value (between ref and alt) is an order of magnitude or more different from
  the higher p-value, otherwise weak.
 }

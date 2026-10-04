@@ -34,8 +34,12 @@ details.}
 
 \item{verbose}{Logical; if running serially, show verbose messages}
 
-\item{bkg}{Numeric Vector; the background probabilites of the nucleotides
-used with method=\code{log} method=\code{ic}}
+\item{bkg}{Numeric Vector or "genome" or "aggregate" or "pwm"; the background probabilities of the nucleotides
+used with method=\code{log} method=\code{ic}. "genome" and "aggregate" are
+special cases based on user data. "genome" will calculate the background frequencies
+based on the reference genome sequence, while "aggregate" will calculate the
+background frequencies based on the aggregate nucleotide frequencies across all
+windows around user variants.}
 
 \item{BPPARAM}{a BiocParallel object see \code{\link[BiocParallel]{register}}
 and see \code{getClass("BiocParallelParam")} for additional parameter
@@ -45,24 +49,30 @@ evaluation.}
 }
 \value{
 a GRanges object containing:
+ \item{SNP_id}{the identifier of the variant}
  \item{REF}{the reference allele for the variant}
  \item{ALT}{the alternate allele for the variant}
- \item{snpPos}{the coordinates of the variant}
- \item{motifPos}{The position of the motif relative the the variant}
+ \item{varType}{one of \code{SNV}, \code{Insertion}, \code{Deletion}, or \code{Other}}
+ \item{windowIdxRef, windowIdxAlt}{the start of the best motif match on the
+ reference and alternate allele, relative to the first base of the variant}
+ \item{motifStrandRef, motifStrandAlt}{the strand (\code{+} or \code{-}) of the
+ best motif match on the reference and alternate allele}
  \item{geneSymbol}{the geneSymbol corresponding to the TF of the TF binding motif}
  \item{dataSource}{the source of the TF binding motif}
- \item{providerName, providerId}{the name and id provided by the source}
- \item{seqMatch}{the sequence on the 5' -> 3' direction of the "+" strand
- that corresponds to DNA at the position that the TF binding motif was found.}
+ \item{motifID, providerName, providerId}{the name and id provided by the source}
+ \item{seqMatch}{the sequence matched by the TF binding motif on the allele
+ with the stronger match (see \code{strongerIn})}
+ \item{pwmConsensus}{the consensus sequence of the TF binding motif, on the
+ strand of the stronger match}
  \item{pctRef}{The score as determined by the scoring method, when the sequence contains the reference variant allele, normalized to a scale from 0 - 1. If \code{filterp = FALSE},
  this is the value that is thresholded.}
  \item{pctAlt}{The score as determined by the scoring method, when the sequence contains the alternate variant allele, normalized to a scale from 0 - 1. If \code{filterp = FALSE},
  this is the value that is thresholded.}
  \item{scoreRef}{The score as determined by the scoring method, when the sequence contains the reference variant allele}
  \item{scoreAlt}{The score as determined by the scoring method, when the sequence contains the alternate variant allele}
- \item{Refpvalue}{p-value for the match for the pctRef score, initially set to \code{NA}. see \code{\link{calculatePvalue}} for more information}
- \item{Altpvalue}{p-value for the match for the pctAlt score, initially set to \code{NA}. see \code{\link{calculatePvalue}} for more information}
- \item{altPos}{the position, relative to the reference allele, of the alternate allele}
+ \item{pValueRef}{p-value for the match for the pctRef score, initially set to \code{NA}; only present when \code{filterp = TRUE}. see \code{\link{calculatePvalue}} for more information}
+ \item{pValueAlt}{p-value for the match for the pctAlt score, initially set to \code{NA}; only present when \code{filterp = TRUE}. see \code{\link{calculatePvalue}} for more information}
+ \item{strongerIn}{\code{Ref} or \code{Alt}, the allele with the stronger motif match}
  \item{alleleDiff}{The difference between the score on the reference allele and the score on the alternate allele}
  \item{alleleEffectSize}{The ratio of the \code{alleleDiff} and the maximal score of a sequence under the PWM}
  \item{effect}{one of weak, strong, or neutral indicating the strength of the effect.}
@@ -180,7 +190,7 @@ Additionally, now, with the use of \code{\link{TFMPvalue-package}}, we may filte
 This is unfortunately a two step process. First, by invoking \code{filterp=TRUE} and setting a threshold at
 a desired p-value e.g 1e-4, we perform a rough filter on the results by rounding all values in the PWM to two
 decimal place, and calculating a scoring threshold based upon that. The second step is to use the function \code{\link{calculatePvalue}()}
-on a selection of results which will change the \code{Refpvalue} and \code{Altpvalue} columns in the output from \code{NA} to the p-value
+on a selection of results which will change the \code{pValueRef} and \code{pValueAlt} columns in the output from \code{NA} to the p-value
 calculated by \code{\link{TFMsc2pv}}.  This can be (although not always) a very memory and time intensive process if the algorithm doesn't converge rapidly.
 }
 \examples{

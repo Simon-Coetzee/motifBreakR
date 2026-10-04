@@ -231,24 +231,28 @@ server <- function(input, output, session) {
                         "REF",
                         "ALT",
                         "varType",
-                        "motifPos",
+                        "windowIdxRef",
+                        "motifStrandRef",
+                        "windowIdxAlt",
+                        "motifStrandAlt",
                         "geneSymbol",
                         "dataSource",
                         "providerName",
                         "providerId",
                         "seqMatch",
+                        "pwmConsensus",
                         "pctRef",
                         "pctAlt",
                         "scoreRef",
                         "scoreAlt",
-                        "Refpvalue",
-                        "Altpvalue",
-                        "altPos",
+                        "pValueRef",
+                        "pValueAlt",
+                        "strongerIn",
                         "alleleDiff",
                         "alleleEffectSize",
                         "effect",
                         "matchingBindingEvent",
-                        "pvalueEffect")
+                        "pValueEffect")
 
   output$motifbreakr.results <- DT::renderDT({
     empty <- as.data.frame(matrix(ncol = 6,
@@ -263,24 +267,28 @@ server <- function(input, output, session) {
                                                     "REF",
                                                     "ALT",
                                                     "varType",
-                                                    "motifPos",
+                                                    "windowIdxRef",
+                                                    "motifStrandRef",
+                                                    "windowIdxAlt",
+                                                    "motifStrandAlt",
                                                     "geneSymbol",
                                                     "dataSource",
                                                     "providerName",
                                                     "providerId",
                                                     "seqMatch",
+                                                    "pwmConsensus",
                                                     "pctRef",
                                                     "pctAlt",
                                                     "scoreRef",
                                                     "scoreAlt",
-                                                    "Refpvalue",
-                                                    "Altpvalue",
-                                                    "altPos",
+                                                    "pValueRef",
+                                                    "pValueAlt",
+                                                    "strongerIn",
                                                     "alleleDiff",
                                                     "alleleEffectSize",
                                                     "effect",
                                                     "matchingBindingEvent",
-                                                    "pvalueEffect"))))
+                                                    "pValueEffect"))))
     DT::datatable(empty, filter = "top", rownames = F)
     })
 
@@ -326,7 +334,7 @@ server <- function(input, output, session) {
     subset_data$providerName <- as.factor(subset_data$providerName)
     subset_data$providerId <- as.factor(subset_data$providerId)
     subset_data$effect <- as.factor(subset_data$effect)
-    subset_data$pvalueEffect <- as.factor(subset_data$pvalueEffect)
+    subset_data$pValueEffect <- as.factor(subset_data$pValueEffect)
     subset_data <- subset_data[, input$select_results, drop = FALSE]
     subset_data_cols <- c("pctRef", "pctAlt", "scoreRef", "scoreAlt", "alleleDiff")
     subset_data_cols <- subset_data_cols[subset_data_cols %in% input$select_results]
