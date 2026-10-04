@@ -33,7 +33,7 @@ Heinz S, Benner C, Spann N, Bertolino E et al. (2010 May 28) Simple Combinations
   PMID: \href{http://www.ncbi.nlm.nih.gov/sites/entrez?Db=Pubmed&term=20513432[UID]}{20513432}
 }
 \usage{
-homer
+data(homer)
 }
 \value{
 \code{\link[MotifDb]{MotifList-class}} object

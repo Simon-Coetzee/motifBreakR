@@ -32,7 +32,7 @@ J Wang, J Zhuang, S Iyer, XY Lin, et al. (2012) Sequence features and
   factors. Genome Research, \bold{22 (9)}, 1798-1812, doi:10.1101/gr.139105.112
 }
 \usage{
-factorbook
+data(factorbook)
 }
 \value{
 \code{\link[MotifDb]{MotifList-class}} object

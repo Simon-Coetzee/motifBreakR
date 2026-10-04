@@ -102,7 +102,7 @@ Kulakovskiy,I.V., Medvedeva,Y.A., Schaefer,U., Kasianov,A.S.,
   Acids Research, \bold{41}, D195--D202.
 }
 \usage{
-hocomoco
+data(hocomoco)
 }
 \value{
 \code{\link[MotifDb]{MotifList-class}} object

@@ -8,7 +8,7 @@
 \code{\link[GenomicRanges]{GRanges}} output from \code{motifbreakR}
 }
 \usage{
-example.results
+data(example.results)
 }
 \value{
 \code{\link[GenomicRanges]{GRanges}} object. See \code{\link{motifbreakR}} for information on it's structure.

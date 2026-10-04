@@ -37,7 +37,7 @@ Pouya Kheradpour and Manolis Kellis (2013 December 13) Systematic
   experiments. Nucleic Acids Research, doi:10.1093/nar/gkt1249
 }
 \usage{
-encodemotif
+data(encodemotif)
 }
 \value{
 \code{\link[MotifDb]{MotifList-class}} object
