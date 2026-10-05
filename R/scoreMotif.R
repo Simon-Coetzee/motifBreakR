@@ -1254,14 +1254,12 @@ exportMBbed <- function(results, file, name = NULL, color = "effect_size") {
       if(!("pValueRef" %in% names(mcols(results))))
         stop('incorrect results format; please rerun analysis with filterp=TRUE')
       if(any(is.na(results$pValueRef)))
-        stop('run computePvalue before exporting data with p-values')
+        stop('run calculatePvalue before exporting data with p-values')
     }
     bed_score <- switch(color,
                         ref_sig = -log10(results$pValueRef),
                         alt_sig = -log10(results$pValueAlt),
-                        best_sig = ifelse(results$pctRef < results$pctAlt,
-                                          -log10(results$pValueRef),
-                                          -log10(results$pValueAlt)),
+                        best_sig = -log10(pmin(results$pValueRef, results$pValueAlt)),
                         ref_score = results$pctRef,
                         alt_score = results$pctAlt,
                         best_score = ifelse(results$pctAlt < results$pctRef,
