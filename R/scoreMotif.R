@@ -630,8 +630,7 @@ get_background <- function(bkg, snpList, genome.bsgenome, pwmList) {
 #'                         method = "ic",
 #'                         BPPARAM=BiocParallel::SerialParam())
 #' @import BiocParallel
-#' @import parallel
-#' @importFrom parallel clusterEvalQ
+#' @importClassesFrom MotifDb MotifList
 #' @importFrom BiocParallel bplapply bpnworkers
 #' @importFrom stringr str_length str_trim
 #' @export
@@ -648,11 +647,6 @@ motifbreakR <- function(snpList, pwmList, threshold = 0.85, filterp = FALSE,
   num.snps <- length(snpList)
   if (num.snps < cores) {
     cores <- num.snps
-  }
-  if (!(is(BPPARAM, "MulticoreParam")|is(BPPARAM, "SerialParam"))) {
-    bpstart(BPPARAM)
-    cl <- bpbackend(BPPARAM)
-    clusterEvalQ(cl, library("MotifDb"))
   }
 
   genome.package <- attributes(snpList)$genome.package
@@ -687,17 +681,6 @@ motifbreakR <- function(snpList, pwmList, threshold = 0.85, filterp = FALSE,
                 genome.bsgenome = genome.bsgenome,
                 filterp = filterp,
                 BPPARAM = BPPARAM)
-
-
-  if (inherits(x, "try-error")) {
-    if (is(BPPARAM, "SnowParam")) {
-      bpstop(BPPARAM)
-    }
-    stop(attributes(x)$condition)
-  }
-  if (is(BPPARAM, "SnowParam")) {
-    bpstop(BPPARAM)
-  }
 
   pwms <- preparePWM(pwmList = pwmList, filterp = filterp,
                      scoreThresh = threshold, bkg = bg,
@@ -779,11 +762,6 @@ calculatePvalue <- function(results,
   if (num.res < cores) {
     cores <- num.res
   }
-  if (!(is(BPPARAM, "MulticoreParam")|is(BPPARAM, "SerialParam"))) {
-    bpstart(BPPARAM)
-    cl <- bpbackend(BPPARAM)
-    clusterEvalQ(cl, library("MotifDb"))
-  }
   if(!("pValueRef" %in% names(mcols(results)))) {
     stop('incorrect results format; please rerun analysis with filterp=TRUE')
   } else {
@@ -805,22 +783,11 @@ calculatePvalue <- function(results,
       gc()
       return(data.frame(ref=ref, alt=alt))
     }, pwmList=pwmList, pwmListmeta=pwmListmeta, bkg = background, BPPARAM = BPPARAM)
-    ## Cluster / MC cleanup
-    if (inherits(pvalues, "try-error")) {
-      if (is(BPPARAM, "SnowParam")) {
-        bpstop(BPPARAM)
-      }
-      stop(attributes(pvalues)$condition)
-    }
     pvalues.df <- base::do.call("rbind", c(pvalues, make.row.names = FALSE))
     results$pValueRef <- pvalues.df[, "ref"]
     results$pValueAlt <- pvalues.df[, "alt"]
     pscore <- with(results, ifelse(pValueRef < pValueAlt, pValueAlt/pValueRef, pValueRef/pValueAlt))
     results$pValueEffect <- ifelse(pscore > 10, "strong", "weak")
-
-    if (is(BPPARAM, "SnowParam")) {
-      bpstop(BPPARAM)
-    }
 
     return(results)
   }

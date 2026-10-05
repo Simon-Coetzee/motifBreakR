@@ -23,7 +23,7 @@ Description: We introduce motifbreakR, which allows the biologist to
         Bioconductor (currently there are 32 species, a total of 109 
         versions).
 Depends: R (>= 4.4.0), grid, MotifDb
-Imports: methods, grDevices, stringr, parallel,
+Imports: methods, grDevices, stringr,
         BiocGenerics, S4Vectors (>= 0.9.25), IRanges, GenomeInfoDb,
         GenomicRanges, Biostrings, BSgenome, rtracklayer, VariantAnnotation,
         BiocParallel, motifStack, Gviz, matrixStats, TFMPvalue,

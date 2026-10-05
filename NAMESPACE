@@ -20,8 +20,8 @@ import(bsicons)
 import(bslib)
 import(grDevices)
 import(methods)
-import(parallel)
 import(shiny)
+importClassesFrom(MotifDb,MotifList)
 importClassesFrom(motifStack,marker)
 importClassesFrom(motifStack,pfm)
 importFrom(BSgenome,
@@ -114,7 +114,6 @@ importFrom(motifStack,
   plotMotifLogo,
   plotMotifLogoStack
 )
-importFrom(parallel,clusterEvalQ)
 importFrom(pwalign,
   deletion,
   insertion,
