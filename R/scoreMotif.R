@@ -20,14 +20,16 @@ prepareVariants <- function(fsnplist, genome.bsgenome, max.pwm.width) {
                sep = " "))
   }
 
-  alt_pad <- max(c(ref_len, alt_len))
-  ref_pad <- as.integer((alt_pad - ref_len) %/% 2)
-  alt_pad <- as.integer((alt_pad - alt_len) %/% 2)
-  width_pad <- max(ref_pad, alt_pad) + k
+  ## centre every allele in a context of the same odd width; with an even
+  ## maximum allele length, ref and alt contexts would otherwise differ in width
+  max_len <- max(c(ref_len, alt_len))
+  max_len <- max_len + (1L - max_len %% 2L)
+  ref_pad <- as.integer((max_len - ref_len) %/% 2)
+  alt_pad <- as.integer((max_len - alt_len) %/% 2)
 
   gr_ref <- fsnplist
   start(gr_ref) <- start(gr_ref) - k - ref_pad
-  gr_ref <- resize(gr_ref, width = width_pad * 2L + 1L, fix = "start")
+  gr_ref <- resize(gr_ref, width = max_len + 2L * k, fix = "start")
 
   gr_alt <- fsnplist
   start(gr_alt) <- start(gr_alt) - k - alt_pad
