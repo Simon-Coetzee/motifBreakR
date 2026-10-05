@@ -24,88 +24,120 @@ import(parallel)
 import(shiny)
 importClassesFrom(motifStack,marker)
 importClassesFrom(motifStack,pfm)
-importFrom(BSgenome,available.genomes)
-importFrom(BSgenome,snplocs)
-importFrom(BSgenome,snpsById)
-importFrom(BSgenome,snpsByOverlaps)
-importFrom(BiocFileCache,BiocFileCache)
-importFrom(BiocFileCache,bfcadd)
-importFrom(BiocFileCache,bfcdownload)
-importFrom(BiocFileCache,bfcneedsupdate)
-importFrom(BiocFileCache,bfcnew)
-importFrom(BiocFileCache,bfcquery)
-importFrom(BiocFileCache,bfcrpath)
-importFrom(BiocParallel,bplapply)
-importFrom(BiocParallel,bpnworkers)
-importFrom(Biostrings,BStringSetList)
-importFrom(Biostrings,DNAString)
-importFrom(Biostrings,DNAStringSet)
-importFrom(Biostrings,DNAStringSetList)
-importFrom(Biostrings,DNA_ALPHABET)
-importFrom(Biostrings,IUPAC_CODE_MAP)
-importFrom(Biostrings,complement)
-importFrom(Biostrings,getSeq)
-importFrom(Biostrings,letterFrequency)
-importFrom(Biostrings,matchPattern)
-importFrom(Biostrings,replaceAt)
-importFrom(Biostrings,replaceLetterAt)
-importFrom(Biostrings,reverseComplement)
-importFrom(Biostrings,subseq)
-importFrom(Biostrings,uniqueLetters)
-importFrom(DT,DTOutput)
-importFrom(DT,JS)
-importFrom(DT,datatable)
-importFrom(DT,formatRound)
-importFrom(DT,renderDT)
-importFrom(Gviz,AnnotationTrack)
-importFrom(Gviz,GenomeAxisTrack)
-importFrom(Gviz,HighlightTrack)
-importFrom(Gviz,IdeogramTrack)
-importFrom(Gviz,SequenceTrack)
-importFrom(Gviz,plotTracks)
+importFrom(BSgenome,
+  available.genomes,
+  snplocs,
+  snpsById,
+  snpsByOverlaps
+)
+importFrom(BiocFileCache,
+  BiocFileCache,
+  bfcadd,
+  bfcdownload,
+  bfcneedsupdate,
+  bfcnew,
+  bfcquery,
+  bfcrpath
+)
+importFrom(BiocParallel,
+  bplapply,
+  bpnworkers
+)
+importFrom(Biostrings,
+  BStringSetList,
+  DNAString,
+  DNAStringSet,
+  DNAStringSetList,
+  DNA_ALPHABET,
+  IUPAC_CODE_MAP,
+  complement,
+  getSeq,
+  letterFrequency,
+  matchPattern,
+  replaceAt,
+  replaceLetterAt,
+  reverseComplement,
+  subseq,
+  uniqueLetters
+)
+importFrom(DT,
+  DTOutput,
+  JS,
+  datatable,
+  formatRound,
+  renderDT
+)
+importFrom(Gviz,
+  AnnotationTrack,
+  GenomeAxisTrack,
+  HighlightTrack,
+  IdeogramTrack,
+  SequenceTrack,
+  plotTracks
+)
 importFrom(SummarizedExperiment,rowRanges)
-importFrom(TFMPvalue,TFMpv2sc)
-importFrom(TFMPvalue,TFMsc2pv)
-importFrom(VariantAnnotation,ScanVcfParam)
-importFrom(VariantAnnotation,VcfFile)
-importFrom(VariantAnnotation,alt)
-importFrom(VariantAnnotation,isSNV)
-importFrom(VariantAnnotation,readVcf)
-importFrom(VariantAnnotation,ref)
-importFrom(biomaRt,getBM)
-importFrom(biomaRt,searchDatasets)
-importFrom(biomaRt,useEnsembl)
-importFrom(grid,gpar)
-importFrom(grid,grid.newpage)
-importFrom(grid,popViewport)
-importFrom(grid,pushViewport)
-importFrom(grid,viewport)
-importFrom(matrixStats,colAlls)
-importFrom(matrixStats,colMaxs)
-importFrom(matrixStats,colMins)
-importFrom(matrixStats,colRanges)
-importFrom(motifStack,DNAmotifAlignment)
-importFrom(motifStack,addBlank)
-importFrom(motifStack,colorset)
-importFrom(motifStack,motifStack)
-importFrom(motifStack,plotMotifLogo)
-importFrom(motifStack,plotMotifLogoStack)
+importFrom(TFMPvalue,
+  TFMpv2sc,
+  TFMsc2pv
+)
+importFrom(VariantAnnotation,
+  ScanVcfParam,
+  VcfFile,
+  alt,
+  isSNV,
+  readVcf,
+  ref
+)
+importFrom(biomaRt,
+  getBM,
+  searchDatasets,
+  useEnsembl
+)
+importFrom(grid,
+  gpar,
+  grid.newpage,
+  popViewport,
+  pushViewport,
+  viewport
+)
+importFrom(matrixStats,
+  colAlls,
+  colMaxs,
+  colMins,
+  colRanges
+)
+importFrom(motifStack,
+  DNAmotifAlignment,
+  addBlank,
+  colorset,
+  motifStack,
+  plotMotifLogo,
+  plotMotifLogoStack
+)
 importFrom(parallel,clusterEvalQ)
-importFrom(pwalign,deletion)
-importFrom(pwalign,insertion)
-importFrom(pwalign,pairwiseAlignment)
-importFrom(rtracklayer,export.bed)
-importFrom(rtracklayer,import)
-importFrom(stringr,str_extract)
-importFrom(stringr,str_length)
-importFrom(stringr,str_locate_all)
-importFrom(stringr,str_pad)
-importFrom(stringr,str_remove)
-importFrom(stringr,str_sort)
-importFrom(stringr,str_split)
-importFrom(stringr,str_sub)
-importFrom(stringr,str_trim)
+importFrom(pwalign,
+  deletion,
+  insertion,
+  pairwiseAlignment
+)
+importFrom(rtracklayer,
+  export.bed,
+  import
+)
+importFrom(stringr,
+  str_extract,
+  str_length,
+  str_locate_all,
+  str_pad,
+  str_remove,
+  str_sort,
+  str_split,
+  str_sub,
+  str_trim
+)
 importFrom(tools,R_user_dir)
-importFrom(utils,write.csv)
-importFrom(utils,write.table)
+importFrom(utils,
+  write.csv,
+  write.table
+)
 importFrom(vroom,vroom)

@@ -43,4 +43,4 @@ License: GPL-2
 BugReports: https://github.com/Simon-Coetzee/motifbreakR/issues
 biocViews: ChIPSeq, Visualization, MotifAnnotation, Transcription
 NeedsCompilation: no
-Config/roxygen2/version: 8.0.0
+Config/roxygen2/version: 8.1.0
