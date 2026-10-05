@@ -28,14 +28,14 @@ knitr::opts_chunk$set(cache=TRUE, autodep=TRUE)
 # Introduction
 This document offers an introduction and overview of `r BiocStyle::Biocpkg("motifbreakR")`, which allows the biologist to judge whether the sequence surrounding a polymorphism or mutation is a good match to known transcription factor binding sites, and how much information is gained or lost in one allele of the polymorphism relative to another or mutation vs. wildtype. `r BiocStyle::Biocpkg("motifbreakR")` is flexible, giving a choice of algorithms for interrogation of genomes with motifs from public sources that users can choose from; these are 1) a weighted-sum, 2) log-probabilities, and 3) relative entropy. `r BiocStyle::Biocpkg("motifbreakR")` can predict effects for novel or previously described variants in public databases, making it suitable for tasks beyond the scope of its original design. Lastly, it can be used to interrogate any genome curated within Bioconductor.
 
-As of version 2.0 `r BiocStyle::Biocpkg("motifbreakR")` is also able to perform it's analysis on indels, small insertions or deletions.
+As of version 2.0 `r BiocStyle::Biocpkg("motifbreakR")` is also able to perform its analysis on indels, small insertions or deletions.
 
 `r BiocStyle::Biocpkg("motifbreakR")` works with position probability matrices (PPM). PPM are derived as the fractional occurrence of nucleotides A,C,G, and T at each position of a position frequency matrix (PFM). PFM are simply the tally of each nucleotide at each position across a set of aligned sequences. With a PPM, one can generate probabilities based on the genome, or more practically, create any number of position specific scoring matrices (PSSM) based on the principle that the PPM contains information about the likelihood of observing a particular nucleotide at a particular position of a true transcription factor binding site.
 
 This guide includes a brief overview of the [processing flow](#flow), an example focusing more in depth on the [practical](#practical) aspect of using `r BiocStyle::Biocpkg("motifbreakR")`, and finally a detailed section on the [scoring methods](#methods) employed by the package.
 
 # Processing overview {#flow}
-`r BiocStyle::Biocpkg("motifbreakR")` may be used to interrogate SNPs or SNVs for their potential effect on transcription factor binding by examining how the two alleles of the variant effect the binding score of a motif.  The basic process is outlined in the figure below.
+`r BiocStyle::Biocpkg("motifbreakR")` may be used to interrogate SNVs and indels for their potential effect on transcription factor binding by examining how the two alleles of the variant affect the binding score of a motif.  The basic process is outlined in the figure below.
 
 ## Outline of process
 
@@ -44,25 +44,25 @@ This guide includes a brief overview of the [processing flow](#flow), an example
   <img width="50%" src="motifbreakr-manuscript.png" />
   <p class="caption"><em>motifbreakR workflow: How inputs (trapezoids) are generated from R functions (rectangles). Diamonds represent decisions of the user.</em></p>
 </div>
-This straightforward process allows the interrogation of SNPs and SNVs in the context of the different species represented by `r Biocpkg("BSgenome")` packages (at least 22 different species) and allows the use of the full `r Biocpkg("MotifDb")` data set that includes over 4200 motifs across 8 studies and 22 organisms that we have supplemented with over 2800 additional motifs across four additional studies in Humans see `data(encodemotif)`[^encodemotif], `data(factorbook)`[^factorbook], `data(hocomoco)`[^hocomoco] and `data(homer)`[^homer] for the additional studies that we have included.
+This straightforward process allows the interrogation of variants in any species represented by a `r Biocpkg("BSgenome")` package, and allows the use of the full `r Biocpkg("MotifDb")` data set, which includes over 16,000 motifs from more than 20 sources. We have supplemented these with 2,817 additional motifs from four studies in humans; see `data(encodemotif)`[^encodemotif], `data(factorbook)`[^factorbook], `data(hocomoco)`[^hocomoco] and `data(homer)`[^homer] for the additional studies that we have included. Note that newer releases of several of these collections (e.g. HOCOMOCO v11 and v13, and HOMER) are available directly in `r Biocpkg("MotifDb")`.
 
-[^encodemotif]: Website: [encode-motifs](http://compbio.mit.edu/encode-motifs/)
-  Paper: [Systematic discovery and characterization of regulatory motifs in ENCODE TF binding experiments](http://dx.doi.org/10.1093/nar/gkt1249)
-[^factorbook]: Website: [Factorbook](http://factorbook.org/mediawiki/index.php/Welcome_to_factorbook)
-  Paper: [Sequence features and chromatin structure around the genomic regions bound by 119 human transcription factors](http://dx.doi.org/10.1101/gr.139105.112)
-[^hocomoco]: Website: [HOCOMOCO](http://autosome.ru/HOCOMOCO/)
-  Paper: [HOCOMOCO: a comprehensive collection of human transcription factor binding sites models](http://dx.doi.org/10.1093/nar/gks1089)
-[^homer]: Website: [Homer](http://homer.salk.edu/homer/index.html)
-  Paper: [http://www.sciencedirect.com/science/article/pii/S1097276510003667](http://dx.doi.org/10.1016/j.molcel.2010.05.004)
+[^encodemotif]: Website: [encode-motifs](https://compbio.mit.edu/encode-motifs/)
+  Paper: [Systematic discovery and characterization of regulatory motifs in ENCODE TF binding experiments](https://doi.org/10.1093/nar/gkt1249)
+[^factorbook]: Website: [Factorbook](https://www.factorbook.org/)
+  Paper: [Sequence features and chromatin structure around the genomic regions bound by 119 human transcription factors](https://doi.org/10.1101/gr.139105.112)
+[^hocomoco]: Website: [HOCOMOCO](https://hocomoco.autosome.org/)
+  Paper: [HOCOMOCO: a comprehensive collection of human transcription factor binding sites models](https://doi.org/10.1093/nar/gks1089)
+[^homer]: Website: [Homer](http://homer.ucsd.edu/homer/)
+  Paper: [Simple combinations of lineage-determining transcription factors prime cis-regulatory elements required for macrophage and B cell identities](https://doi.org/10.1016/j.molcel.2010.05.004)
 
-Practically `r BiocStyle::Biocpkg("motifbreakR")` has involves three phases.
+Practically `r BiocStyle::Biocpkg("motifbreakR")` involves three phases.
 
-1. *Read in Single Nucleotide Variants or Indels:* The first step is to read in the list of variants.  Variants can be a list of rsIDs if your SNPs are represented in one of the SNPlocs packages, may be included as a [.bed](http://www.genome.ucsc.edu/FAQ/FAQformat.html#format1) file with a specifically formatted name field, or may be provided as a [.vcf](http://www.1000genomes.org/wiki/analysis/variant%20call%20format/vcf-variant-call-format-version-41) file. We then transform these input such that it may be read my `r BiocStyle::Biocpkg("motifbreakR")`.
+1. *Read in Single Nucleotide Variants or Indels:* The first step is to read in the list of variants.  Variants can be a list of rsIDs if your SNPs are represented in one of the SNPlocs packages, may be included as a [.bed](https://genome.ucsc.edu/FAQ/FAQformat.html#format1) file with a specifically formatted name field, or may be provided as a [.vcf](https://samtools.github.io/hts-specs/VCFv4.2.pdf) file. We then transform these inputs such that they may be read by `r BiocStyle::Biocpkg("motifbreakR")`.
 2. *Find Broken Motifs:* Next we present `r BiocStyle::Biocpkg("motifbreakR")` with the input generated in the previous step, along with a set of motifs formatted as class `MotifList`, and your preferred [scoring method](#methods). 
-3. *Visualize SNPs and motifs:* Finally we can visualize which motifs are broken by any individual SNP using our plotting function.
+3. *Visualize variants and motifs:* Finally we can visualize which motifs are broken by any individual variant using our plotting function.
 
 # How To Use motifbreakR: A Practical Example {#practical}
-This section offers an example of how to use `r BiocStyle::Biocpkg("motifbreakR")` to identify potentially disrupted transcription factor binding sites due to 701 SNPs output from a `r Biocpkg("FunciSNP")` analysis of Prostate Cancer (PCa) genome wide association studies (GWAS) risk loci.
+This section offers an example of how to use `r BiocStyle::Biocpkg("motifbreakR")` to identify potentially disrupted transcription factor binding sites due to 693 SNPs output from a `r Biocpkg("FunciSNP")` analysis of Prostate Cancer (PCa) genome wide association studies (GWAS) risk loci.
 The SNPs are included in this package here:
 ```{r start, cache=TRUE, message=FALSE}
 library(motifbreakR)
@@ -79,14 +79,14 @@ plotMB(results = motifbreakr.results, rsid = "rs7837328", effect = "strong")
 ```
 Lets look at these steps more closely and see how we can customize our analysis.
 
-## *Step 1* | Read in Single Nucleotide Variants
+## *Step 1* | Read in Variants
 
-Variants can be input either as a list of rsIDs or as a [.bed](http://www.genome.ucsc.edu/FAQ/FAQformat.html#format1) file. The main factor determining which you will use is if your variants have rsIDs that are included in one of the Bioconductor `SNPlocs` packages.  The present selection is seen here:
+Variants can be input either as a list of rsIDs, or as a [.bed](https://genome.ucsc.edu/FAQ/FAQformat.html#format1) or VCF file. The main factor determining which you will use is if your variants have rsIDs that are included in one of the Bioconductor `SNPlocs` packages.  The present selection is seen here:
 ```{r whichsnps, message=FALSE, cache=TRUE}
 library(BSgenome)
 available.SNPs()
 ```
-For cases where your rsIDs are not available in a SNPlocs package, or you have novel variants that are not cataloged at all, variants may be entered in [BED](http://www.genome.ucsc.edu/FAQ/FAQformat.html#format1) format as seen below:
+For cases where your rsIDs are not available in a SNPlocs package, or you have novel variants that are not cataloged at all, variants may be entered in [BED](https://genome.ucsc.edu/FAQ/FAQformat.html#format1) format as seen below:
 ```{r showbed, message=FALSE, cache=TRUE}
 snps.file <- system.file("extdata", "snps.bed", package = "motifbreakR")
 read.delim(snps.file, header = FALSE)
@@ -99,7 +99,7 @@ More to the point here are the two methods for reading in the variants.
 
 
 
-We use the `r Biocannopkg("SNPlocs.Hsapiens.dbSNP155.GRCh37")` which is the SNP locations and alleles defined in [dbSNP155](http://www.ncbi.nlm.nih.gov/projects/SNP/snp_summary.cgi?view+summary=view+summary&build_id=155) as a source for looking up our rsIDs and `r Biocannopkg("BSgenome.Hsapiens.UCSC.hg19")` which holds the reference sequence for [UCSC genome build hg19](http://www.ncbi.nlm.nih.gov/assembly/2758/). Additional SNPlocs packages are availble from Bioconductor.
+We use the `r Biocannopkg("SNPlocs.Hsapiens.dbSNP155.GRCh37")` which is the SNP locations and alleles defined in [dbSNP155](https://www.ncbi.nlm.nih.gov/snp/) as a source for looking up our rsIDs and `r Biocannopkg("BSgenome.Hsapiens.UCSC.hg19")` which holds the reference sequence for [UCSC genome build hg19](https://www.ncbi.nlm.nih.gov/assembly/2758/). Additional SNPlocs packages are available from Bioconductor.
 
 ```{r fromrsid, message=FALSE, cache=TRUE}
 library(SNPlocs.Hsapiens.dbSNP155.GRCh37) # dbSNP155 in hg19
@@ -111,7 +111,7 @@ snps.mb <- snps.from.rsid(rsid = pca.snps,
 snps.mb
 ```
 
-A far greater variety of variants may be read into `r BiocStyle::Biocpkg("motifbreakR")` via the `snps.from.file` function. In fact `r BiocStyle::Biocpkg("motifbreakR")` will work with any organism present as a Bioconductor `r Biocpkg("BSgenome")` package. This includes 76 genomes representing 22 species.
+A far greater variety of variants may be read into `r BiocStyle::Biocpkg("motifbreakR")` via the `snps.from.file` function. In fact `r BiocStyle::Biocpkg("motifbreakR")` will work with any organism present as a Bioconductor `r Biocpkg("BSgenome")` package; the current list is:
 
 ```{r whichgenome, message=FALSE, cache=TRUE}
 library(BSgenome)
@@ -121,7 +121,7 @@ genomes
 ```
 
 ### SNPs from BED formatted file:
-Here we examine two possibilities. In one case we have a mixture of rsIDs and our naming scheme that allows for arbitrary variants.  Second we have a list of variants for the zebrafish *Danio rerio* that does not have a `SNPlocs` package, but does have it's genome present among the `availible.genomes()`.
+Here we examine two possibilities. In one case we have a mixture of rsIDs and our naming scheme that allows for arbitrary variants.  Second we have a list of variants for the zebrafish *Danio rerio* that does not have a `SNPlocs` package, but does have its genome present among the `available.genomes()`.
 
 ```{r showbed2, message=TRUE, cache=TRUE}
 snps.bed.file <- system.file("extdata", "snps.bed", package = "motifbreakR")
@@ -147,7 +147,7 @@ message("Warning in snps.from.file(file = snps.bed.file, dbSNP = SNPlocs.Hsapien
   rs11753604 was found as a match for chr6:44503246:A:T; using entry from dbSNP")
 snps.mb.frombed
 ```
-We see also that two of our custom variants `chr2:12594018:G:A` and `chr6:44503246:A:T` were actually already included in dbSNP155, and were therefor annotated in the output as `rs7601289` and `rs11753604` respectively.
+We see also that two of our custom variants `chr2:12594018:G:A` and `chr6:44503246:A:T` were actually already included in dbSNP155, and were therefore annotated in the output as `rs7601289` and `rs11753604` respectively.
 
 If our BED file includes no rsIDs, then we may omit the `dbSNP` argument from the function. This example uses variants from *Danio rerio*
 ```{r getbedcust, message=FALSE, cache=TRUE}
@@ -160,11 +160,11 @@ snps.mb.frombed <- snps.from.file(file = snps.bedfile.nors,
 snps.mb.frombed
 ```
 
-`snps.from.file` also can take as input a vcf file with SNVs, by using `format = "vcf"`.
+`snps.from.file` can also take a VCF file as input, by using `format = "vcf"`.
 
 ### Indels
 
-As of version 2.0 `r BiocStyle::Biocpkg("motifbreakR")` is able to parse and analyse indels as well as SNVs. The function `variants.from.file()` allows the import of indels and SNVs simultaneously.
+As of version 2.0 `r BiocStyle::Biocpkg("motifbreakR")` is able to parse and analyse indels as well as SNVs. `snps.from.file()` imports indels and SNVs together; `variants.from.file()` is an identical function kept for backwards compatibility. Variants with alleles that are not DNA sequence, such as the symbolic copy-number alleles (`<CN0>`, `<CN2>`) in this file, are removed with a warning.
 
 ```{r getindel, message=FALSE, cache=TRUE}
 snps.indel.vcf <- system.file("extdata", "chek2.vcf.gz", package = "motifbreakR")
@@ -187,7 +187,7 @@ library(MotifDb)
 MotifDb
 ```
 ```{r motifdbtableshow, message=FALSE, cache=TRUE, eval=FALSE}
-### Here we can see which organisms are availible under which sources
+### Here we can see which organisms are available under which sources
 ### in MotifDb
 table(mcols(MotifDb)$organism, mcols(MotifDb)$dataSource)
 ```
@@ -208,7 +208,7 @@ hocomoco
 See `?motifbreakR_motif` for more information and citations.
 
 
-Some of our data sets include a sequenceCount. These include `FlyFactorSurvey`, `hPDI`, `JASPAR_2014`, `JASPAR_CORE`, and `jolma2013` from `r Biocpkg("MotifDb")` and `HOCOMOCO` from the set of `motifbreakR_motif`. Using these we calculate a pseudocount to allow us to calculate the logarithms in the case where we have a `0` in a pwm.  The calculation for incorporating pseudocounts is `ppm <- (ppm * sequenceCount + 0.25)/(sequenceCount + 1)`.  If the sequenceCount for a particular ppm is `NA` we use 20 as a default sequenceCount.
+Many motifs include a `sequenceCount`, the number of sequences the motif was built from; in `r Biocpkg("MotifDb")` these include the JASPAR, HOCOMOCO, HOMER, `FlyFactorSurvey`, `hPDI`, `jolma2013` and `SwissRegulon` sources, and in `motifbreakR_motif` the `HOCOMOCO` set. We use it to add a pseudocount, which allows us to calculate logarithms when a ppm contains a `0`. The calculation for incorporating pseudocounts is `ppm <- (ppm * sequenceCount + bkg)/(sequenceCount + 1)`, where `bkg` is the background nucleotide frequency (see [Methods](#methods)).  If the sequenceCount for a particular ppm is `NA` we use 20 as a default sequenceCount.
 
 Now that we have the three necessary components to run `r BiocStyle::Biocpkg("motifbreakR")`:
 
@@ -220,7 +220,7 @@ We get to the task of actually running the function `motifbreakR()`.
 
 We have several options that we may pass to the function, the main ones that will dictate how long the function will run with a given set of variants and motifs are the `threshold` we pass and the `method` we use to [score](#methods).
 
-Here we specify the `snpList`, `pwmList`, `threshold` that we declare as the cutoff for reporting results, `filterp` set to true declares that we are filtering by p-value, the `method`, and `bkg` the relative nucleotide frequency of A, C, G, and T.
+Here we specify the `snpList`, `pwmList`, `threshold` that we declare as the cutoff for reporting results, `filterp` set to true declares that we are filtering by p-value, the `method`, and `bkg` the relative nucleotide frequency of A, C, G, and T. `bkg` may also be `"genome"`, `"aggregate"` (the composition of the sequence around your variants) or `"pwm"` (the composition of the motifs); see `?motifbreakR`.
 
 For the purposes of this small example, we use the `SerialParam` back end. However, for larger variant lists, `MulticoreParam` or one of the other `r Biocpkg("BiocParallel")` back-ends could speed up completion.
 
@@ -249,7 +249,7 @@ example.p <- system.file("extdata", "example.pvalue.rda", package = "motifbreakR
 load(example.p)
 rs1006140
 ```
-And here we see that for each SNP we have at least one allele achieving a p-value below 1e-4 threshold that we required. The `seqMatch` column shows what the reference genome sequence is at that location, with the variant position appearing in an uppercase letter. pctRef and pctAlt display the the score for the motif in the sequence as a percentage of the best score that motif could achieve on an ideal sequence. In other words $(scoreVariant-minscorePWM)/(maxscorePWM-minscorePWM)$. We can also see the absolute scores for our method in scoreRef and scoreAlt and thier respective p-values.
+And here we see that for each match at least one allele achieves a p-value below the 1e-4 threshold that we required. The `seqMatch` column shows the sequence matched by the motif on the allele with the stronger match (given in `strongerIn`), and `pwmConsensus` the consensus sequence of the motif on the same strand. `windowIdxRef`/`windowIdxAlt` and `motifStrandRef`/`motifStrandAlt` give the position of the best match relative to the variant, and its strand, on each allele. pctRef and pctAlt display the score for the motif in the sequence as a fraction of the best score that motif could achieve on an ideal sequence. In other words $(scoreVariant-minscorePWM)/(maxscorePWM-minscorePWM)$. We can also see the absolute scores for our method in scoreRef and scoreAlt and their respective p-values.
 
 ### Parallel Evaluation (an aside)
 Important to note, is that `motifbreakR` uses the `r Biocpkg("BiocParallel")` parallel back-end, and one may modify what type of parallel evaluation it uses (or if it runs in parallel at all).  Here we can see the versions available on the machine this vignette was compiled on.
@@ -257,7 +257,7 @@ Important to note, is that `motifbreakR` uses the `r Biocpkg("BiocParallel")` pa
 BiocParallel::registered()
 BiocParallel::bpparam()
 ```
-By default `motifbreakR` uses `bpparam()` as an argument to `BPPARAM` and will use all available cores on the machine on which it is running. However on Windows machines this reverts to using a serial evaluation model, so if you wish to run in parallel on a Windows machine consider using a different parameter shown in `BiocParallel::registered()` such as `SnowParam` passing `BPPARAM = SnowParam()`.
+By default `motifbreakR` uses `bpparam()` as an argument to `BPPARAM`, which uses the default parallel back-end registered for your machine; work is divided between workers by motif. `MulticoreParam` is not supported on Windows and evaluates serially there, so to run in parallel on a Windows machine pass `BPPARAM = SnowParam()`.
 
 ## *Step 3* | Visualize
 Now that we have our results, we can visualize them with the function `plotMB`.  Lets take a look at rs1006140.
@@ -289,7 +289,7 @@ on sequence preference is the core of `r BiocStyle::Biocpkg("motifbreakR")`, gro
 transcription factor binding can improve the prioritization of results. ReMap[^remap2022] provides manually curated,
 high quality catalogs of regulatory regions based on DNA binding experiments in Human, Mouse, Fly and *Arabidopsis thaliana*
 
-We can annotate results with the ReMap sourced TF peaks corresponding to  to motif/transcription factor relationships
+We can annotate results with the ReMap sourced TF peaks corresponding to motif/transcription factor relationships
 provided by the constituent public `r Biocpkg("MotifDb")` sources. The user may optionally query an
 expanded motif/transcription factor relationship encompassing the entire potential
 transcription factor family as implemented by `r Biocpkg("MotifDb")` based on TFClass[^TFclass].
@@ -302,11 +302,10 @@ results
 ```
 
 
-[^remap2022] Website: [Remap](https://remap.univ-amu.fr/)
+[^remap2022]: Website: [ReMap](https://remap.univ-amu.fr/)
   Paper: [ReMap 2022: a database of Human, Mouse, Drosophila and Arabidopsis regulatory regions from an integrative analysis of DNA-binding sequencing experiments](https://doi.org/10.1093/nar/gkab996)
 
-[^TFclass] Website: [Classification of Transcription Factors in Mammalia](https://tfclass.bioinf.med.uni-goettingen.de/)
-  Paper: [TFClass: expanding the classification of human transcription factors to their mammalian orthologs](https://doi.org/10.1093/nar/gkx987)
+[^TFclass]: Paper: [TFClass: expanding the classification of human transcription factors to their mammalian orthologs](https://doi.org/10.1093/nar/gkx987)
 
 
 ## *Export Results*
@@ -318,7 +317,7 @@ exportMBtable(results, file = "mb_test_output.tsv", format = "tsv")
 ```
 
 Alternatively, we can export a BED file of results. The BED file represents the variants that interact with motifs. They are named by the variant name, reference and alternate alleles, and the name of the motif disrupted. The intervals may be colored with diverging color
-scale for effect_size (blue representing stronger binding in `REF`}`, red
+scale for effect_size (blue representing stronger binding in `REF`, red
 representing stronger binding in `ALT`), or a sequential color scale
 otherwise (low values as purple, high values as yellow). The score column is
 either the `effect_size` (`alleleDiff` column), the -log10(p-value)
@@ -340,7 +339,7 @@ genome, or more practically, create any number of position specific
 scoring matrices (PSSM) based on the principle that the PPM contains
 information about the likelihood of observing a particular nucleotide at
 a particular position of a true transcription factor binding site. What
-follows is a discussion of the three different algorithms that may be
+follows is a discussion of the different algorithms that may be
 employed in calls to the `r BiocStyle::Biocpkg("motifbreakR")` function via the `method`
 argument.
 
@@ -354,7 +353,7 @@ Commonly in the literature sequences are scored as the sum of log
 probabilities:
 
 ## Sum of Log Probabilities {#eqn1}
-$$F( s,M ) = \sum_{i = 1}^{n}{\log( \frac{M_{s_{i},i}}{b_{s_{i}}} )}$$
+$$F( s,M ) = \sum_{i = 1}^{n}{\log_2( \frac{M_{s_{i},i}}{b_{s_{i}}} )}$$
 
 where $b_{s_{i}}$ is the background frequency of letter $s_{i}$ in
 the genome of interest. This method can be specified by the user as
@@ -374,16 +373,14 @@ $M$, and $w_{M}$ is a weight vector derived from $M$. First, we
 compute the scoring vector of position scores $p$:
 
 ## Calculating Scoring Vector $p$
-$$p( s ) = ( M_{s_{i},i} ) \textrm{   where   } \frac{i = 1,\ldots n}{s_{i} \in \{ A,C,G,T \}}$$
+$$p( s ) = ( M_{s_{i},i} ) \textrm{   for   } i = 1,\ldots n$$
 
 and second, for each $M$ a constant vector of weights
 $\omega_{M} = ( \omega_{1},\omega_{2},\ldots,\omega_{n} )$.
 
 There are two methods for producing $\omega_{M}$. The first, which we
-call weighted sum, is the difference in the probabilities for the two
-letters of the polymorphism (or variant), *i.e.*
-$\Delta p_{s_{i}}$, or the difference of the maximum and minimum
-values for each column of $M$:
+call weighted sum (`method='default'`), is the difference of the maximum and
+minimum values for each column of $M$:
 
 ## Calculating $\omega$ For Weighted Sum {#eqn4.1}
 $$\omega_{i} = \max \{ M_{i} \} - \min \{ M_{i} \}\textrm{    where      }i = 1,\ldots n$$
@@ -393,17 +390,20 @@ Thus the relative entropy weight for each column $i$ of the matrix is
 given by:
 
 ## Calculating $\omega$ For Relative Entropy {#eqn4.2}
-$$\omega_{i} = \sum_{j \in \{ A,C,G,T \}}^{}{M_{j,i}\log_2( \frac{M_{j,i}}{b_{i}} )}\textrm{     where     }i = 1,\ldots n$$
+$$\omega_{i} = \sum_{j \in \{ A,C,G,T \}}^{}{M_{j,i}\log_2( \frac{M_{j,i}}{b_{j}} )}\textrm{     where     }i = 1,\ldots n$$
 
-where $b_{i}$ is again the background frequency of the letter $i$.
+where $b_{j}$ is again the background frequency of the letter $j$.
 
-Thus, there are 3 possible algorithms to apply via the `method`
+Thus, there are 3 scoring algorithms to apply via the `method`
 argument. The first is the standard summation of log probabilities
 (`method='log'`). The second and third are the weighted sum and
 information content methods (`method='default'` and `method='ic'`) specified by
-equations for [Weighted Sum](#eqn4.1) and [Relative Entropy](#eqn4.2), respectively. `r BiocStyle::Biocpkg("motifbreakR")` assumes a
-uniform background nucleotide distribution ($b$) in equations [4.1](#eqn1) and
-[4.5](#eqn4.1) unless otherwise specified by the user. Since we are primarily
+equations for [Weighted Sum](#eqn4.1) and [Relative Entropy](#eqn4.2), respectively. Additionally, `method='notrans'` scores the plain sum of the
+probabilities, $\sum p( s )$. `r BiocStyle::Biocpkg("motifbreakR")` assumes a
+uniform background nucleotide distribution ($b$) in the equations for
+[Sum of Log Probabilities](#eqn1) and [Relative Entropy](#eqn4.2) unless otherwise
+specified by the user with the `bkg` argument, either as frequencies or as
+`"genome"`, `"aggregate"` or `"pwm"`. Since we are primarily
 interested in the difference between alleles, background frequency is
 not a major factor, although it can change the results. Additionally,
 inclusion of background frequency introduces potential bias when
@@ -419,20 +419,21 @@ variant). The scores are scaled as a fraction of scoring range 0-1 of
 the motif matrix, $M$. If either of
 $F( s_{\textrm{REF}},M )$ and
 $F( s_{\textrm{ALT}},M )$ is greater than a user-specified
-threshold (default value of 0.85) the SNP is reported. By default
-`r BiocStyle::Biocpkg("motifbreakR")` does not display neutral effects,
-($\Delta p_{i} < 0.4$) but this behavior can be
-overridden.
+threshold (default value of 0.85) the variant is reported. The effect is
+classified from the absolute difference between the allele scores
+(`alleleDiff`): `"strong"` above 0.7, `"weak"` from 0.4 to 0.7, and `"neut"`
+below 0.4. By default `r BiocStyle::Biocpkg("motifbreakR")` does not display
+neutral effects, but this behavior can be overridden with `show.neutral = TRUE`.
 
 ## Calculate P-values for PWM match
 Additionally, now, with the use of `r CRANpkg("TFMPvalue")`, we may filter by p-value of the match.
 This is unfortunately a two step process. First, by invoking `filterp=TRUE` and setting a threshold at
 a desired p-value e.g 1e-4, we perform a rough filter on the results by rounding all values in the PWM to two
-decimal place, and calculating a scoring threshold based upon that. The second step is to use the function `calculatePvalue()`
+decimal places, and calculating a scoring threshold based upon that. The second step is to use the function `calculatePvalue()`
 on a selection of results which will change the `pValueRef` and `pValueAlt` columns in the output from `NA` to the p-value
 calculated by `TFMsc2pv`.  This can be (although not always) a very memory and time intensive process if the algorithm doesn't converge rapidly.
 
-P-values can also be calculated in parallel, it is highly recommended to round the PWM matrix with the granularity argument. This trades the accuracy of the p-value calculation for speed of convergence. For most purposes a range of 1e-4 to 1e-6 is an acceptable trade off between accuracy and speed.
+P-values can also be calculated in parallel. It is highly recommended to round the PWM matrix with the granularity argument. This trades the accuracy of the p-value calculation for speed of convergence. For most purposes a range of 1e-4 to 1e-6 is an acceptable trade off between accuracy and speed.
 
 The granularity in TFMPvalue paper is defined:
 
