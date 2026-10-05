@@ -32,8 +32,8 @@
 #'                            dbSNP = SNPlocs.Hsapiens.dbSNP155.GRCh37,
 #'                            search.genome = BSgenome.Hsapiens.UCSC.hg19)
 #'
-#'  ## alternatively using biomaRt
-#'
+#'  ## alternatively using biomaRt (requires access to the Ensembl servers)
+#'  \donttest{
 #'  library(biomaRt)
 #'  library(BSgenome.Hsapiens.UCSC.hg38)
 #'  ensembl_snp <- useEnsembl(biomart = "snps",
@@ -42,6 +42,7 @@
 #'  snps.mb <- snps.from.rsid(snps,
 #'                            biomart.dataset = ensembl_snp,
 #'                            search.genome = BSgenome.Hsapiens.UCSC.hg38)
+#'  }
 #'
 #' @importFrom BSgenome snpsById snplocs snpsByOverlaps
 #' @importFrom Biostrings DNAStringSet DNAString DNAStringSetList
