@@ -1,20 +1,16 @@
-citEntry(entry = "article",
+bibentry(bibtype = "Article",
          title = "motifbreakR: an R/Bioconductor package for predicting variant effects at transcription factor binding sites",
-         author = c(person(given="Simon G.",
-                           family="Coetzee",
-                           role=c("aut", "cre")),
-                    person(given="Gerhard A.",
-                           family="Coetzee",
-                           role=c("aut")),
-                    person(given="Dennis J.",
-                           family="Hazelett",
-                           role=c("aut"))),
+         author = c(person(given = "Simon G.", family = "Coetzee"),
+                    person(given = "Gerhard A.", family = "Coetzee"),
+                    person(given = "Dennis J.", family = "Hazelett")),
          year = 2015,
          journal = "Bioinformatics",
+         volume = 31,
+         number = 23,
+         pages = "3847--3849",
          doi = "10.1093/bioinformatics/btv470",
-         url = "http://bioinformatics.oxfordjournals.org/content/early/2015/08/12/bioinformatics.btv470.abstract",
-         textVersion  =
+         textVersion =
            paste("Simon G. Coetzee, Gerhard A. Coetzee and Dennis J. Hazelett (2015).",
                  "motifbreakR: an R/Bioconductor package for predicting variant effects at transcription factor binding sites.",
-                 "Bioinformatics.", "doi:10.1093/bioinformatics/btv470")
+                 "Bioinformatics, 31(23), 3847-3849. doi:10.1093/bioinformatics/btv470")
 )
