@@ -1,4 +1,20 @@
 bibentry(bibtype = "Article",
+         title = "motifbreakR v2: expanded variant analysis including indels and integrated evidence from transcription factor binding databases",
+         author = c(person(given = "Simon G.", family = "Coetzee"),
+                    person(given = "Dennis J.", family = "Hazelett")),
+         year = 2024,
+         journal = "Bioinformatics Advances",
+         volume = 4,
+         number = 1,
+         pages = "vbae162",
+         doi = "10.1093/bioadv/vbae162",
+         textVersion =
+           paste("Simon G. Coetzee and Dennis J. Hazelett (2024).",
+                 "motifbreakR v2: expanded variant analysis including indels and integrated evidence from transcription factor binding databases.",
+                 "Bioinformatics Advances, 4(1), vbae162. doi:10.1093/bioadv/vbae162")
+)
+
+bibentry(bibtype = "Article",
          title = "motifbreakR: an R/Bioconductor package for predicting variant effects at transcription factor binding sites",
          author = c(person(given = "Simon G.", family = "Coetzee"),
                     person(given = "Gerhard A.", family = "Coetzee"),

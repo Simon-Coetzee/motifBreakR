@@ -8,7 +8,10 @@ See `help("motifbreakR")` for detailed help with running `motifbreakR`.
 
 See `help("plotMB")` for detailed help with visualization.
 
-Please cite: Coetzee SG, Coetzee GA, Hazelett DJ (2015). motifbreakR: an R/Bioconductor package for predicting variant effects at transcription factor binding sites. *Bioinformatics*, 31(23), 3847-3849. [doi:10.1093/bioinformatics/btv470](https://doi.org/10.1093/bioinformatics/btv470)
+Please cite:
+
+- Coetzee SG, Hazelett DJ (2024). motifbreakR v2: expanded variant analysis including indels and integrated evidence from transcription factor binding databases. *Bioinformatics Advances*, 4(1), vbae162. [doi:10.1093/bioadv/vbae162](https://doi.org/10.1093/bioadv/vbae162)
+- Coetzee SG, Coetzee GA, Hazelett DJ (2015). motifbreakR: an R/Bioconductor package for predicting variant effects at transcription factor binding sites. *Bioinformatics*, 31(23), 3847-3849. [doi:10.1093/bioinformatics/btv470](https://doi.org/10.1093/bioinformatics/btv470)
 
 ##### Abstract
 Functional annotation represents a key step toward the understanding and

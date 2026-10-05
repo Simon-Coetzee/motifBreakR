@@ -62,6 +62,11 @@ repository Factorbook (http://factorbook.org) and will continually update
 this repository as more ENCODE data are generated."
 }
 \details{
+This is the 2012 Factorbook motif set. Factorbook has since been substantially
+expanded (Factorbook 2.0; Pratt et al. 2022, \doi{10.1093/nar/gkab1039}), with
+motifs from ENCODE phase II and III ChIP-seq and HT-SELEX experiments
+available from \url{https://www.factorbook.org/}; these are not included here.
+
 Load with \code{data(factorbook)}
 }
 \examples{
