@@ -22,7 +22,7 @@ use mcols(hocomoco)
  \item{bindingSequence}{Consensus sequence for the motif}
  \item{bindingDomain}{\code{NA} incomplete}
  \item{tfFamily}{\code{NA} incomplete}
- \item{experimentType}{from \url{http://autosome.ru/HOCOMOCO/Details.php#200}
+ \item{experimentType}{from the HOCOMOCO v9 documentation,
    quoted here:
 
 "TFBS model identification modes
@@ -110,7 +110,7 @@ data(hocomoco)
 \description{
 From the abstract:
 "We present the Homo sapiens comprehensive model collection (HOCOMOCO,
-\url{http://autosome.ru/HOCOMOCO/}, \url{http://cbrc.kaust.edu.sa/hocomoco/})
+http://autosome.ru/HOCOMOCO/, http://cbrc.kaust.edu.sa/hocomoco/)
 containing carefully hand-curated TFBS models constructed by integration of
 binding sequences obtained by both low- and high-throughput methods. To
 construct position weight matrices to represent these TFBS models, we used
@@ -122,6 +122,10 @@ model. HOCOMOCO contains 426 systematically curated TFBS models for 401 human
 TFs, where 172 models are based on more than one data source."
 }
 \details{
+This is HOCOMOCO version 9. Newer releases (HOCOMOCO v10, v11 and v13) are
+available directly from \pkg{MotifDb}, for example
+\code{subset(MotifDb, dataSource == "HOCOMOCOv13")}.
+
 Load with \code{data(hocomoco)}
 }
 \examples{
@@ -129,6 +133,6 @@ data(hocomoco)
 hocomoco
 }
 \seealso{
-\url{http://autosome.ru/HOCOMOCO/} \url{http://cbrc.kaust.edu.sa/hocomoco/}
+\url{https://hocomoco.autosome.org/}
 }
 \keyword{datasets}

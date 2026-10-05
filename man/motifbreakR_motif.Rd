@@ -6,7 +6,7 @@
 \title{MotifDb object containing motif information from the motif databases of HOCOMOCO, Homer,
  FactorBook and ENCODE}
 \format{
-\code{\link[MotifDb]{MotifDb}} object of length 2816; to access metadata
+\code{\link[MotifDb]{MotifDb}} object of length 2817; to access metadata
 use mcols(motifbreakR_motif)
 }
 \source{
@@ -18,7 +18,7 @@ Kulakovskiy,I.V., Medvedeva,Y.A., Schaefer,U., Kasianov,A.S.,
 Heinz S, Benner C, Spann N, Bertolino E et al. (2010 May 28) Simple Combinations
   of Lineage-Determining Transcription Factors Prime cis-Regulatory
   Elements Required for Macrophage and B Cell Identities. Mol Cell, \bold{38(4):576-589}.
-  PMID: \href{http://www.ncbi.nlm.nih.gov/sites/entrez?Db=Pubmed&term=20513432[UID]}{20513432}
+  PMID: \href{https://pubmed.ncbi.nlm.nih.gov/20513432/}{20513432}
 
 J Wang, J Zhuang, S Iyer, XY Lin, et al. (2012) Sequence features and
   chromatin structure around the genomic regions bound by 119 human transcription

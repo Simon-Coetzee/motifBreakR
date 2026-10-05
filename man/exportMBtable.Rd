@@ -24,7 +24,7 @@ Export motifbreakR results to csv or tsv
 data(example.results)
 example.results
 \donttest{
-exportMBtable(example.results, file = "mb_test_output.tsv", format = "tsv")
+exportMBtable(example.results, file = tempfile(fileext = ".tsv"), format = "tsv")
 }
 }
 \seealso{

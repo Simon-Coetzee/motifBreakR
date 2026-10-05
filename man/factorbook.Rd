@@ -4,7 +4,7 @@
 \name{factorbook}
 \alias{factorbook}
 \title{MotifDb object containing motif information from around the genomic regions
-bound by 119 human transcription factors in Factorbook.}
+bound by 119 human transcription factors in Factorbook}
 \format{
 \code{\link[MotifDb]{MotifDb}} object of length 79; to access metadata
 use mcols(factorbook)
@@ -58,7 +58,7 @@ flanked by well-positioned nucleosomes, and many of these features show cell
 type specificity. The GC-richness may be beneficial for regulating TF binding
 because, when unoccupied by a TF, these regions are occupied by nucleosomes
 in vivo. We present the results of our analysis in a TF-centric web
-repository Factorbook (\url{http://factorbook.org}) and will continually update
+repository Factorbook (http://factorbook.org) and will continually update
 this repository as more ENCODE data are generated."
 }
 \details{
@@ -69,6 +69,6 @@ data(factorbook)
 factorbook
 }
 \seealso{
-\url{http://factorbook.org}
+\url{https://www.factorbook.org/}
 }
 \keyword{datasets}

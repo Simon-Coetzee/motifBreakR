@@ -2,9 +2,9 @@
 % Please edit documentation in R/scoreMotif.R
 \name{calculatePvalue}
 \alias{calculatePvalue}
-\title{Calculate the significance of the matches for the reference and alternate alleles for the for their PWM}
+\title{Calculate the significance of the matches for the reference and alternate alleles for their PWM}
 \source{
-H{\'e}l{\`e}ne Touzet and Jean-St{\'e}phane Varr{\'e} (2007) Efficient and accurate P-value computation for Position Weight Matrices.
+Hélène Touzet and Jean-Stéphane Varré (2007) Efficient and accurate P-value computation for Position Weight Matrices.
  Algorithms for Molecular Biology, \bold{2: 15}.
 }
 \usage{
@@ -17,29 +17,29 @@ calculatePvalue(
 \arguments{
 \item{results}{The output of \code{motifbreakR} that was run with \code{filterp=TRUE}}
 
-\item{granularity}{Numeric Vector; the granularity to which to round the PWM,
+\item{granularity}{Numeric; the granularity to which to round the PWM,
 larger values compromise full accuracy for speed of calculation. A value of
 \code{NULL} does no rounding.}
 
-\item{BPPARAM}{a BiocParallel object see \code{\link[BiocParallel]{register}}
-and see \code{getClass("BiocParallelParam")} for additional parameter
-classes.  Try \code{BiocParallel::registered()} to see what's available and
-for example \code{BiocParallel::bpparam("SerialParam")} would allow serial
-evaluation.}
+\item{BPPARAM}{a \code{\link[BiocParallel]{BiocParallelParam-class}} object
+controlling parallel evaluation. Try \code{BiocParallel::registered()} to
+see what is available; the default \code{BiocParallel::SerialParam()} gives
+serial evaluation.}
 }
 \value{
-a GRanges object. The same Granges object that was input as \code{results}, but with
+a GRanges object. The same GRanges object that was input as \code{results}, but with
  \code{pValueRef} and \code{pValueAlt} columns in the output modified from \code{NA} to the p-value
- calculated by \code{\link{TFMsc2pv}}. Additionally a \code{pValueEffect} column that indicates "strong"
- when the lower p-value (between ref and alt) is an order of magnitude or more different from
- the higher p-value, otherwise weak.
+ calculated by \code{\link[TFMPvalue]{TFMsc2pv}}. Additionally a \code{pValueEffect} column that indicates "strong"
+ when the two p-values differ by more than an order of magnitude, otherwise "weak".
 }
 \description{
-Calculate the significance of the matches for the reference and alternate alleles for the for their PWM
+Calculate the significance of the matches for the reference and alternate alleles for their PWM
 }
 \details{
 This function is intended to be used on a selection of results produced by \code{\link{motifbreakR}}, and
 this can be (although not always) a very memory and time intensive process if the algorithm doesn't converge rapidly.
+The nucleotide background used is the one stored by \code{motifbreakR} in
+\code{attributes(results)$bkg}.
 }
 \examples{
 data(example.results)
@@ -50,6 +50,6 @@ rs1006140 <- calculatePvalue(rs1006140, BPPARAM=BiocParallel::SerialParam(), gra
 
 }
 \seealso{
-See \code{\link{TFMsc2pv}} from the \pkg{TFMPvalue} package for
+See \code{\link[TFMPvalue]{TFMsc2pv}} from the \pkg{TFMPvalue} package for
   information about how the p-values are calculated.
 }

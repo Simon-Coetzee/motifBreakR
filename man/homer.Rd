@@ -4,7 +4,7 @@
 \name{homer}
 \alias{homer}
 \title{MotifDb object containing motif information from motif databases included in
-HOMER.}
+HOMER}
 \format{
 \code{\link[MotifDb]{MotifDb}} object of length 247; to access metadata
 use mcols(homer)
@@ -30,7 +30,7 @@ use mcols(homer)
 Heinz S, Benner C, Spann N, Bertolino E et al. (2010 May 28) Simple Combinations
   of Lineage-Determining Transcription Factors Prime cis-Regulatory
   Elements Required for Macrophage and B Cell Identities. Mol Cell, \bold{38(4):576-589}.
-  PMID: \href{http://www.ncbi.nlm.nih.gov/sites/entrez?Db=Pubmed&term=20513432[UID]}{20513432}
+  PMID: \href{https://pubmed.ncbi.nlm.nih.gov/20513432/}{20513432}
 }
 \usage{
 data(homer)
@@ -42,7 +42,7 @@ data(homer)
 From the website: "Homer includes several motif databases that are used to help annotate
 results and conduct searches for known motifs.  HOMER contains a custom motif
 database based on independent analysis of mostly ChIP-Seq data sets which is
-heavily utilized in the software." See \url{http://homer.salk.edu/homer/motif/motifDatabase.html}
+heavily utilized in the software." See \url{http://homer.ucsd.edu/homer/motif/motifDatabase.html}
 for more information on how these files were generated, and Homer's sources.
 }
 \details{
@@ -53,7 +53,7 @@ data(homer)
 homer
 }
 \seealso{
-\url{http://homer.salk.edu/homer/index.html} \url{http://homer.salk.edu/homer/motif/motifDatabase.html}
-  \url{http://homer.salk.edu/homer/motif/HomerMotifDB/homerResults.html}
+\url{http://homer.ucsd.edu/homer/index.html} \url{http://homer.ucsd.edu/homer/motif/motifDatabase.html}
+  \url{http://homer.ucsd.edu/homer/motif/HomerMotifDB/homerResults.html}
 }
 \keyword{datasets}

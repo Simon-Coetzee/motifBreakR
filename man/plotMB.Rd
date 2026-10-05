@@ -16,13 +16,14 @@ plotMB(
 \arguments{
 \item{results}{The output of \code{motifbreakR}}
 
-\item{rsid}{Character; the identifier of the variant to be visualized}
+\item{rsid}{Character; the identifier (\code{SNP_id}) of the variant to be visualized}
 
-\item{reverseMotif}{Logical; if the motif is on the "-" strand show the
-the motifs as reversed \code{FALSE} or reverse complement \code{TRUE}}
+\item{reverseMotif}{Logical; for motifs matched on the "-" strand, show the
+reverse complement of the motif (\code{TRUE}) or the motif reversed only
+(\code{FALSE})}
 
-\item{effect}{Character; show motifs that are strongly effected \code{c("strong")},
-weakly effected \code{c("weak")}, or both \code{c("strong", "weak")}}
+\item{effect}{Character; show motifs that are strongly affected \code{c("strong")},
+weakly affected \code{c("weak")}, or both \code{c("strong", "weak")}}
 
 \item{altAllele}{Character; The default value of \code{NULL} uses the first (or only)
 alternative allele for the SNP to be plotted.}
@@ -36,9 +37,10 @@ Plot a genomic region surrounding a genomic variant, and potentially disrupted
 motifs
 }
 \details{
-\code{plotMB} produces output showing the location of the SNP on the
-  chromosome, the surrounding sequence of the + strand, the footprint of any
-  motif that is disrupted by the SNP or SNV, and the DNA sequence motif(s).
+\code{plotMB} produces output showing the location of the variant on
+  the chromosome, the reference and alternate sequence of the + strand, the
+  footprint of any motif that is disrupted by the variant, and the DNA sequence
+  motif(s), with the position of the variant marked on each motif.
   The \code{altAllele} argument is included for variants like rs1006140 where
   multiple alternate alleles exist, the reference allele is A, and the alternate
   can be G,T, or C. \code{plotMB} only plots one alternate allele at a time.

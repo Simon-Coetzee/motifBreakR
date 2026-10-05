@@ -11,10 +11,14 @@
 data(example.results)
 }
 \value{
-\code{\link[GenomicRanges]{GRanges}} object. See \code{\link{motifbreakR}} for information on it's structure.
+\code{\link[GenomicRanges]{GRanges}} object. See \code{\link{motifbreakR}} for information on its structure.
 }
 \description{
-This contains example results from motifbreaker for use in examples from the help docs
+Example output of \code{\link{motifbreakR}} for the variants rs10034824 and
+rs1006140 (hg19), scored against the HOCOMOCOv11 core motifs from
+\pkg{MotifDb} with \code{method = "ic"}, \code{filterp = TRUE} and
+\code{threshold = 1e-4}, as in the vignette. Used in the examples of the help
+pages.
 }
 \examples{
 data(example.results)

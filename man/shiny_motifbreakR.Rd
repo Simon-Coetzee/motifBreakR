@@ -2,15 +2,15 @@
 % Please edit documentation in R/scoreMotif.R
 \name{shiny_motifbreakR}
 \alias{shiny_motifbreakR}
-\title{Run Shiny version of the motifbreakR package.}
+\title{Run Shiny version of the motifbreakR package}
 \usage{
 shiny_motifbreakR()
 }
 \value{
-returns a \code{\link{shinyAppDir}} that launches the shiny app when printed.
+returns a \code{\link[shiny]{shinyAppDir}} that launches the shiny app when printed.
 }
 \description{
-Run Shiny version of the motifbreakR package.
+Run Shiny version of the motifbreakR package
 }
 \examples{
 library(motifbreakR)

@@ -1,25 +1,28 @@
 #' Import SNPs from rsid for use in motifbreakR
 #'
 #' @param rsid Character; a character vector of rsid values from dbSNP
-#' @param dbSNP an object of class SNPlocs to lookup rsids; see \code{availible.SNPs} in
-#'   \code{\link[BSgenome]{injectSNPs}} to check for availible SNPlocs
+#' @param dbSNP an object of class SNPlocs to look up rsids; run
+#'   \code{\link[BSgenome]{available.SNPs}()} to list the available SNPlocs packages
 #' @param search.genome an object of class BSgenome for the species you are interrogating;
 #'  see \code{\link[BSgenome]{available.genomes}} for a list of species.
-#' @param biomart.dataset a Mart object from \code{\link{useEnsembl}} specifying
+#' @param biomart.dataset a Mart object from \code{\link[biomaRt]{useEnsembl}} specifying
 #'  the \code{snps} biomart, which dataset i.e., \code{hsapiens_snp}, and which
 #'  version i.e., \code{111} or \code{GRCm39}. This will override \code{SNPlocs} and must
 #'  be compatible with search.genome selection, and will query from \code{biomaRt},
 #'  which may be considerably faster than a lookup from a \code{SNPlocs} object.
 #' @seealso See \code{\link{motifbreakR}} for analysis; See \code{\link{snps.from.file}}
 #'   for an alternate method for generating a list of variants.
-#' @details \code{snps.from.rsid} take an rsid, or character vector of rsids and
-#'  generates the required object to input into \code{motifbreakR}
-#' @return a GRanges object containing:
-#'  \item{SNP_id}{The rsid of the snp with the "rs" portion stripped}
-#'  \item{alleles_as_ambig}{THE IUPAC ambiguity code between the reference and
-#'  alternate allele for this SNP}
-#'  \item{REF}{The reference allele for the SNP}
-#'  \item{ALT}{The alternate allele for the SNP}
+#' @details \code{snps.from.rsid} takes an rsid, or a character vector of rsids,
+#'  and generates the input required by \code{motifbreakR}. rsids that are not
+#'  found are dropped with a warning.
+#' @return a GRanges object with one range per variant and alternate allele
+#'  (multi-allelic variants are split into one range per alternate allele),
+#'  containing:
+#'  \item{SNP_id}{The identifier of the variant}
+#'  \item{REF}{The reference allele, as a DNAStringSet}
+#'  \item{ALT}{The alternate allele, as a DNAStringSet}
+#'  The name of the BSgenome package is stored in \code{attributes(x)$genome.package}
+#'  for use by \code{\link{motifbreakR}}.
 #' @examples
 #'  library(BSgenome.Hsapiens.UCSC.hg19)
 #'  library(SNPlocs.Hsapiens.dbSNP155.GRCh37)
@@ -205,7 +208,7 @@ cleanVariants <- function(variants) {
   letters <- uniqueLetters(unlist(BStringSetList(variants)))
   letters_remove <- letters[!letters %in% DNA_ALPHABET]
   if(length(letters_remove) > 0) {
-    warning(paste0("The following non-standard nucleotide codes were found in the VCF file and variants containing these codes were removed: ", paste(letters_remove, collapse = " ")))
+    warning(paste0("The following non-standard nucleotide codes were found in the input and variants containing these codes were removed: ", paste(letters_remove, collapse = " ")))
     search.pattern <- paste0(letters_remove, collapse = "|")
     drop.variants <- grepl(search.pattern, variants)
     return(drop.variants)
@@ -237,41 +240,50 @@ formatVcfOut <- function(x, gseq) {
   return(x)
 }
 
-#' Import SNPs from a BED file or VCF file for use in motifbreakR
+#' Import variants from a BED file or VCF file for use in motifbreakR
 #'
-#' @param file Character; a character containing the path to a bed file or a vcf file
-#'   see Details for a description of the required format
-#' @param dbSNP OPTIONAL; an object of class SNPlocs to lookup rsids; see \code{availible.SNPs} in
-#'   \code{\link[BSgenome]{injectSNPs}} to check for availible SNPlocs
+#' @param file Character; the path to a BED or VCF file; see Details for the
+#'   required format
+#' @param dbSNP OPTIONAL; an object of class SNPlocs to look up rsids; run
+#'   \code{\link[BSgenome]{available.SNPs}()} to list the available SNPlocs packages
 #' @param search.genome an object of class BSgenome for the species you are interrogating;
 #'  see \code{\link[BSgenome]{available.genomes}} for a list of species
 #' @param format Character; one of \code{bed} or \code{vcf}
-#' @param biomart.dataset a Mart object from \code{\link{useEnsembl}} specifying
+#' @param biomart.dataset a Mart object from \code{\link[biomaRt]{useEnsembl}} specifying
 #'  the \code{snps} biomart, which dataset i.e., \code{hsapiens_snp}, and which
 #'  version i.e., \code{111} or \code{GRCm39}. This will override \code{SNPlocs} and must
 #'  be compatible with search.genome selection, and will query from \code{biomaRt},
 #'  which may be considerably faster than a lookup from a \code{SNPlocs} object.
-#' @param check.unnamed.for.rsid Logical; check snps in the form chr:pos:ref:alt
-#'  for corresponding rsid, lookup may be slow, requires either param dbSNP or biomart.dataset.
+#' @param check.unnamed.for.rsid Logical; for BED input, look up variants named
+#'  in the form chr:pos:ref:alt in dbSNP and use the rsid if one is found. Lookup
+#'  may be slow and requires either \code{dbSNP} or \code{biomart.dataset}.
 #' @seealso See \code{\link{motifbreakR}} for analysis; See \code{\link{snps.from.rsid}}
 #'   for an alternate method for generating a list of variants.
-#' @details \code{snps.from.file} takes a character vector describing the file path
-#'  to a bed file that contains the necissary information to generate the input for
-#'  \code{motifbreakR} see \url{http://www.genome.ucsc.edu/FAQ/FAQformat.html#format1}
-#'  for a complete description of the BED format.  Our convention deviates in that there
-#'  is a required format for the name field.  \code{name} is defined as chromosome:start:REF:ALT
-#'  or the rsid from dbSNP (if you've included the optional SNPlocs argument).
-#'  For example if you were to include rs123 in it's alternate
-#'  format it would be entered as chr7:24966446:C:A
-#' @return a GRanges object containing:
-#'  \item{SNP_id}{The rsid of the snp with the "rs" portion stripped}
-#'  \item{alleles_as_ambig}{THE IUPAC ambiguity code between the reference and
-#'  alternate allele for this SNP}
-#'  \item{REF}{The reference allele for the SNP}
-#'  \item{ALT}{The alternate allele for the SNP}
+#' @details \code{snps.from.file} reads a BED or VCF file and generates the input
+#'  for \code{motifbreakR}. Both SNVs and indels are imported.
+#'
+#'  For BED files see \url{https://genome.ucsc.edu/FAQ/FAQformat.html#format1}
+#'  for a complete description of the format. Our convention deviates in that
+#'  there is a required format for the name field: \code{name} is either
+#'  chromosome:start:REF:ALT or an rsid from dbSNP (in which case \code{dbSNP}
+#'  or \code{biomart.dataset} must be supplied). For example rs123 would be
+#'  entered in the first format as chr7:24966446:C:A. Several alternate alleles
+#'  may be separated by commas, e.g. chr7:24966446:C:A,G.
+#'
+#'  For VCF files, multi-allelic records are split into one variant per
+#'  alternate allele. Variants whose alleles contain characters outside the
+#'  IUPAC DNA alphabet (for example symbolic alleles such as \code{<DEL>}) are
+#'  removed with a warning.
+#' @return a GRanges object with one range per variant and alternate allele
+#'  (multi-allelic variants are split into one range per alternate allele),
+#'  containing:
+#'  \item{SNP_id}{The identifier of the variant}
+#'  \item{REF}{The reference allele, as a DNAStringSet}
+#'  \item{ALT}{The alternate allele, as a DNAStringSet}
+#'  The name of the BSgenome package is stored in \code{attributes(x)$genome.package}
+#'  for use by \code{\link{motifbreakR}}.
 #' @examples
 #'  library(BSgenome.Drerio.UCSC.danRer7)
-#'  library(SNPlocs.Hsapiens.dbSNP155.GRCh37)
 #'  snps.bed.file <- system.file("extdata", "danRer.bed", package = "motifbreakR")
 #'  # see the contents
 #'  read.table(snps.bed.file, header = FALSE)
@@ -438,7 +450,8 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
   }
 }
 
-#' @describeIn snps.from.file Allows the use of indels by default
+#' @describeIn snps.from.file Identical to \code{snps.from.file}; retained for
+#'   backwards compatibility from when \code{snps.from.file} excluded indels by default.
 #' @export
 variants.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, biomart.dataset = NULL, format = "bed") {
   return(snps.from.file(file = file, dbSNP = dbSNP, search.genome = search.genome, format = format, biomart.dataset = biomart.dataset))

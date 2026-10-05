@@ -133,6 +133,7 @@ passThresh <- function(ref.windows, alt.windows, thresh, filterp, pwmRanges) {
 
 #' Calculate Positions Relative to an Arbitrary Anchor (Vectorized)
 #'
+#' @noRd
 #' @param result A GRanges object containing the results of a motif scan, with
 #'   metadata columns for window index, context start and end, and motif strand
 #'   for both alleles. The metadata columns should be named in the format
@@ -451,32 +452,43 @@ get_background <- function(bkg, snpList, genome.bsgenome, pwmList) {
   return(bg)
 }
 
-#' Predict The Disruptiveness Of Single Nucleotide Polymorphisms On
-#' Transcription Factor Binding Sites.
+#' Predict The Disruptiveness Of Genetic Variants On Transcription Factor
+#' Binding Sites
 #'
-#' @param snpList The output of \code{snps.from.rsid} or \code{snps.from.file}
+#' @param snpList The output of \code{\link{snps.from.rsid}} or
+#'   \code{\link{snps.from.file}}; may contain SNVs and indels
 #' @param pwmList An object of class \code{MotifList} containing the motifs that
 #'   you wish to interrogate
-#' @param threshold Numeric; the maximum p-value for a match to be called or a minimum score threshold
-#' @param method Character; one of \code{default}, \code{log}, \code{ic}, or \code{notrans}; see
-#'   details.
-#' @param bkg Numeric Vector or "genome" or "aggregate" or "pwm"; the background probabilities of the nucleotides
-#'   used with method=\code{log} method=\code{ic}. "genome" and "aggregate" are
-#'   special cases based on user data. "genome" will calculate the background frequencies
-#'   based on the reference genome sequence, while "aggregate" will calculate the
-#'   background frequencies based on the aggregate nucleotide frequencies across all
-#'   windows around user variants.
+#' @param threshold Numeric; with \code{filterp = TRUE}, the maximum p-value for
+#'   a match to be reported; otherwise the minimum score, as a fraction (0-1) of
+#'   the motif's scoring range (see \code{pctRef} and \code{pctAlt}).
+#' @param method Character; one of \code{default}, \code{log}, \code{ic}, or
+#'   \code{notrans}; see Details.
+#' @param bkg the background nucleotide frequencies; either a numeric vector of
+#'   length 4 named \code{A}, \code{C}, \code{G} and \code{T}, or one of:
+#'   \describe{
+#'     \item{\code{"genome"}}{frequencies across the whole reference genome. This
+#'       reads the entire genome sequence into memory.}
+#'     \item{\code{"aggregate"}}{frequencies across the sequence windows
+#'       surrounding the input variants.}
+#'     \item{\code{"pwm"}}{the average nucleotide composition of the motifs in
+#'       \code{pwmList}.}
+#'   }
+#'   The background is used for the motif pseudocounts, by \code{method = "log"}
+#'   and \code{method = "ic"}, and for p-values. It is stored in
+#'   \code{attributes(results)$bkg} and reused by \code{\link{calculatePvalue}}.
 #' @param filterp Logical; filter by p-value instead of by pct score.
 #' @param show.neutral Logical; include neutral changes in the output
-#' @param verbose Logical; if running serially, show verbose messages
-#' @param BPPARAM a BiocParallel object see \code{\link[BiocParallel]{register}}
-#'   and see \code{getClass("BiocParallelParam")} for additional parameter
-#'   classes.  Try \code{BiocParallel::registered()} to see what's availible and
-#'   for example \code{BiocParallel::bpparam("SerialParam")} would allow serial
-#'   evaluation.
+#' @param verbose Logical; show progress messages (from the workers only when
+#'   running serially)
+#' @param BPPARAM a \code{\link[BiocParallel]{BiocParallelParam-class}} object
+#'   controlling parallel evaluation; work is split across workers by motif.
+#'   Try \code{BiocParallel::registered()} to see what is available; for example
+#'   \code{BiocParallel::SerialParam()} gives serial evaluation, and
+#'   \code{BiocParallel::SnowParam()} parallel evaluation on Windows.
 #' @seealso See \code{\link{snps.from.rsid}} and \code{\link{snps.from.file}} for
 #'   information about how to generate the input to this function and
-#'   \code{\link{plotMB}} for information on how to visualize it's output
+#'   \code{\link{plotMB}} for information on how to visualize its output
 #' @details \pkg{motifbreakR} works with position probability matrices (PPM). PPM
 #' are derived as the fractional occurrence of nucleotides A,C,G, and T at
 #' each position of a position frequency matrix (PFM). PFM are simply the
@@ -486,9 +498,14 @@ get_background <- function(bkg, snpList, genome.bsgenome, pwmList) {
 #' scoring matrices (PSSM) based on the principle that the PPM contains
 #' information about the likelihood of observing a particular nucleotide at
 #' a particular position of a true transcription factor binding site. What
-#' follows is a discussion of the three different algorithms that may be
+#' follows is a discussion of the different algorithms that may be
 #' employed in calls to the \pkg{motifbreakR} function via the \code{method}
 #' argument.
+#'
+#' Before scoring, a pseudocount is added to each PPM so that logarithms are
+#' defined: \code{ppm <- (ppm * sequenceCount + bkg) / (sequenceCount + 1)},
+#' where \code{sequenceCount} is taken from the motif metadata, or 20 when it is
+#' \code{NA}.
 #'
 #' Suppose we have a frequency matrix \eqn{M} of width \eqn{n} (\emph{i.e.} a
 #' PPM as described above). Furthermore, we have a sequence \eqn{s} also of
@@ -502,8 +519,8 @@ get_background <- function(bkg, snpList, genome.bsgenome, pwmList) {
 #'
 #' \strong{Equation 1}
 #'
-#' \deqn{F( s,M ) = \sum_{i = 1}^{n}{\log( \frac{M_{s_{i},i}}{b_{s_{i}}} )}}{
-#' F( s,M ) = \sum_(i = 1)^n log ((M_s_i,_i)/b_s_i)}
+#' \deqn{F( s,M ) = \sum_{i = 1}^{n}{\log_2( \frac{M_{s_{i},i}}{b_{s_{i}}} )}}{
+#' F( s,M ) = \sum_(i = 1)^n log2 ((M_s_i,_i)/b_s_i)}
 #'
 #' where \eqn{b_{s_{i}}}{b_s_i} is the background frequency of letter \eqn{s_{i}}{s_i} in
 #' the genome of interest. This method can be specified by the user as
@@ -512,7 +529,7 @@ get_background <- function(bkg, snpList, genome.bsgenome, pwmList) {
 #' As an alternative to this method, we introduced a scoring method to
 #' directly weight the score by the importance of the position within the
 #' match sequence. This method of weighting is accessed by specifying
-#' \code{method='ic'} (information content). A general representation
+#' \code{method='default'} or \code{method='ic'}. A general representation
 #' of this scoring method is given by:
 #'
 #' \strong{Equation 2}
@@ -525,17 +542,15 @@ get_background <- function(bkg, snpList, genome.bsgenome, pwmList) {
 #'
 #' \strong{Equation 3}
 #'
-#' \deqn{p_{s} = ( M_{s_{i},i} ) \textrm{\ \ \ where\ \ \ } \frac{i = 1,\ldots n}{s_{i} \in \{ A,C,G,T \}}}{
-#' p_s = ( M_s_i,_i ) where (i = 1 \ldots n)/(s_i in {A,C,G,T})}
+#' \deqn{p_{s} = ( M_{s_{i},i} ) \textrm{\ \ \ for\ \ \ } i = 1,\ldots n}{
+#' p_s = ( M_s_i,_i ) for i = 1 \ldots n}
 #'
 #' and second, for each \eqn{M} a constant vector of weights
 #' \eqn{\omega_{M} = ( \omega_{1},\omega_{2},\ldots,\omega_{n} )}{\omega_M = ( \omega_1, \omega_2, \ldots, \omega_n)}.
 #'
 #' There are two methods for producing \eqn{\omega_{M}}{\omega_M}. The first, which we
-#' call weighted sum, is the difference in the probabilities for the two
-#' letters of the polymorphism (or variant), \emph{i.e.}
-#' \eqn{\Delta p_{s_{i}}}{\Delta p_s_i}, or the difference of the maximum and minimum
-#' values for each column of \eqn{M}:
+#' call weighted sum (\code{method='default'}), is the difference of the maximum
+#' and minimum values for each column of \eqn{M}:
 #'
 #' \strong{Equation 4.1}
 #'
@@ -548,16 +563,17 @@ get_background <- function(bkg, snpList, genome.bsgenome, pwmList) {
 #'
 #' \strong{Equation 4.2}
 #'
-#' \deqn{\omega_{i} = \sum_{j \in \{ A,C,G,T \}}^{}{M_{j,i}\log_2( \frac{M_{j,i}}{b_{i}} )}\textrm{\ \ \ \ \ where\ \ \ \ \ }i = 1,\ldots n}{
-#' \omega_i = \sum_{j in {A,C,G,T}} {M_(j,i)} log2(M_(j,i)/b_i) where i = 1 \ldots n}
+#' \deqn{\omega_{i} = \sum_{j \in \{ A,C,G,T \}}^{}{M_{j,i}\log_2( \frac{M_{j,i}}{b_{j}} )}\textrm{\ \ \ \ \ where\ \ \ \ \ }i = 1,\ldots n}{
+#' \omega_i = \sum_{j in {A,C,G,T}} {M_(j,i)} log2(M_(j,i)/b_j) where i = 1 \ldots n}
 #'
-#' where \eqn{b_{i}}{b_i} is again the background frequency of the letter \eqn{i}.
+#' where \eqn{b_{j}}{b_j} is again the background frequency of the letter \eqn{j}.
 #'
-#' Thus, there are 3 possible algorithms to apply via the \code{method}
+#' Thus, there are 3 scoring algorithms to apply via the \code{method}
 #' argument. The first is the standard summation of log probabilities
 #' (\code{method='log'}). The second and third are the weighted sum and
 #' information content methods (\code{method='default'} and \code{method='ic'}) specified by
-#' equations 4.1 and 4.2, respectively. \pkg{motifbreakR} assumes a
+#' equations 4.1 and 4.2, respectively. Additionally \code{method='notrans'}
+#' scores the sum of the untransformed probabilities, \eqn{\sum p_{s}}{sum(p_s)}. \pkg{motifbreakR} assumes a
 #' uniform background nucleotide distribution (\eqn{b}) in equations 1 and
 #' 4.2 unless otherwise specified by the user. Since we are primarily
 #' interested in the difference between alleles, background frequency is
@@ -575,17 +591,18 @@ get_background <- function(bkg, snpList, genome.bsgenome, pwmList) {
 #' the motif matrix, \eqn{M}. If either of
 #' \eqn{F( s_{\textsc{ref}},M )}{F( s_ref,M )} and
 #' \eqn{F( s_{\textsc{alt}},M )}{F( s_alt,M )} is greater than a user-specified
-#' threshold (default value of 0.85) the SNP is reported. By default
-#' \pkg{motifbreakR} does not display neutral effects,
-#' (\eqn{\Delta p_{i} < 0.4}{\Delta p_i < 0.4}) but this behaviour can be
-#' overridden.
+#' threshold (default value of 0.85) the SNP is reported. The effect of a
+#' variant is classified from the absolute difference in score between the
+#' alleles (\code{alleleDiff}): \code{"strong"} above 0.7, \code{"weak"} from
+#' 0.4 to 0.7 and \code{"neut"} below 0.4. By default \pkg{motifbreakR} does not
+#' report neutral effects; set \code{show.neutral = TRUE} to include them.
 #'
-#' Additionally, now, with the use of \code{\link{TFMPvalue-package}}, we may filter by p-value of the match.
+#' Additionally, now, with the use of \code{\link[TFMPvalue]{TFMPvalue-package}}, we may filter by p-value of the match.
 #' This is unfortunately a two step process. First, by invoking \code{filterp=TRUE} and setting a threshold at
 #' a desired p-value e.g 1e-4, we perform a rough filter on the results by rounding all values in the PWM to two
-#' decimal place, and calculating a scoring threshold based upon that. The second step is to use the function \code{\link{calculatePvalue}()}
+#' decimal places, and calculating a scoring threshold based upon that. The second step is to use the function \code{\link{calculatePvalue}()}
 #' on a selection of results which will change the \code{pValueRef} and \code{pValueAlt} columns in the output from \code{NA} to the p-value
-#' calculated by \code{\link{TFMsc2pv}}.  This can be (although not always) a very memory and time intensive process if the algorithm doesn't converge rapidly.
+#' calculated by \code{\link[TFMPvalue]{TFMsc2pv}}.  This can be (although not always) a very memory and time intensive process if the algorithm doesn't converge rapidly.
 #'
 #' @return a GRanges object containing:
 #'  \item{SNP_id}{the identifier of the variant}
@@ -614,7 +631,9 @@ get_background <- function(bkg, snpList, genome.bsgenome, pwmList) {
 #'  \item{strongerIn}{\code{Ref} or \code{Alt}, the allele with the stronger motif match}
 #'  \item{alleleDiff}{The difference between the score on the reference allele and the score on the alternate allele}
 #'  \item{alleleEffectSize}{The ratio of the \code{alleleDiff} and the maximal score of a sequence under the PWM}
-#'  \item{effect}{one of weak, strong, or neutral indicating the strength of the effect.}
+#'  \item{effect}{one of \code{"strong"}, \code{"weak"}, or \code{"neut"}
+#'  (neutral, only with \code{show.neutral = TRUE}) indicating the strength of the
+#'  effect; see Details.}
 #'  each SNP in this object may be plotted with \code{\link{plotMB}}
 #' @examples
 #'  library(BSgenome.Hsapiens.UCSC.hg19)
@@ -720,27 +739,27 @@ motifbreakR <- function(snpList, pwmList, threshold = 0.85, filterp = FALSE,
 }
 
 
-#' Calculate the significance of the matches for the reference and alternate alleles for the for their PWM
+#' Calculate the significance of the matches for the reference and alternate alleles for their PWM
 #'
 #' @param results The output of \code{motifbreakR} that was run with \code{filterp=TRUE}
-#' @param granularity Numeric Vector; the granularity to which to round the PWM,
+#' @param granularity Numeric; the granularity to which to round the PWM,
 #'  larger values compromise full accuracy for speed of calculation. A value of
 #'  \code{NULL} does no rounding.
-#' @param BPPARAM a BiocParallel object see \code{\link[BiocParallel]{register}}
-#'   and see \code{getClass("BiocParallelParam")} for additional parameter
-#'   classes.  Try \code{BiocParallel::registered()} to see what's available and
-#'   for example \code{BiocParallel::bpparam("SerialParam")} would allow serial
-#'   evaluation.
-#' @return a GRanges object. The same Granges object that was input as \code{results}, but with
+#' @param BPPARAM a \code{\link[BiocParallel]{BiocParallelParam-class}} object
+#'   controlling parallel evaluation. Try \code{BiocParallel::registered()} to
+#'   see what is available; the default \code{BiocParallel::SerialParam()} gives
+#'   serial evaluation.
+#' @return a GRanges object. The same GRanges object that was input as \code{results}, but with
 #'  \code{pValueRef} and \code{pValueAlt} columns in the output modified from \code{NA} to the p-value
-#'  calculated by \code{\link{TFMsc2pv}}. Additionally a \code{pValueEffect} column that indicates "strong"
-#'  when the lower p-value (between ref and alt) is an order of magnitude or more different from
-#'  the higher p-value, otherwise weak.
-#' @seealso See \code{\link{TFMsc2pv}} from the \pkg{TFMPvalue} package for
+#'  calculated by \code{\link[TFMPvalue]{TFMsc2pv}}. Additionally a \code{pValueEffect} column that indicates "strong"
+#'  when the two p-values differ by more than an order of magnitude, otherwise "weak".
+#' @seealso See \code{\link[TFMPvalue]{TFMsc2pv}} from the \pkg{TFMPvalue} package for
 #'   information about how the p-values are calculated.
 #' @details This function is intended to be used on a selection of results produced by \code{\link{motifbreakR}}, and
 #' this can be (although not always) a very memory and time intensive process if the algorithm doesn't converge rapidly.
-#' @source H{\'e}l{\`e}ne Touzet and Jean-St{\'e}phane Varr{\'e} (2007) Efficient and accurate P-value computation for Position Weight Matrices.
+#' The nucleotide background used is the one stored by \code{motifbreakR} in
+#' \code{attributes(results)$bkg}.
+#' @source Hélène Touzet and Jean-Stéphane Varré (2007) Efficient and accurate P-value computation for Position Weight Matrices.
 #'  Algorithms for Molecular Biology, \bold{2: 15}.
 #' @examples
 #' data(example.results)
@@ -914,20 +933,22 @@ DNAmotifAlignment.2snp <- function(pwms, result) {
 #' motifs
 #'
 #' @param results The output of \code{motifbreakR}
-#' @param rsid Character; the identifier of the variant to be visualized
-#' @param reverseMotif Logical; if the motif is on the "-" strand show the
-#'   the motifs as reversed \code{FALSE} or reverse complement \code{TRUE}
-#' @param effect Character; show motifs that are strongly effected \code{c("strong")},
-#'   weakly effected \code{c("weak")}, or both \code{c("strong", "weak")}
+#' @param rsid Character; the identifier (\code{SNP_id}) of the variant to be visualized
+#' @param reverseMotif Logical; for motifs matched on the "-" strand, show the
+#'   reverse complement of the motif (\code{TRUE}) or the motif reversed only
+#'   (\code{FALSE})
+#' @param effect Character; show motifs that are strongly affected \code{c("strong")},
+#'   weakly affected \code{c("weak")}, or both \code{c("strong", "weak")}
 #' @param altAllele Character; The default value of \code{NULL} uses the first (or only)
 #'   alternative allele for the SNP to be plotted.
 #' @seealso See \code{\link{motifbreakR}} for the function that produces output to be
 #'   visualized here, also \code{\link{snps.from.rsid}} and \code{\link{snps.from.file}}
 #'   for information about how to generate the input to \code{\link{motifbreakR}}
 #'   function.
-#' @details \code{plotMB} produces output showing the location of the SNP on the
-#'   chromosome, the surrounding sequence of the + strand, the footprint of any
-#'   motif that is disrupted by the SNP or SNV, and the DNA sequence motif(s).
+#' @details \code{plotMB} produces output showing the location of the variant on
+#'   the chromosome, the reference and alternate sequence of the + strand, the
+#'   footprint of any motif that is disrupted by the variant, and the DNA sequence
+#'   motif(s), with the position of the variant marked on each motif.
 #'   The \code{altAllele} argument is included for variants like rs1006140 where
 #'   multiple alternate alleles exist, the reference allele is A, and the alternate
 #'   can be G,T, or C. \code{plotMB} only plots one alternate allele at a time.
@@ -1113,8 +1134,8 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, effect = c("strong", "wea
   return(invisible(NULL))
 }
 
-#' Run Shiny version of the motifbreakR package.
-#' @return returns a \code{\link{shinyAppDir}} that launches the shiny app when printed.
+#' Run Shiny version of the motifbreakR package
+#' @return returns a \code{\link[shiny]{shinyAppDir}} that launches the shiny app when printed.
 #' @examples
 #' library(motifbreakR)
 #'
@@ -1148,7 +1169,7 @@ shiny_motifbreakR <- function() {
 #' data(example.results)
 #' example.results
 #' \donttest{
-#' exportMBtable(example.results, file = "mb_test_output.tsv", format = "tsv")
+#' exportMBtable(example.results, file = tempfile(fileext = ".tsv"), format = "tsv")
 #' }
 #' @importFrom utils write.csv write.table
 #' @export
@@ -1216,7 +1237,7 @@ get_color_values <- function(bed_score, color_set) {
 #' data(example.results)
 #' example.results
 #' \donttest{
-#' exportMBbed(example.results, file = "mb_test_output.bed", color = "effect_size")
+#' exportMBbed(example.results, file = tempfile(fileext = ".bed"), color = "effect_size")
 #' }
 #' @export
 exportMBbed <- function(results, file, name = NULL, color = "effect_size") {
@@ -1294,7 +1315,7 @@ exportMBbed <- function(results, file, name = NULL, color = "effect_size") {
 #' \code{TAIR10_TF} or \code{TAIR10_HISTONE} for Arabidopsis thaliana
 #' @param TFClass Logical;  The user may optionally query an expanded
 #' motif/transcription factor relationship encompassing the entire potential
-#' transcription factor family as implemented by \code{\link{MotifDb}} based on
+#' transcription factor family as implemented by \code{\link[MotifDb]{MotifDb}} based on
 #' TFClass.
 #' @details \code{TFClass} argument works for objects loaded in from the
 #' \code{MotifDb} package. \code{hg19} and \code{mm39} are data from liftOver.
@@ -1312,10 +1333,10 @@ exportMBbed <- function(results, file, name = NULL, color = "effect_size") {
 #' measures that legally restrict others from doing anything the license
 #' permits.
 #'
-#' @seealso \code{\link{associateTranscriptionFactors}} for information about
+#' @seealso \code{\link[MotifDb]{associateTranscriptionFactors}} for information about
 #' TFClass. \url{https://remap.univ-amu.fr/} for details about ReMap2022.
 #' @return the results GenomicRanges object output by \code{\link{motifbreakR}}
-#' containing with the additional columns:
+#' with the additional columns:
 #'  \item{matchingBindingEvent}{The name of the transcription factor that binds
 #'  over the motif, or \code{NA} if none}
 #'  \item{matchingCellType}{A list corresponding in length to the number of
@@ -1428,7 +1449,7 @@ cachePeakFile <- function(fileURL, genome) {
   }
   needupdate <- tryCatch(bfcneedsupdate(bfc, rid),
                          error = function(cond) {
-                           message("URL is down, using cache if availible")
+                           message("URL is down, using cache if available")
                            FALSE
                          })
   if (!isFALSE(needupdate)) {

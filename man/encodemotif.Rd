@@ -4,9 +4,9 @@
 \name{encodemotif}
 \alias{encodemotif}
 \title{MotifDb object containing motif information from the known and discovered
-motifs for the ENCODE TF ChIP-seq datasets.}
+motifs for the ENCODE TF ChIP-seq datasets}
 \format{
-\code{\link[MotifDb]{MotifDb}} object of length 2064; to access metadata
+\code{\link[MotifDb]{MotifDb}} object of length 2065; to access metadata
 use mcols(encodemotif)
 \describe{
  \item{providerName}{Name provided by ENCODE}
@@ -71,6 +71,6 @@ data(encodemotif)
 encodemotif
 }
 \seealso{
-\url{http://compbio.mit.edu/encode-motifs/}
+\url{https://compbio.mit.edu/encode-motifs/}
 }
 \keyword{datasets}

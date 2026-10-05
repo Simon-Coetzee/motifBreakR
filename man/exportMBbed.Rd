@@ -39,7 +39,7 @@ Export motifbreakR variants to bed file
 data(example.results)
 example.results
 \donttest{
-exportMBbed(example.results, file = "mb_test_output.bed", color = "effect_size")
+exportMBbed(example.results, file = tempfile(fileext = ".bed"), color = "effect_size")
 }
 }
 \seealso{

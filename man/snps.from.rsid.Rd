@@ -14,32 +14,35 @@ snps.from.rsid(
 \arguments{
 \item{rsid}{Character; a character vector of rsid values from dbSNP}
 
-\item{dbSNP}{an object of class SNPlocs to lookup rsids; see \code{availible.SNPs} in
-\code{\link[BSgenome]{injectSNPs}} to check for availible SNPlocs}
+\item{dbSNP}{an object of class SNPlocs to look up rsids; run
+\code{\link[BSgenome]{available.SNPs}()} to list the available SNPlocs packages}
 
 \item{search.genome}{an object of class BSgenome for the species you are interrogating;
 see \code{\link[BSgenome]{available.genomes}} for a list of species.}
 
-\item{biomart.dataset}{a Mart object from \code{\link{useEnsembl}} specifying
+\item{biomart.dataset}{a Mart object from \code{\link[biomaRt]{useEnsembl}} specifying
 the \code{snps} biomart, which dataset i.e., \code{hsapiens_snp}, and which
 version i.e., \code{111} or \code{GRCm39}. This will override \code{SNPlocs} and must
 be compatible with search.genome selection, and will query from \code{biomaRt},
 which may be considerably faster than a lookup from a \code{SNPlocs} object.}
 }
 \value{
-a GRanges object containing:
- \item{SNP_id}{The rsid of the snp with the "rs" portion stripped}
- \item{alleles_as_ambig}{THE IUPAC ambiguity code between the reference and
- alternate allele for this SNP}
- \item{REF}{The reference allele for the SNP}
- \item{ALT}{The alternate allele for the SNP}
+a GRanges object with one range per variant and alternate allele
+ (multi-allelic variants are split into one range per alternate allele),
+ containing:
+ \item{SNP_id}{The identifier of the variant}
+ \item{REF}{The reference allele, as a DNAStringSet}
+ \item{ALT}{The alternate allele, as a DNAStringSet}
+ The name of the BSgenome package is stored in \code{attributes(x)$genome.package}
+ for use by \code{\link{motifbreakR}}.
 }
 \description{
 Import SNPs from rsid for use in motifbreakR
 }
 \details{
-\code{snps.from.rsid} take an rsid, or character vector of rsids and
- generates the required object to input into \code{motifbreakR}
+\code{snps.from.rsid} takes an rsid, or a character vector of rsids,
+ and generates the input required by \code{motifbreakR}. rsids that are not
+ found are dropped with a warning.
 }
 \examples{
  library(BSgenome.Hsapiens.UCSC.hg19)

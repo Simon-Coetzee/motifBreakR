@@ -2,8 +2,8 @@
 % Please edit documentation in R/scoreMotif.R
 \name{motifbreakR}
 \alias{motifbreakR}
-\title{Predict The Disruptiveness Of Single Nucleotide Polymorphisms On
-Transcription Factor Binding Sites.}
+\title{Predict The Disruptiveness Of Genetic Variants On Transcription Factor
+Binding Sites}
 \usage{
 motifbreakR(
   snpList,
@@ -18,34 +18,45 @@ motifbreakR(
 )
 }
 \arguments{
-\item{snpList}{The output of \code{snps.from.rsid} or \code{snps.from.file}}
+\item{snpList}{The output of \code{\link{snps.from.rsid}} or
+\code{\link{snps.from.file}}; may contain SNVs and indels}
 
 \item{pwmList}{An object of class \code{MotifList} containing the motifs that
 you wish to interrogate}
 
-\item{threshold}{Numeric; the maximum p-value for a match to be called or a minimum score threshold}
+\item{threshold}{Numeric; with \code{filterp = TRUE}, the maximum p-value for
+a match to be reported; otherwise the minimum score, as a fraction (0-1) of
+the motif's scoring range (see \code{pctRef} and \code{pctAlt}).}
 
 \item{filterp}{Logical; filter by p-value instead of by pct score.}
 
-\item{method}{Character; one of \code{default}, \code{log}, \code{ic}, or \code{notrans}; see
-details.}
+\item{method}{Character; one of \code{default}, \code{log}, \code{ic}, or
+\code{notrans}; see Details.}
 
 \item{show.neutral}{Logical; include neutral changes in the output}
 
-\item{verbose}{Logical; if running serially, show verbose messages}
+\item{verbose}{Logical; show progress messages (from the workers only when
+running serially)}
 
-\item{bkg}{Numeric Vector or "genome" or "aggregate" or "pwm"; the background probabilities of the nucleotides
-used with method=\code{log} method=\code{ic}. "genome" and "aggregate" are
-special cases based on user data. "genome" will calculate the background frequencies
-based on the reference genome sequence, while "aggregate" will calculate the
-background frequencies based on the aggregate nucleotide frequencies across all
-windows around user variants.}
+\item{bkg}{the background nucleotide frequencies; either a numeric vector of
+length 4 named \code{A}, \code{C}, \code{G} and \code{T}, or one of:
+\describe{
+  \item{\code{"genome"}}{frequencies across the whole reference genome. This
+    reads the entire genome sequence into memory.}
+  \item{\code{"aggregate"}}{frequencies across the sequence windows
+    surrounding the input variants.}
+  \item{\code{"pwm"}}{the average nucleotide composition of the motifs in
+    \code{pwmList}.}
+}
+The background is used for the motif pseudocounts, by \code{method = "log"}
+and \code{method = "ic"}, and for p-values. It is stored in
+\code{attributes(results)$bkg} and reused by \code{\link{calculatePvalue}}.}
 
-\item{BPPARAM}{a BiocParallel object see \code{\link[BiocParallel]{register}}
-and see \code{getClass("BiocParallelParam")} for additional parameter
-classes.  Try \code{BiocParallel::registered()} to see what's availible and
-for example \code{BiocParallel::bpparam("SerialParam")} would allow serial
-evaluation.}
+\item{BPPARAM}{a \code{\link[BiocParallel]{BiocParallelParam-class}} object
+controlling parallel evaluation; work is split across workers by motif.
+Try \code{BiocParallel::registered()} to see what is available; for example
+\code{BiocParallel::SerialParam()} gives serial evaluation, and
+\code{BiocParallel::SnowParam()} parallel evaluation on Windows.}
 }
 \value{
 a GRanges object containing:
@@ -75,12 +86,14 @@ a GRanges object containing:
  \item{strongerIn}{\code{Ref} or \code{Alt}, the allele with the stronger motif match}
  \item{alleleDiff}{The difference between the score on the reference allele and the score on the alternate allele}
  \item{alleleEffectSize}{The ratio of the \code{alleleDiff} and the maximal score of a sequence under the PWM}
- \item{effect}{one of weak, strong, or neutral indicating the strength of the effect.}
+ \item{effect}{one of \code{"strong"}, \code{"weak"}, or \code{"neut"}
+ (neutral, only with \code{show.neutral = TRUE}) indicating the strength of the
+ effect; see Details.}
  each SNP in this object may be plotted with \code{\link{plotMB}}
 }
 \description{
-Predict The Disruptiveness Of Single Nucleotide Polymorphisms On
-Transcription Factor Binding Sites.
+Predict The Disruptiveness Of Genetic Variants On Transcription Factor
+Binding Sites
 }
 \details{
 \pkg{motifbreakR} works with position probability matrices (PPM). PPM
@@ -92,9 +105,14 @@ genome, or more practically, create any number of position specific
 scoring matrices (PSSM) based on the principle that the PPM contains
 information about the likelihood of observing a particular nucleotide at
 a particular position of a true transcription factor binding site. What
-follows is a discussion of the three different algorithms that may be
+follows is a discussion of the different algorithms that may be
 employed in calls to the \pkg{motifbreakR} function via the \code{method}
 argument.
+
+Before scoring, a pseudocount is added to each PPM so that logarithms are
+defined: \code{ppm <- (ppm * sequenceCount + bkg) / (sequenceCount + 1)},
+where \code{sequenceCount} is taken from the motif metadata, or 20 when it is
+\code{NA}.
 
 Suppose we have a frequency matrix \eqn{M} of width \eqn{n} (\emph{i.e.} a
 PPM as described above). Furthermore, we have a sequence \eqn{s} also of
@@ -108,8 +126,8 @@ probabilities:
 
 \strong{Equation 1}
 
-\deqn{F( s,M ) = \sum_{i = 1}^{n}{\log( \frac{M_{s_{i},i}}{b_{s_{i}}} )}}{
-F( s,M ) = \sum_(i = 1)^n log ((M_s_i,_i)/b_s_i)}
+\deqn{F( s,M ) = \sum_{i = 1}^{n}{\log_2( \frac{M_{s_{i},i}}{b_{s_{i}}} )}}{
+F( s,M ) = \sum_(i = 1)^n log2 ((M_s_i,_i)/b_s_i)}
 
 where \eqn{b_{s_{i}}}{b_s_i} is the background frequency of letter \eqn{s_{i}}{s_i} in
 the genome of interest. This method can be specified by the user as
@@ -118,7 +136,7 @@ the genome of interest. This method can be specified by the user as
 As an alternative to this method, we introduced a scoring method to
 directly weight the score by the importance of the position within the
 match sequence. This method of weighting is accessed by specifying
-\code{method='ic'} (information content). A general representation
+\code{method='default'} or \code{method='ic'}. A general representation
 of this scoring method is given by:
 
 \strong{Equation 2}
@@ -131,17 +149,15 @@ compute the scoring vector of position scores \eqn{p}
 
 \strong{Equation 3}
 
-\deqn{p_{s} = ( M_{s_{i},i} ) \textrm{\ \ \ where\ \ \ } \frac{i = 1,\ldots n}{s_{i} \in \{ A,C,G,T \}}}{
-p_s = ( M_s_i,_i ) where (i = 1 \ldots n)/(s_i in {A,C,G,T})}
+\deqn{p_{s} = ( M_{s_{i},i} ) \textrm{\ \ \ for\ \ \ } i = 1,\ldots n}{
+p_s = ( M_s_i,_i ) for i = 1 \ldots n}
 
 and second, for each \eqn{M} a constant vector of weights
 \eqn{\omega_{M} = ( \omega_{1},\omega_{2},\ldots,\omega_{n} )}{\omega_M = ( \omega_1, \omega_2, \ldots, \omega_n)}.
 
 There are two methods for producing \eqn{\omega_{M}}{\omega_M}. The first, which we
-call weighted sum, is the difference in the probabilities for the two
-letters of the polymorphism (or variant), \emph{i.e.}
-\eqn{\Delta p_{s_{i}}}{\Delta p_s_i}, or the difference of the maximum and minimum
-values for each column of \eqn{M}:
+call weighted sum (\code{method='default'}), is the difference of the maximum
+and minimum values for each column of \eqn{M}:
 
 \strong{Equation 4.1}
 
@@ -154,16 +170,17 @@ given by:
 
 \strong{Equation 4.2}
 
-\deqn{\omega_{i} = \sum_{j \in \{ A,C,G,T \}}^{}{M_{j,i}\log_2( \frac{M_{j,i}}{b_{i}} )}\textrm{\ \ \ \ \ where\ \ \ \ \ }i = 1,\ldots n}{
-\omega_i = \sum_{j in {A,C,G,T}} {M_(j,i)} log2(M_(j,i)/b_i) where i = 1 \ldots n}
+\deqn{\omega_{i} = \sum_{j \in \{ A,C,G,T \}}^{}{M_{j,i}\log_2( \frac{M_{j,i}}{b_{j}} )}\textrm{\ \ \ \ \ where\ \ \ \ \ }i = 1,\ldots n}{
+\omega_i = \sum_{j in {A,C,G,T}} {M_(j,i)} log2(M_(j,i)/b_j) where i = 1 \ldots n}
 
-where \eqn{b_{i}}{b_i} is again the background frequency of the letter \eqn{i}.
+where \eqn{b_{j}}{b_j} is again the background frequency of the letter \eqn{j}.
 
-Thus, there are 3 possible algorithms to apply via the \code{method}
+Thus, there are 3 scoring algorithms to apply via the \code{method}
 argument. The first is the standard summation of log probabilities
 (\code{method='log'}). The second and third are the weighted sum and
 information content methods (\code{method='default'} and \code{method='ic'}) specified by
-equations 4.1 and 4.2, respectively. \pkg{motifbreakR} assumes a
+equations 4.1 and 4.2, respectively. Additionally \code{method='notrans'}
+scores the sum of the untransformed probabilities, \eqn{\sum p_{s}}{sum(p_s)}. \pkg{motifbreakR} assumes a
 uniform background nucleotide distribution (\eqn{b}) in equations 1 and
 4.2 unless otherwise specified by the user. Since we are primarily
 interested in the difference between alleles, background frequency is
@@ -181,17 +198,18 @@ variant). The scores are scaled as a fraction of scoring range 0-1 of
 the motif matrix, \eqn{M}. If either of
 \eqn{F( s_{\textsc{ref}},M )}{F( s_ref,M )} and
 \eqn{F( s_{\textsc{alt}},M )}{F( s_alt,M )} is greater than a user-specified
-threshold (default value of 0.85) the SNP is reported. By default
-\pkg{motifbreakR} does not display neutral effects,
-(\eqn{\Delta p_{i} < 0.4}{\Delta p_i < 0.4}) but this behaviour can be
-overridden.
+threshold (default value of 0.85) the SNP is reported. The effect of a
+variant is classified from the absolute difference in score between the
+alleles (\code{alleleDiff}): \code{"strong"} above 0.7, \code{"weak"} from
+0.4 to 0.7 and \code{"neut"} below 0.4. By default \pkg{motifbreakR} does not
+report neutral effects; set \code{show.neutral = TRUE} to include them.
 
-Additionally, now, with the use of \code{\link{TFMPvalue-package}}, we may filter by p-value of the match.
+Additionally, now, with the use of \code{\link[TFMPvalue]{TFMPvalue-package}}, we may filter by p-value of the match.
 This is unfortunately a two step process. First, by invoking \code{filterp=TRUE} and setting a threshold at
 a desired p-value e.g 1e-4, we perform a rough filter on the results by rounding all values in the PWM to two
-decimal place, and calculating a scoring threshold based upon that. The second step is to use the function \code{\link{calculatePvalue}()}
+decimal places, and calculating a scoring threshold based upon that. The second step is to use the function \code{\link{calculatePvalue}()}
 on a selection of results which will change the \code{pValueRef} and \code{pValueAlt} columns in the output from \code{NA} to the p-value
-calculated by \code{\link{TFMsc2pv}}.  This can be (although not always) a very memory and time intensive process if the algorithm doesn't converge rapidly.
+calculated by \code{\link[TFMPvalue]{TFMsc2pv}}.  This can be (although not always) a very memory and time intensive process if the algorithm doesn't converge rapidly.
 }
 \examples{
  library(BSgenome.Hsapiens.UCSC.hg19)
@@ -212,5 +230,5 @@ calculated by \code{\link{TFMsc2pv}}.  This can be (although not always) a very 
 \seealso{
 See \code{\link{snps.from.rsid}} and \code{\link{snps.from.file}} for
   information about how to generate the input to this function and
-  \code{\link{plotMB}} for information on how to visualize it's output
+  \code{\link{plotMB}} for information on how to visualize its output
 }

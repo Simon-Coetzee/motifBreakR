@@ -3,7 +3,7 @@
 #'
 #' From the abstract:
 #' "We present the Homo sapiens comprehensive model collection (HOCOMOCO,
-#' \url{http://autosome.ru/HOCOMOCO/}, \url{http://cbrc.kaust.edu.sa/hocomoco/})
+#' http://autosome.ru/HOCOMOCO/, http://cbrc.kaust.edu.sa/hocomoco/)
 #' containing carefully hand-curated TFBS models constructed by integration of
 #' binding sequences obtained by both low- and high-throughput methods. To
 #' construct position weight matrices to represent these TFBS models, we used
@@ -13,6 +13,10 @@
 #' for two rather distinct TFBS models. We assigned a quality rating to each
 #' model. HOCOMOCO contains 426 systematically curated TFBS models for 401 human
 #' TFs, where 172 models are based on more than one data source."
+#'
+#' This is HOCOMOCO version 9. Newer releases (HOCOMOCO v10, v11 and v13) are
+#' available directly from \pkg{MotifDb}, for example
+#' \code{subset(MotifDb, dataSource == "HOCOMOCOv13")}.
 #'
 #' Load with \code{data(hocomoco)}
 #'
@@ -34,7 +38,7 @@
 #'  \item{bindingSequence}{Consensus sequence for the motif}
 #'  \item{bindingDomain}{\code{NA} incomplete}
 #'  \item{tfFamily}{\code{NA} incomplete}
-#'  \item{experimentType}{from \url{http://autosome.ru/HOCOMOCO/Details.php#200}
+#'  \item{experimentType}{from the HOCOMOCO v9 documentation,
 #'    quoted here:
 #'
 #' "TFBS model identification modes
@@ -112,14 +116,14 @@
 #'   collection of human transcription factor binding sites models. Nucleic
 #'   Acids Research, \bold{41}, D195--D202.
 #'
-#' @seealso \url{http://autosome.ru/HOCOMOCO/} \url{http://cbrc.kaust.edu.sa/hocomoco/}
+#' @seealso \url{https://hocomoco.autosome.org/}
 #' @examples
 #' data(hocomoco)
 #' hocomoco
 "hocomoco"
 
 #' MotifDb object containing motif information from the known and discovered
-#' motifs for the ENCODE TF ChIP-seq datasets.
+#' motifs for the ENCODE TF ChIP-seq datasets
 #'
 #' From the abstract: "Recent advances in technology have led to a dramatic
 #' increase in the number of available transcription factor ChIP-seq and
@@ -145,7 +149,7 @@
 #'
 #'@return \code{\link[MotifDb]{MotifList-class}} object
 #'
-#'@format \code{\link[MotifDb]{MotifDb}} object of length 2064; to access metadata
+#'@format \code{\link[MotifDb]{MotifDb}} object of length 2065; to access metadata
 #' use mcols(encodemotif)
 #'\describe{
 #'  \item{providerName}{Name provided by ENCODE}
@@ -174,14 +178,14 @@
 #'   discovery and characterization of regulatory motifs in ENCODE TF binding
 #'   experiments. Nucleic Acids Research, doi:10.1093/nar/gkt1249
 #'
-#' @seealso \url{http://compbio.mit.edu/encode-motifs/}
+#' @seealso \url{https://compbio.mit.edu/encode-motifs/}
 #' @examples
 #' data(encodemotif)
 #' encodemotif
 "encodemotif"
 
 #' MotifDb object containing motif information from around the genomic regions
-#' bound by 119 human transcription factors in Factorbook.
+#' bound by 119 human transcription factors in Factorbook
 #'
 #' From the abstract: "Chromatin immunoprecipitation coupled with
 #' high-throughput sequencing (ChIP-seq) has become the dominant technique for
@@ -203,7 +207,7 @@
 #' type specificity. The GC-richness may be beneficial for regulating TF binding
 #' because, when unoccupied by a TF, these regions are occupied by nucleosomes
 #' in vivo. We present the results of our analysis in a TF-centric web
-#' repository Factorbook (\url{http://factorbook.org}) and will continually update
+#' repository Factorbook (http://factorbook.org) and will continually update
 #' this repository as more ENCODE data are generated."
 #'
 #' Load with \code{data(factorbook)}
@@ -235,19 +239,19 @@
 #'   chromatin structure around the genomic regions bound by 119 human transcription
 #'   factors. Genome Research, \bold{22 (9)}, 1798-1812, doi:10.1101/gr.139105.112
 #'
-#' @seealso \url{http://factorbook.org}
+#' @seealso \url{https://www.factorbook.org/}
 #' @examples
 #' data(factorbook)
 #' factorbook
 "factorbook"
 
 #' MotifDb object containing motif information from motif databases included in
-#' HOMER.
+#' HOMER
 #'
 #' From the website: "Homer includes several motif databases that are used to help annotate
 #' results and conduct searches for known motifs.  HOMER contains a custom motif
 #' database based on independent analysis of mostly ChIP-Seq data sets which is
-#' heavily utilized in the software." See \url{http://homer.salk.edu/homer/motif/motifDatabase.html}
+#' heavily utilized in the software." See \url{http://homer.ucsd.edu/homer/motif/motifDatabase.html}
 #' for more information on how these files were generated, and Homer's sources.
 #'
 #' Load with \code{data(homer)}
@@ -278,10 +282,10 @@
 #' @source Heinz S, Benner C, Spann N, Bertolino E et al. (2010 May 28) Simple Combinations
 #'   of Lineage-Determining Transcription Factors Prime cis-Regulatory
 #'   Elements Required for Macrophage and B Cell Identities. Mol Cell, \bold{38(4):576-589}.
-#'   PMID: \href{http://www.ncbi.nlm.nih.gov/sites/entrez?Db=Pubmed&term=20513432[UID]}{20513432}
+#'   PMID: \href{https://pubmed.ncbi.nlm.nih.gov/20513432/}{20513432}
 #'
-#' @seealso \url{http://homer.salk.edu/homer/index.html} \url{http://homer.salk.edu/homer/motif/motifDatabase.html}
-#'   \url{http://homer.salk.edu/homer/motif/HomerMotifDB/homerResults.html}
+#' @seealso \url{http://homer.ucsd.edu/homer/index.html} \url{http://homer.ucsd.edu/homer/motif/motifDatabase.html}
+#'   \url{http://homer.ucsd.edu/homer/motif/HomerMotifDB/homerResults.html}
 #' @examples
 #' data(homer)
 #' homer
@@ -298,7 +302,7 @@
 #'
 #'@return \code{\link[MotifDb]{MotifList-class}} object
 #'
-#'@format \code{\link[MotifDb]{MotifDb}} object of length 2816; to access metadata
+#'@format \code{\link[MotifDb]{MotifDb}} object of length 2817; to access metadata
 #' use mcols(motifbreakR_motif)
 #'
 #' @seealso \code{\link{hocomoco}}, \code{\link{homer}},
@@ -313,7 +317,7 @@
 #' @source Heinz S, Benner C, Spann N, Bertolino E et al. (2010 May 28) Simple Combinations
 #'   of Lineage-Determining Transcription Factors Prime cis-Regulatory
 #'   Elements Required for Macrophage and B Cell Identities. Mol Cell, \bold{38(4):576-589}.
-#'   PMID: \href{http://www.ncbi.nlm.nih.gov/sites/entrez?Db=Pubmed&term=20513432[UID]}{20513432}
+#'   PMID: \href{https://pubmed.ncbi.nlm.nih.gov/20513432/}{20513432}
 #'
 #' @source J Wang, J Zhuang, S Iyer, XY Lin, et al. (2012) Sequence features and
 #'   chromatin structure around the genomic regions bound by 119 human transcription
@@ -329,11 +333,15 @@
 
 #' Example Results from motifbreakR
 #'
-#' This contains example results from motifbreaker for use in examples from the help docs
+#' Example output of \code{\link{motifbreakR}} for the variants rs10034824 and
+#' rs1006140 (hg19), scored against the HOCOMOCOv11 core motifs from
+#' \pkg{MotifDb} with \code{method = "ic"}, \code{filterp = TRUE} and
+#' \code{threshold = 1e-4}, as in the vignette. Used in the examples of the help
+#' pages.
 #'
 #' @format \code{\link[GenomicRanges]{GRanges}} output from \code{motifbreakR}
 #'
-#' @return \code{\link[GenomicRanges]{GRanges}} object. See \code{\link{motifbreakR}} for information on it's structure.
+#' @return \code{\link[GenomicRanges]{GRanges}} object. See \code{\link{motifbreakR}} for information on its structure.
 #'
 #' @examples
 #' data(example.results)

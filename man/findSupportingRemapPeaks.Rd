@@ -17,12 +17,12 @@ findSupportingRemapPeaks(results, genome, TFClass = FALSE)
 
 \item{TFClass}{Logical;  The user may optionally query an expanded
 motif/transcription factor relationship encompassing the entire potential
-transcription factor family as implemented by \code{\link{MotifDb}} based on
+transcription factor family as implemented by \code{\link[MotifDb]{MotifDb}} based on
 TFClass.}
 }
 \value{
 the results GenomicRanges object output by \code{\link{motifbreakR}}
-containing with the additional columns:
+with the additional columns:
  \item{matchingBindingEvent}{The name of the transcription factor that binds
  over the motif, or \code{NA} if none}
  \item{matchingCellType}{A list corresponding in length to the number of
@@ -58,6 +58,6 @@ example.results <- findSupportingRemapPeaks(example.results,
 }
 }
 \seealso{
-\code{\link{associateTranscriptionFactors}} for information about
+\code{\link[MotifDb]{associateTranscriptionFactors}} for information about
 TFClass. \url{https://remap.univ-amu.fr/} for details about ReMap2022.
 }
