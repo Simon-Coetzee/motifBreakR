@@ -37,11 +37,14 @@ Suggests: BSgenome.Hsapiens.UCSC.hg19,
         BSgenome.Hsapiens.UCSC.hg19.masked,
         BSgenome.Hsapiens.NCBI.GRCh38,
         BSgenome.Hsapiens.UCSC.hg38.masked,
-        BSgenome.Hsapiens.UCSC.hg38
+        BSgenome.Hsapiens.UCSC.hg38,
+        testthat (>= 3.0.0),
+        withr
 VignetteBuilder: knitr
 Encoding: UTF-8
 License: GPL-2
 BugReports: https://github.com/Simon-Coetzee/motifbreakR/issues
 biocViews: ChIPSeq, Visualization, MotifAnnotation, Transcription
 NeedsCompilation: no
+Config/testthat/edition: 3
 Config/roxygen2/version: 8.1.0
