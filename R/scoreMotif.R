@@ -688,11 +688,11 @@ motifbreakR <- function(snpList, pwmList, threshold = 0.85, filterp = FALSE,
   ##
   ## Genome Setup
   genome.package <- attributes(snpList)$genome.package
-  if (requireNamespace(eval(genome.package), quietly = TRUE, character.only = TRUE)) {
-    genome.bsgenome <- eval(parse(text = paste(genome.package, genome.package, sep = "::")))
+  if (requireNamespace(genome.package, quietly = TRUE)) {
+    genome.bsgenome <- getExportedValue(genome.package, genome.package)
   } else {
-    stop(paste0(eval(genome.package), " is the genome selected for this snp list and \n",
-                "is not present on your environment. Please load it and try again."))
+    stop(paste0(genome.package, " is the genome selected for this snp list and \n",
+                "  is not present on your environment. Please load it and try again."))
   }
   ##
 
@@ -835,7 +835,7 @@ calculatePvalue <- function(results,
     if(!is.null(granularity)) {
       pwmList <- lapply(pwmList, function(x, g) {x <- floor(x/g)*g; return(x)}, g = granularity)
     }
-    results_sp <- split(results, 1:length(results))
+    results_sp <- split(results, seq_along(results))
     pvalues <- bplapply(results_sp, function(i, pwmList, pwmListmeta, bkg) {
       result <- i
       pwm.id <- result$providerId
