@@ -50,8 +50,8 @@ Import SNPs from rsid for use in motifbreakR
                            dbSNP = SNPlocs.Hsapiens.dbSNP155.GRCh37,
                            search.genome = BSgenome.Hsapiens.UCSC.hg19)
 
- ## alternatively using biomaRt
-
+ ## alternatively using biomaRt (requires access to the Ensembl servers)
+ \donttest{
  library(biomaRt)
  library(BSgenome.Hsapiens.UCSC.hg38)
  ensembl_snp <- useEnsembl(biomart = "snps",
@@ -60,6 +60,7 @@ Import SNPs from rsid for use in motifbreakR
  snps.mb <- snps.from.rsid(snps,
                            biomart.dataset = ensembl_snp,
                            search.genome = BSgenome.Hsapiens.UCSC.hg38)
+ }
 
 }
 \seealso{
