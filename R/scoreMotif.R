@@ -1009,7 +1009,7 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, effect = c("strong", "wea
   result <- result[result$effect %in% effect]
   chromosome <- as.character(seqnames(result))[[1]]
   genome.package <- attributes(result)$genome.package
-  genome.bsgenome <- eval(parse(text = genome.package))
+  genome.bsgenome <- getExportedValue(genome.package, genome.package)
   seq.len <- max(length(result$REF[[1]]), length(result$ALT[[1]]))
   distance.to.edge <- max(abs(c(sapply(result$motifPos, min),
                                 sapply(result$motifPos, max)))) + 4
