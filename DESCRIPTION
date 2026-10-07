@@ -1,7 +1,7 @@
 Package: motifbreakR
 Title: A Package for Predicting the Disruptiveness of Single Nucleotide
         Polymorphisms on Transcription Factor Binding Sites
-Version: 2.27.3
+Version: 2.27.4
 Authors@R: c(person(given="Simon Gert", family="Coetzee",
         email="coetzee@uthscsa.edu", role = c("aut", "cre"),
         comment=c(ORCID="0000-0003-4267-5930")),
