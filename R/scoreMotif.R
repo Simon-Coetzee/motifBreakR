@@ -423,12 +423,12 @@ preparePWM <- function(pwmList,
   pwmList@listData <- lapply(pwmList, function(pwm) {
     pwm <- pwm[c("A", "C", "G", "T"), ]
     pwm <- rbind(pwm, N = 0)
-    colnames(pwm) <- as.character(1:ncol(pwm))
+    colnames(pwm) <- as.character(seq_len(ncol(pwm)))
     return(pwm) })
   pwmList.pc <- lapply(pwmList.pc, function(pwm) {
     pwm <- pwm[c("A", "C", "G", "T"), ]
     pwm <- rbind(pwm, N = 0)
-    colnames(pwm) <- as.character(1:ncol(pwm))
+    colnames(pwm) <- as.character(seq_len(ncol(pwm)))
     return(pwm) })
   return(list(pwmList = pwmList,
               pwmListPseudoCount = pwmList.pc,
@@ -1004,7 +1004,7 @@ plotMB <- function(results, rsid, reverseMotif = TRUE, effect = c("strong", "wea
     doRev <- doRevStrand == 2L
     if (doRev) {
         pwm <- pwms[[pwm.i]]
-        pwm <- pwm[, rev(1:ncol(pwm))]
+        pwm <- pwm[, rev(seq_len(ncol(pwm)))]
         if (reverseMotif) {
           rownames(pwm) <- c("T", "G", "C", "A")
           pwm <- pwm[c("A", "C", "G", "T"), ]
@@ -1385,7 +1385,7 @@ findSupportingRemapPeaks <- function(results, genome, TFClass = FALSE) {
   tf_ct <- stringr::str_split(variant_to_peak$tf.binding, ":")
   variant_to_peak$tf.binding <- vapply(tf_ct, FUN = `[`, character(1), 1)
   variant_to_peak$tf.celltype <- vapply(tf_ct, FUN = `[`, character(1), 2)
-  variant_to_peak$tf.celltype <- lapply(variant_to_peak$tf.celltype, function(x) {stringr::str_split(x, ",", simplify = T)[1, ]})
+  variant_to_peak$tf.celltype <- lapply(variant_to_peak$tf.celltype, function(x) {stringr::str_split(x, ",", simplify = TRUE)[1, ]})
   mcol_variant_to_gene <- data.frame(variant = names(results), tf.gene = results$geneSymbol, motif = results$providerId)
 
   if(("manuallyCuratedGeneMotifAssociationTable" %in% slotNames(attributes(results)$motifs)) &
@@ -1419,7 +1419,7 @@ findSupportingRemapPeaks <- function(results, genome, TFClass = FALSE) {
     vgmm <- split(vgmm, vgmm$motif)
     vgmg <- vgm[which(vgm$tf.gene %in% mcol_variant_to_gene$tf.gene), ]
     vgmg <- split(vgmg, vgmg$motif)
-    vgm <- mapply(rbind, vgmm, vgmg, SIMPLIFY = F)
+    vgm <- mapply(rbind, vgmm, vgmg, SIMPLIFY = FALSE)
 
     results[mbv_sel]$matchingBindingEvent <- lapply(vgm, function(x) {unique(x$tf.binding)})[results[mbv_sel]$providerId]
     results[mbv_sel]$matchingCellType <- lapply(vgm, function(x) {x$tf.celltype})[results[mbv_sel]$providerId]
@@ -1436,7 +1436,7 @@ findSupportingRemapPeaks <- function(results, genome, TFClass = FALSE) {
 #' @importFrom BiocFileCache BiocFileCache
 .get_cache <- function() {
   cache <- tools::R_user_dir("motifbreakR", which="cache")
-  BiocFileCache(cache = cache, ask = F)
+  BiocFileCache(cache = cache, ask = FALSE)
 }
 
 #' @importFrom BiocFileCache bfcquery bfcadd bfcneedsupdate bfcdownload bfcrpath bfcnew

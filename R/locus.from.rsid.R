@@ -306,8 +306,8 @@ snps.from.file <- function(file = NULL, dbSNP = NULL, search.genome = NULL, form
     }
     genome.name <- genome(search.genome)[[1]]
     vcfparam <- ScanVcfParam(info = NA, geno = NA)
-    vcffile = open(VcfFile(file))
-    vcf = readVcf(vcffile, genome = genome.name, param = vcfparam)
+    vcffile <- open(VcfFile(file))
+    vcf <- readVcf(vcffile, genome = genome.name, param = vcfparam)
     close(vcffile)
 
     vcf_ranges <- rowRanges(vcf)
